@@ -12,7 +12,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com/joshgachnang/mongoose-rest-framework.git"
+    "url": "git+ssh://git@github.com/FlourishHealth/ferns-api.git"
   },
   "keywords": [
     "rest",
