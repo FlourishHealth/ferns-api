@@ -41,7 +41,7 @@ jobs:
       # run tests just in case
       - run: yarn test
       # publish to NPM -> there is one caveat, continue reading for the fix
-      - run: npm publish
+      - run: npm publish --access public
         env:
           # Use a token to publish to NPM. See below for how to set it up
           NODE_AUTH_TOKEN: ${{ secrets.NPM_PUBLISH_TOKEN }}
