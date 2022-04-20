@@ -439,11 +439,6 @@
     minimatch "^3.0.4"
     strip-json-comments "^3.1.1"
 
-"@ferns/lint@*":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@ferns/lint/-/lint-0.1.4.tgz#da64803ea7af55243f67a08eec9d65de84274338"
-  integrity sha512-pYggMRdqlDlzSZ+tcbnOcGLpGQ3YNnECswHEiRNguRcMu2TOzZMo2/3qFZ3e3vKX3SqLVrTpNRhEaHMw5Lsy0A==
-
 "@humanwhocodes/config-array@^0.5.0":
   version "0.5.0"
   resolved "https://registry.yarnpkg.com/@humanwhocodes/config-array/-/config-array-0.5.0.tgz#1407967d4c6eecd7388f83acf1eaf4d0c6e58ef9"
@@ -2160,6 +2155,11 @@ escodegen@^2.0.0:
     optionator "^0.8.1"
   optionalDependencies:
     source-map "~0.6.1"
+
+eslint-config-ferns@*:
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/eslint-config-ferns/-/eslint-config-ferns-0.2.0.tgz#15fda8e8e3e6edb3d2b2ede6527803023b187601"
+  integrity sha512-jgAxPqda0Y/v9wFNtcMogHe4x51QaRmuOFEVq5TvAZkmyWX6ynEDMh3SR6L82qRe6uKDEffEXjjprXXSXCbAfw==
 
 eslint-config-prettier@^4.1.0:
   version "4.3.0"
@@ -5719,10 +5719,10 @@ typedarray-to-buffer@^3.1.5:
   dependencies:
     is-typedarray "^1.0.0"
 
-typescript@^4.1.5:
-  version "4.4.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.4.3.tgz#bdc5407caa2b109efd4f82fe130656f977a29324"
-  integrity sha512-4xfscpisVgqqDfPaJo5vkd+Qd/ItkoagnHpufr+i2QCHBsNYp+G7UAoyFl8aPtx879u38wPV65rZ8qbGZijalA==
+typescript@^4.6.3:
+  version "4.6.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.6.3.tgz#eefeafa6afdd31d725584c67a0eaba80f6fc6c6c"
+  integrity sha512-yNIatDa5iaofVozS/uQJEl3JRWLKKGJKh6Yaiv0GLGSuhpFJe7P3SbHZ8/yjAHRQwKRoA6YZqlfjXWmVzoVSMw==
 
 uid-safe@~2.1.5:
   version "2.1.5"
