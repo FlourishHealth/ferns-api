@@ -7,7 +7,7 @@ import onFinished from "on-finished";
 import passport from "passport";
 
 import {logger, LoggingOptions, setupLogging} from "./logger";
-import {Env, setupAuth, UserModel as UserMongooseModel} from "./mongooseRestFramework";
+import {Env, setupAuth, UserModel as UserMongooseModel} from "./api";
 
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;

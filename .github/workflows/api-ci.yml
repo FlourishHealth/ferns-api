@@ -1,13 +1,6 @@
 name: API Continuous Integration
 
-on:
-  push:
-    paths:
-      - 'packages/api/**'
-
-defaults:
-  run:
-    working-directory: packages/api
+on: [push]
 
 jobs:
   test:
@@ -43,7 +36,6 @@ jobs:
         # if: steps.yarn-cache.outputs.cache-hit != 'true' # I think we want to install every time,
         # but use the cache?
         run: yarn --frozen-lockfile
-        working-directory: './'
       - name: yarn lint
         run: yarn lint
       - name: yarn build

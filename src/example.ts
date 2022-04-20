@@ -9,7 +9,7 @@ import {
   gooseRestRouter,
   Permissions,
   setupAuth,
-} from "./mongooseRestFramework";
+} from "./api";
 import {passportLocalMongoose} from "./passport";
 
 const assert = chai.assert;

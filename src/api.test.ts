@@ -11,7 +11,7 @@ import {
   Permissions,
   setupAuth,
   tokenPlugin,
-} from "./mongooseRestFramework";
+} from "./api";
 import {passportLocalMongoose} from "./passport";
 
 const assert = chai.assert;
