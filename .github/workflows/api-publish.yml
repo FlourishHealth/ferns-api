@@ -5,10 +5,6 @@ on:
     # This specifies that the build will be triggered when we publish a release
     types: [published]
 
-defaults:
-  run:
-    working-directory: packages/api
-
 jobs:
   build:
     # Run on latest version of ubuntu
@@ -35,7 +31,6 @@ jobs:
         # if: steps.yarn-cache.outputs.cache-hit != 'true' # I think we want to install every time,
         # but use the cache?
         run: yarn --frozen-lockfile
-        working-directory: './'
       # set up git since we will later push to the repo
       - run: git config --global user.name "GitHub CD bot"
       - run: git config --global user.email "github-cd-bot@nang.io"
