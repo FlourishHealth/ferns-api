@@ -700,6 +700,9 @@ export function gooseRestRouter<T>(
     let builtQuery = model.find(query).limit(limit);
 
     if (req.query.page) {
+      if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
+        return res.status(400).json({message: `Invalid page: ${req.query.page}`});
+      }
       builtQuery = builtQuery.skip((Number(req.query.page) - 1) * limit);
     }
 

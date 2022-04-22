@@ -876,6 +876,16 @@ describe("mongoose rest framework", () => {
       assert.equal(res.body.data[0].id, (pizza as any).id);
     });
 
+    it("list page 0 ", async function () {
+      const res = await server.get("/food?limit=1&page=0").expect(400);
+      assert.equal(res.body.message, "Invalid page: 0");
+    });
+
+    it("list page with garbage ", async function () {
+      const res = await server.get("/food?limit=1&page=abc").expect(400);
+      assert.equal(res.body.message, "Invalid page: abc");
+    });
+
     it("list page over", async function () {
       // Should skip to carrots since apples are hidden
       const res = await server.get("/food?limit=1&page=5").expect(200);
