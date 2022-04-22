@@ -697,7 +697,7 @@ export function gooseRestRouter<T>(
       limit = Math.min(Number(req.query.limit), options.maxLimit ?? 500);
     }
 
-    let builtQuery = model.find(query).limit(limit);
+    let builtQuery = model.find(query).limit(limit + 1);
 
     if (req.query.page) {
       if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
@@ -723,8 +723,14 @@ export function gooseRestRouter<T>(
       return res.status(500).send();
     }
     // TODO add pagination
+    let more = false;
     try {
-      return res.json({data: serialize(data, req.user)});
+      let serialized = serialize(data, req.user);
+      if (serialized && serialized?.length === limit + 1) {
+        more = true;
+        serialized = serialized?.slice(0, limit);
+      }
+      return res.json({data: serialized, more: true});
     } catch (e) {
       logger.error("Serialization error", e);
       return res.status(500).send();
