@@ -722,15 +722,21 @@ export function gooseRestRouter<T>(
       logger.error(`List error: ${(e as any).stack}`);
       return res.status(500).send();
     }
-    // TODO add pagination
-    let more = false;
+    let more;
     try {
       let serialized = serialize(data, req.user);
-      if (serialized && serialized?.length === limit + 1) {
-        more = true;
-        serialized = serialized?.slice(0, limit);
+      if (serialized && Array.isArray(serialized)) {
+        more = serialized.length === limit + 1 && serialized.length > 0;
+        if (more) {
+          // Slice off the extra document we fetched to determine if more is true or not.
+          serialized = serialized.slice(0, limit);
+        }
       }
-      return res.json({data: serialized, more: true});
+      if (more !== undefined) {
+        return res.json({data: serialized, more});
+      } else {
+        return res.json({data: serialized});
+      }
     } catch (e) {
       logger.error("Serialization error", e);
       return res.status(500).send();

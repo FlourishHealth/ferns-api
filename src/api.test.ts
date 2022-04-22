@@ -851,6 +851,7 @@ describe("mongoose rest framework", () => {
       assert.lengthOf(res.body.data, 1);
       assert.equal(res.body.data[0].id, (spinach as any).id);
       assert.equal(res.body.data[0].ownerId._id, notAdmin.id);
+      assert.isTrue(res.body.more);
     });
 
     it("list limit over", async function () {
@@ -864,6 +865,7 @@ describe("mongoose rest framework", () => {
       });
       const res = await server.get("/food?limit=4").expect(200);
       assert.lengthOf(res.body.data, 3);
+      assert.isTrue(res.body.more);
       assert.equal(res.body.data[0].id, (spinach as any).id);
       assert.equal(res.body.data[1].id, (pizza as any).id);
       assert.equal(res.body.data[2].id, (carrots as any).id);
@@ -873,6 +875,7 @@ describe("mongoose rest framework", () => {
       // Should skip to carrots since apples are hidden
       const res = await server.get("/food?limit=1&page=2").expect(200);
       assert.lengthOf(res.body.data, 1);
+      assert.isTrue(res.body.more);
       assert.equal(res.body.data[0].id, (pizza as any).id);
     });
 
@@ -890,12 +893,14 @@ describe("mongoose rest framework", () => {
       // Should skip to carrots since apples are hidden
       const res = await server.get("/food?limit=1&page=5").expect(200);
       assert.lengthOf(res.body.data, 0);
+      assert.isFalse(res.body.more);
     });
 
     it("list query params", async function () {
       // Should skip to carrots since apples are hidden
       const res = await server.get("/food?hidden=true").expect(200);
       assert.lengthOf(res.body.data, 1);
+      assert.isFalse(res.body.more);
       assert.equal(res.body.data[0].id, (apple as any).id);
     });
 
