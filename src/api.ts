@@ -697,9 +697,12 @@ export function gooseRestRouter<T>(
       limit = Math.min(Number(req.query.limit), options.maxLimit ?? 500);
     }
 
-    let builtQuery = model.find(query).limit(limit);
+    let builtQuery = model.find(query).limit(limit + 1);
 
     if (req.query.page) {
+      if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
+        return res.status(400).json({message: `Invalid page: ${req.query.page}`});
+      }
       builtQuery = builtQuery.skip((Number(req.query.page) - 1) * limit);
     }
 
@@ -719,9 +722,19 @@ export function gooseRestRouter<T>(
       logger.error(`List error: ${(e as any).stack}`);
       return res.status(500).send();
     }
-    // TODO add pagination
+    let more;
     try {
-      return res.json({data: serialize(data, req.user)});
+      let serialized = serialize(data, req.user);
+      if (serialized && Array.isArray(serialized)) {
+        more = serialized.length === limit + 1 && serialized.length > 0;
+        if (more) {
+          // Slice off the extra document we fetched to determine if more is true or not.
+          serialized = serialized.slice(0, limit);
+        }
+        return res.json({data: serialized, more, page: req.query.page, limit});
+      } else {
+        return res.json({data: serialized});
+      }
     } catch (e) {
       logger.error("Serialization error", e);
       return res.status(500).send();
