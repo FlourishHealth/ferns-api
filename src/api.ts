@@ -731,9 +731,7 @@ export function gooseRestRouter<T>(
           // Slice off the extra document we fetched to determine if more is true or not.
           serialized = serialized.slice(0, limit);
         }
-      }
-      if (more !== undefined) {
-        return res.json({data: serialized, more});
+        return res.json({data: serialized, more, page: req.query.page, limit});
       } else {
         return res.json({data: serialized});
       }
