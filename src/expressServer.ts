@@ -1,13 +1,14 @@
 import * as Sentry from "@sentry/node";
 import axios from "axios";
+import cors from "cors";
 import cron from "cron";
 import express, {Router} from "express";
 import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
 
-import {logger, LoggingOptions, setupLogging} from "./logger";
 import {Env, setupAuth, UserModel as UserMongooseModel} from "./api";
+import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
@@ -115,15 +116,21 @@ function initializeRoutes(UserModel: UserMongooseModel, addRoutes: AddRoutes) {
 
   app.use(Sentry.Handlers.requestHandler());
 
-  app.all("/*", function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "*");
-    if (req.method === "OPTIONS") {
-      res.send(200);
-    } else {
-      next();
-    }
-  });
+  // app.all("/*", function (req, res, next) {
+  //   res.header("Access-Control-Allow-Origin", "*");
+  //   res.header("Access-Control-Allow-Headers", "*");
+  //   if (req.method === "OPTIONS") {
+  //     console.log("OPTIONS");
+  //     return res.sendStatus(200);
+  //   } else {
+  //     return next();
+  //   }
+  // });
+  app.use(
+    cors({
+      origin: "*",
+    })
+  );
 
   app.use(express.json());
 

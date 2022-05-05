@@ -325,7 +325,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
           const user = await userModel.findOne({email});
 
           if (!user) {
-            logger.debug("Could not find login user for", email);
+            logger.debug(`Could not find login user for ${email}`);
             return done(null, false, {message: "User not found"});
           }
 
@@ -432,12 +432,14 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
   router.get("/me", authenticateMiddleware(), async (req, res) => {
     if (!req.user?.id) {
-      return res.status(401).send();
+      logger.debug("Not user found for /me");
+      return res.sendStatus(401);
     }
     const data = await userModel.findById(req.user.id);
 
     if (!data) {
-      return res.status(404).send();
+      logger.debug("Not user data found for /me");
+      return res.sendStatus(404);
     }
     const dataObject = data.toObject();
     (dataObject as any).id = data._id;
@@ -446,7 +448,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
   router.patch("/me", authenticateMiddleware(), async (req, res) => {
     if (!req.user?.id) {
-      return res.status(401).send();
+      return res.sendStatus(401);
     }
     // TODO support limited updates for profile.
     // try {
@@ -457,7 +459,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     try {
       const data = await userModel.findOneAndUpdate({_id: req.user.id}, req.body, {new: true});
       if (data === null) {
-        return res.status(404).send();
+        return res.sendStatus(404);
       }
       const dataObject = data.toObject();
       (dataObject as any).id = data._id;
@@ -601,7 +603,7 @@ export function gooseRestRouter<T>(
   router.post("/", authenticateMiddleware(true), async (req, res) => {
     if (!(await checkPermissions("create", options.permissions.create, req.user))) {
       logger.warn(`Access to CREATE on ${model.name} denied for ${req.user?.id}`);
-      return res.status(405).send();
+      return res.sendStatus(405);
     }
 
     let body;
@@ -640,7 +642,7 @@ export function gooseRestRouter<T>(
   router.get("/", authenticateMiddleware(true), async (req, res) => {
     if (!(await checkPermissions("list", options.permissions.list, req.user))) {
       logger.warn(`Access to LIST on ${model.name} denied for ${req.user?.id}`);
-      return res.status(403).send();
+      return res.sendStatus(403);
     }
 
     let query = {};
@@ -720,7 +722,7 @@ export function gooseRestRouter<T>(
       data = await builtQuery.exec();
     } catch (e) {
       logger.error(`List error: ${(e as any).stack}`);
-      return res.status(500).send();
+      return res.sendStatus(500);
     }
     let more;
     try {
@@ -737,25 +739,25 @@ export function gooseRestRouter<T>(
       }
     } catch (e) {
       logger.error("Serialization error", e);
-      return res.status(500).send();
+      return res.sendStatus(500);
     }
   });
 
   router.get("/:id", authenticateMiddleware(true), async (req, res) => {
     if (!(await checkPermissions("read", options.permissions.read, req.user))) {
       logger.warn(`Access to READ on ${model.name} denied for ${req.user?.id}`);
-      return res.status(405).send();
+      return res.sendStatus(405);
     }
 
     const data = await model.findById(req.params.id);
 
     if (!data) {
-      return res.status(404).send();
+      return res.sendStatus(404);
     }
 
     if (!(await checkPermissions("read", options.permissions.read, req.user, data))) {
       logger.warn(`Access to READ on ${model.name}:${req.params.id} denied for ${req.user?.id}`);
-      return res.status(403).send();
+      return res.sendStatus(403);
     }
 
     return res.json({data: serialize(data, req.user)});
@@ -763,24 +765,24 @@ export function gooseRestRouter<T>(
 
   router.put("/:id", authenticateMiddleware(true), async (req, res) => {
     // Patch is what we want 90% of the time
-    return res.status(500);
+    return res.sendStatus(500);
   });
 
   router.patch("/:id", authenticateMiddleware(true), async (req, res) => {
     if (!(await checkPermissions("update", options.permissions.update, req.user))) {
       logger.warn(`Access to PATCH on ${model.name} denied for ${req.user?.id}`);
-      return res.status(405).send();
+      return res.sendStatus(405);
     }
 
     let doc = await model.findById(req.params.id);
 
     if (!doc) {
-      return res.status(404).send();
+      return res.sendStatus(404);
     }
 
     if (!(await checkPermissions("update", options.permissions.update, req.user, doc))) {
       logger.warn(`Patch not allowed for user ${req.user?.id} on doc ${doc._id}`);
-      return res.status(403).send();
+      return res.sendStatus(403);
     }
 
     let body;
@@ -821,18 +823,18 @@ export function gooseRestRouter<T>(
   router.delete("/:id", authenticateMiddleware(true), async (req, res) => {
     if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
       logger.warn(`Access to DELETE on ${model.name} denied for ${req.user?.id}`);
-      return res.status(405).send();
+      return res.sendStatus(405);
     }
 
     const data = await model.findById(req.params.id);
 
     if (!data) {
-      return res.status(404).send();
+      return res.sendStatus(404);
     }
 
     if (!(await checkPermissions("delete", options.permissions.delete, req.user, data))) {
       logger.warn(`Access to DELETE on ${model.name}:${req.params.id} denied for ${req.user?.id}`);
-      return res.status(403).send();
+      return res.sendStatus(403);
     }
 
     if (options.preDelete) {
@@ -870,7 +872,7 @@ export function gooseRestRouter<T>(
       }
     }
 
-    return res.status(204).send();
+    return res.sendStatus(204);
   });
 
   return router;
