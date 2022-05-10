@@ -107,7 +107,15 @@ export function createRouterWithAuth(
   ]);
 }
 
-function initializeRoutes(UserModel: UserMongooseModel, addRoutes: AddRoutes) {
+interface InitializeRoutesOptions {
+  corsOrigin?: string;
+}
+
+function initializeRoutes(
+  UserModel: UserMongooseModel,
+  addRoutes: AddRoutes,
+  options: InitializeRoutesOptions = {}
+) {
   if (!process.env.SESSION_SECRET && process.env.NODE_ENV === "production") {
     throw new Error("You must provide a SESSION_SECRET in env.");
   }
@@ -116,19 +124,9 @@ function initializeRoutes(UserModel: UserMongooseModel, addRoutes: AddRoutes) {
 
   app.use(Sentry.Handlers.requestHandler());
 
-  // app.all("/*", function (req, res, next) {
-  //   res.header("Access-Control-Allow-Origin", "*");
-  //   res.header("Access-Control-Allow-Headers", "*");
-  //   if (req.method === "OPTIONS") {
-  //     console.log("OPTIONS");
-  //     return res.sendStatus(200);
-  //   } else {
-  //     return next();
-  //   }
-  // });
   app.use(
     cors({
-      origin: "*",
+      origin: options.corsOrigin ?? "*",
     })
   );
 
@@ -165,6 +163,7 @@ export interface SetupServerOptions {
   addRoutes: AddRoutes;
   loggingOptions?: LoggingOptions;
   skipListen?: boolean;
+  corsOrigin?: string;
 }
 
 // Sets up the routes and returns a function to launch the API.
@@ -176,7 +175,7 @@ export function setupServer(options: SetupServerOptions) {
 
   let app: express.Application;
   try {
-    app = initializeRoutes(UserModel, addRoutes);
+    app = initializeRoutes(UserModel, addRoutes, {corsOrigin: options.corsOrigin});
   } catch (e) {
     logger.error("Error initializing routes", e);
     throw e;

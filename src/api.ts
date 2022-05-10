@@ -1,4 +1,3 @@
-import bodyParser from "body-parser";
 import express from "express";
 import session from "express-session";
 import jwt from "jsonwebtoken";
@@ -476,7 +475,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       saveUninitialized: true,
     }) as any
   );
-  app.use(bodyParser.urlencoded({extended: false}) as any);
+  app.use(express.urlencoded({extended: false}) as any);
   app.use(passport.initialize() as any);
   app.use(passport.session());
 
