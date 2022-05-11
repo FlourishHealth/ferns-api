@@ -1,5 +1,6 @@
 import chai from "chai";
 import express, {Express} from "express";
+import {sortBy} from "lodash";
 import mongoose, {model, ObjectId, Schema} from "mongoose";
 import qs from "qs";
 import supertest from "supertest";
@@ -1041,25 +1042,27 @@ describe("ferns-api", () => {
       const res = await agent.get("/users").set("authorization", `Bearer ${token}`).expect(200);
       assert.lengthOf(res.body.data, 4);
 
-      assert.equal(res.body.data[0].email, "notAdmin@example.com");
-      assert.isUndefined(res.body.data[0].department);
-      assert.isUndefined(res.body.data[0].supertitle);
-      assert.isUndefined(res.body.data[0].__t);
+      const data = sortBy(res.body.data, ["email"]);
 
-      assert.equal(res.body.data[1].email, "admin@example.com");
-      assert.isUndefined(res.body.data[1].department);
-      assert.isUndefined(res.body.data[1].supertitle);
-      assert.isUndefined(res.body.data[1].__t);
+      assert.equal(data[0].email, "admin@example.com");
+      assert.isUndefined(data[0].department);
+      assert.isUndefined(data[0].supertitle);
+      assert.isUndefined(data[0].__t);
 
-      assert.equal(res.body.data[2].email, "staff@example.com");
-      assert.equal(res.body.data[2].department, "Accounting");
-      assert.isUndefined(res.body.data[2].supertitle);
-      assert.equal(res.body.data[2].__t, "Staff");
+      assert.equal(data[1].email, "notAdmin@example.com");
+      assert.isUndefined(data[1].department);
+      assert.isUndefined(data[1].supertitle);
+      assert.isUndefined(data[1].__t);
 
-      assert.equal(res.body.data[3].email, "superuser@example.com");
-      assert.isUndefined(res.body.data[3].department);
-      assert.equal(res.body.data[3].superTitle, "Super Man");
-      assert.equal(res.body.data[3].__t, "SuperUser");
+      assert.equal(data[2].email, "staff@example.com");
+      assert.equal(data[2].department, "Accounting");
+      assert.isUndefined(data[2].supertitle);
+      assert.equal(data[2].__t, "Staff");
+
+      assert.equal(data[3].email, "superuser@example.com");
+      assert.isUndefined(data[3].department);
+      assert.equal(data[3].superTitle, "Super Man");
+      assert.equal(data[3].__t, "SuperUser");
     });
 
     it("gets a discriminated user", async function () {

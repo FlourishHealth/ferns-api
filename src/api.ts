@@ -805,7 +805,8 @@ export function gooseRestRouter<T>(
     }
 
     const doc = await model.findById(req.params.id);
-    if (!doc) {
+    // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+    if (!doc || (doc.__t && !req.body.__t)) {
       logger.warn(`Could not find document to PATCH: ${req.params.id}`);
       return res.status(404).send();
     }
