@@ -62,8 +62,6 @@ export interface UserModel extends Model<User> {
   deserializeUser(): any;
 }
 
-export type DiscriminatorMap = {[key: string]: Model<any>};
-
 export type PermissionMethod<T> = (
   method: RESTMethod,
   user?: User,
@@ -99,8 +97,6 @@ interface GooseRESTOptions<T> {
   // The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
   // https://mongoosejs.com/docs/discriminators.html
   discriminatorKey?: string;
-  // A map of discriminatorKeys to Models so write operations can happen on the correct model.
-  discriminatorMap?: DiscriminatorMap;
 }
 
 export const OwnerQueryFilter = (user?: User) => {
@@ -567,7 +563,7 @@ function getModel(baseModel: Model<any>, body?: any, options?: GooseRESTOptions<
   if (!modelName) {
     return baseModel;
   } else {
-    const model = (options?.discriminatorMap ?? {})[modelName];
+    const model = (baseModel.discriminators ?? {})[modelName];
     if (!model) {
       throw new Error(
         `Could not find discriminator model for key ${modelName}, baseModel: ${baseModel}`
