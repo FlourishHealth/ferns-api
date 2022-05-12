@@ -124,7 +124,6 @@ function initializeRoutes(
 
   app.use(Sentry.Handlers.requestHandler());
 
-  // TODO: Allow specifying the origin in
   app.use(
     cors({
       origin: options.corsOrigin ?? "*",
