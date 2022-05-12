@@ -567,7 +567,7 @@ function getModel(baseModel: Model<any>, body?: any, options?: GooseRESTOptions<
   if (!modelName) {
     return baseModel;
   } else {
-    const model = (options?.discriminatorMap ?? {})[modelName];
+    const model = (baseModel.discriminators ?? {})[modelName];
     if (!model) {
       throw new Error(
         `Could not find discriminator model for key ${modelName}, baseModel: ${baseModel}`
