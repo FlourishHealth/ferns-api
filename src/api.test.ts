@@ -1,6 +1,6 @@
 import chai from "chai";
 import express, {Express} from "express";
-import {sortBy} from "lodash";
+import sortBy from "lodash/sortBy";
 import mongoose, {model, ObjectId, Schema} from "mongoose";
 import qs from "qs";
 import supertest from "supertest";
