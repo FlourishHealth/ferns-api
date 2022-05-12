@@ -1023,10 +1023,6 @@ describe("ferns-api", () => {
             delete: [Permissions.IsAuthenticated],
           },
           discriminatorKey: "__t",
-          discriminatorMap: {
-            Staff: StaffUserModel,
-            SuperUser: SuperUserModel,
-          },
         })
       );
 
