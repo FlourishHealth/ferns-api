@@ -62,6 +62,8 @@ export interface UserModel extends Model<User> {
   deserializeUser(): any;
 }
 
+export type DiscriminatorMap = {[key: string]: Model<any>};
+
 export type PermissionMethod<T> = (
   method: RESTMethod,
   user?: User,
@@ -94,6 +96,11 @@ interface GooseRESTOptions<T> {
   postCreate?: (value: any, request: express.Request) => void | Promise<void>;
   postUpdate?: (value: any, request: express.Request) => void | Promise<void>;
   postDelete?: (request: express.Request) => void | Promise<void>;
+  // The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
+  // https://mongoosejs.com/docs/discriminators.html
+  discriminatorKey?: string;
+  // A map of discriminatorKeys to Models so write operations can happen on the correct model.
+  discriminatorMap?: DiscriminatorMap;
 }
 
 export const OwnerQueryFilter = (user?: User) => {
@@ -553,8 +560,25 @@ export function AdminOwnerTransformer<T>(options: {
   };
 }
 
+// A function to decide which model to use. If no discriminators are provided, just returns the base model. If
+function getModel(baseModel: Model<any>, body?: any, options?: GooseRESTOptions<any>) {
+  const discriminatorKey = options?.discriminatorKey ?? "__t";
+  const modelName = (body ?? {})[discriminatorKey];
+  if (!modelName) {
+    return baseModel;
+  } else {
+    const model = (options?.discriminatorMap ?? {})[modelName];
+    if (!model) {
+      throw new Error(
+        `Could not find discriminator model for key ${modelName}, baseModel: ${baseModel}`
+      );
+    }
+    return model;
+  }
+}
+
 export function gooseRestRouter<T>(
-  model: Model<any>,
+  baseModel: Model<any>,
   options: GooseRESTOptions<T>
 ): express.Router {
   const router = express.Router();
@@ -600,6 +624,7 @@ export function gooseRestRouter<T>(
 
   // TODO Toggle anonymous auth middleware based on settings for route.
   router.post("/", authenticateMiddleware(true), async (req, res) => {
+    const model = getModel(baseModel, req.body?.__t, options);
     if (!(await checkPermissions("create", options.permissions.create, req.user))) {
       logger.warn(`Access to CREATE on ${model.name} denied for ${req.user?.id}`);
       return res.sendStatus(405);
@@ -639,6 +664,9 @@ export function gooseRestRouter<T>(
 
   // TODO add rate limit
   router.get("/", authenticateMiddleware(true), async (req, res) => {
+    // For pure read queries, Mongoose will return the correct data with just the base model.
+    const model = baseModel;
+
     if (!(await checkPermissions("list", options.permissions.list, req.user))) {
       logger.warn(`Access to LIST on ${model.name} denied for ${req.user?.id}`);
       return res.sendStatus(403);
@@ -743,6 +771,9 @@ export function gooseRestRouter<T>(
   });
 
   router.get("/:id", authenticateMiddleware(true), async (req, res) => {
+    // For pure read queries, Mongoose will return the correct data with just the base model.
+    const model = baseModel;
+
     if (!(await checkPermissions("read", options.permissions.read, req.user))) {
       logger.warn(`Access to READ on ${model.name} denied for ${req.user?.id}`);
       return res.sendStatus(405);
@@ -768,15 +799,18 @@ export function gooseRestRouter<T>(
   });
 
   router.patch("/:id", authenticateMiddleware(true), async (req, res) => {
+    const model = getModel(baseModel, req.body, options);
+
     if (!(await checkPermissions("update", options.permissions.update, req.user))) {
       logger.warn(`Access to PATCH on ${model.name} denied for ${req.user?.id}`);
       return res.sendStatus(405);
     }
 
-    let doc = await model.findById(req.params.id);
-
-    if (!doc) {
-      return res.sendStatus(404);
+    const doc = await model.findById(req.params.id);
+    // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+    if (!doc || (doc.__t && !req.body.__t)) {
+      logger.warn(`Could not find document to PATCH: ${req.params.id}`);
+      return res.sendStatus(404).send();
     }
 
     if (!(await checkPermissions("update", options.permissions.update, req.user, doc))) {
@@ -788,7 +822,9 @@ export function gooseRestRouter<T>(
     try {
       body = transform(req.body, "update", req.user);
     } catch (e) {
-      logger.warn(`Patch failed for user ${req.user?.id}: ${(e as any).message}`);
+      logger.warn(
+        `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${(e as any).message}`
+      );
       return res.status(403).send({message: (e as any).message});
     }
 
@@ -796,16 +832,22 @@ export function gooseRestRouter<T>(
       try {
         body = options.preUpdate(body, req);
       } catch (e) {
-        return res.status(400).send({message: `Pre Update error: ${(e as any).message}`});
+        logger.warn(`PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`);
+        return res
+          .status(400)
+          .send({message: `PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`});
       }
       if (body === null) {
+        logger.warn(`PATCH Pre Update on ${req.params.id} returned null`);
         return res.status(403).send({message: "Pre Update returned null"});
       }
     }
 
+    let updatedDoc;
     try {
-      doc = await model.findOneAndUpdate({_id: req.params.id}, body as any, {new: true});
+      updatedDoc = await model.findOneAndUpdate({_id: req.params.id}, body, {new: true});
     } catch (e) {
+      logger.warn(`PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`);
       return res.status(400).send({message: (e as any).message});
     }
 
@@ -813,36 +855,44 @@ export function gooseRestRouter<T>(
       try {
         await options.postUpdate(doc, req);
       } catch (e) {
-        return res.status(400).send({message: `Post Update error: ${(e as any).message}`});
+        logger.warn(`PATCH Post Update error on ${req.params.id}: ${(e as any).message}`);
+        return res
+          .status(400)
+          .send({message: `PATCH Post Update error on ${req.params.id}: ${(e as any).message}`});
       }
     }
-    return res.json({data: serialize(doc, req.user)});
+    return res.json({data: serialize(updatedDoc, req.user)});
   });
 
   router.delete("/:id", authenticateMiddleware(true), async (req, res) => {
+    const model = getModel(baseModel, req.body, options);
     if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
       logger.warn(`Access to DELETE on ${model.name} denied for ${req.user?.id}`);
       return res.sendStatus(405);
     }
 
-    const data = await model.findById(req.params.id);
+    const doc = await model.findById(req.params.id);
 
-    if (!data) {
+    // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+    if (!doc || (doc.__t && !req.body.__t)) {
+      logger.warn(`Could not find document to DELETE: ${req.user?.id}`);
       return res.sendStatus(404);
     }
 
-    if (!(await checkPermissions("delete", options.permissions.delete, req.user, data))) {
+    if (!(await checkPermissions("delete", options.permissions.delete, req.user, doc))) {
       logger.warn(`Access to DELETE on ${model.name}:${req.params.id} denied for ${req.user?.id}`);
       return res.sendStatus(403);
     }
 
     if (options.preDelete) {
       try {
-        const body = options.preDelete(data, req);
+        const body = options.preDelete(doc, req);
         if (body === null) {
-          return res.status(403).send({message: "Pre Delete returned null"});
+          logger.warn(`DELETE Pre Delete for ${req.params.id} returned null`);
+          return res.status(403).send({message: `Pre Delete for: ${req.params.id} returned null`});
         }
       } catch (e) {
+        logger.warn(`DELETE Pre Delete error for ${req.params.id} error: ${(e as any).message}`);
         return res.status(400).send({message: `Pre Delete error: ${(e as any).message}`});
       }
     }
@@ -852,12 +902,12 @@ export function gooseRestRouter<T>(
       Object.keys(model.schema.paths).includes("deleted") &&
       model.schema.paths.deleted.instance === "Boolean"
     ) {
-      data.deleted = true;
-      await data.save();
+      doc.deleted = true;
+      await doc.save();
     } else {
       // For models without the isDeleted plugin
       try {
-        await data.remove();
+        await doc.remove();
       } catch (e) {
         return res.status(400).send({message: (e as any).message});
       }

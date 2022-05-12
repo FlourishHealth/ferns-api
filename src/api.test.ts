@@ -1,5 +1,6 @@
 import chai from "chai";
 import express, {Express} from "express";
+import sortBy from "lodash/sortBy";
 import mongoose, {model, ObjectId, Schema} from "mongoose";
 import qs from "qs";
 import supertest from "supertest";
@@ -23,6 +24,14 @@ interface User {
   username: string;
   email: string;
   age?: number;
+}
+
+interface SuperUser extends User {
+  superTitle: string;
+}
+
+interface StaffUser extends User {
+  department: string;
 }
 
 interface Food {
@@ -51,6 +60,16 @@ userSchema.methods.postCreate = async function (body: any) {
 };
 
 const UserModel = model<User>("User", userSchema);
+
+const superUserSchema = new Schema<SuperUser>({
+  superTitle: {type: String, required: true},
+});
+const SuperUserModel = UserModel.discriminator("SuperUser", superUserSchema);
+
+const staffUserSchema = new Schema<StaffUser>({
+  department: {type: String, required: true},
+});
+const StaffUserModel = UserModel.discriminator("Staff", staffUserSchema);
 
 const schema = new Schema<Food>({
   name: String,
@@ -112,7 +131,7 @@ async function setupDb() {
   return [admin, notAdmin];
 }
 
-describe("mongoose rest framework", () => {
+describe("ferns-api", () => {
   let server: supertest.SuperTest<supertest.Test>;
   let app: express.Application;
   const OLD_ENV = process.env;
@@ -974,6 +993,202 @@ describe("mongoose rest framework", () => {
         ["2021-12-03T00:00:10.000Z"],
         res.body.data.map((d: any) => d.created)
       );
+    });
+  });
+
+  describe("discriminator", function () {
+    let agent: supertest.SuperAgentTest;
+    let token: string;
+    let superUser: mongoose.Document<SuperUser>;
+    let staffUser: mongoose.Document<StaffUser>;
+    let notAdmin: mongoose.Document;
+
+    beforeEach(async function () {
+      [notAdmin] = await setupDb();
+      [staffUser, superUser] = await Promise.all([
+        StaffUserModel.create({email: "staff@example.com", department: "Accounting"}),
+        SuperUserModel.create({email: "superuser@example.com", superTitle: "Super Man"}),
+      ]);
+
+      app = getBaseServer();
+      setupAuth(app, UserModel as any);
+      app.use(
+        "/users",
+        gooseRestRouter(UserModel, {
+          permissions: {
+            list: [Permissions.IsAuthenticated],
+            create: [Permissions.IsAuthenticated],
+            read: [Permissions.IsAuthenticated],
+            update: [Permissions.IsAuthenticated],
+            delete: [Permissions.IsAuthenticated],
+          },
+          discriminatorKey: "__t",
+          discriminatorMap: {
+            Staff: StaffUserModel,
+            SuperUser: SuperUserModel,
+          },
+        })
+      );
+
+      agent = supertest.agent(app);
+      const res = await agent
+        .post("/auth/login")
+        .send({email: "notAdmin@example.com", password: "password"})
+        .expect(200);
+      token = res.body.data.token;
+    });
+
+    it("gets all users", async function () {
+      const res = await agent.get("/users").set("authorization", `Bearer ${token}`).expect(200);
+      assert.lengthOf(res.body.data, 4);
+
+      const data = sortBy(res.body.data, ["email"]);
+
+      assert.equal(data[0].email, "admin@example.com");
+      assert.isUndefined(data[0].department);
+      assert.isUndefined(data[0].supertitle);
+      assert.isUndefined(data[0].__t);
+
+      assert.equal(data[1].email, "notAdmin@example.com");
+      assert.isUndefined(data[1].department);
+      assert.isUndefined(data[1].supertitle);
+      assert.isUndefined(data[1].__t);
+
+      assert.equal(data[2].email, "staff@example.com");
+      assert.equal(data[2].department, "Accounting");
+      assert.isUndefined(data[2].supertitle);
+      assert.equal(data[2].__t, "Staff");
+
+      assert.equal(data[3].email, "superuser@example.com");
+      assert.isUndefined(data[3].department);
+      assert.equal(data[3].superTitle, "Super Man");
+      assert.equal(data[3].__t, "SuperUser");
+    });
+
+    it("gets a discriminated user", async function () {
+      const res = await agent
+        .get(`/users/${superUser._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .expect(200);
+
+      assert.equal(res.body.data.email, "superuser@example.com");
+      assert.isUndefined(res.body.data.department);
+      assert.equal(res.body.data.superTitle, "Super Man");
+    });
+
+    it("updates a discriminated user", async function () {
+      // Fails without __t.
+      await agent
+        .patch(`/users/${superUser._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .send({superTitle: "Batman"})
+        .expect(404);
+
+      const res = await agent
+        .patch(`/users/${superUser._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .send({superTitle: "Batman", __t: "SuperUser"})
+        .expect(200);
+
+      assert.equal(res.body.data.email, "superuser@example.com");
+      assert.isUndefined(res.body.data.department);
+      assert.equal(res.body.data.superTitle, "Batman");
+
+      const user = await SuperUserModel.findById(superUser._id);
+      assert.equal(user?.superTitle, "Batman");
+    });
+
+    it("updates a base user", async function () {
+      const res = await agent
+        .patch(`/users/${notAdmin._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .send({email: "newemail@example.com", superTitle: "The Boss"})
+        .expect(200);
+
+      assert.equal(res.body.data.email, "newemail@example.com");
+      assert.isUndefined(res.body.data.superTitle);
+
+      const user = await SuperUserModel.findById(notAdmin._id);
+      assert.isUndefined(user?.superTitle);
+    });
+
+    it("cannot update discriminator key", async function () {
+      await agent
+        .patch(`/users/${notAdmin._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .send({superTitle: "Batman", __t: "Staff"})
+        .expect(404);
+
+      await agent
+        .patch(`/users/${staffUser._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .send({superTitle: "Batman", __t: "SuperUser"})
+        .expect(404);
+    });
+
+    it("updating a field on another discriminated model does nothing", async function () {
+      const res = await agent
+        .patch(`/users/${superUser._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .send({department: "Journalism", __t: "SuperUser"});
+
+      assert.isUndefined(res.body.data.department);
+
+      const user = await SuperUserModel.findById(superUser._id);
+      assert.isUndefined(user?.department);
+    });
+
+    it("creates a discriminated user", async function () {
+      const res = await agent.post("/users").set("authorization", `Bearer ${token}`).send({
+        email: "brucewayne@example.com",
+        superTitle: "Batman",
+        department: "R&D",
+        __t: "SuperUser",
+      });
+
+      assert.equal(res.body.data.email, "brucewayne@example.com");
+      // Because we pass __t, this should create a SuperUser which has no department, so this is dropped.
+      assert.isUndefined(res.body.data.department);
+      assert.equal(res.body.data.superTitle, "Batman");
+
+      const user = await SuperUserModel.findById(res.body.data._id);
+      assert.equal(user?.superTitle, "Batman");
+    });
+
+    it("deletes a discriminated user", async function () {
+      // Fails without __t.
+      await agent
+        .delete(`/users/${superUser._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .expect(404);
+
+      await agent
+        .delete(`/users/${superUser._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .send({
+          __t: "SuperUser",
+        })
+        .expect(204);
+
+      const user = await SuperUserModel.findById(superUser._id);
+      assert.isNull(user);
+    });
+
+    it("deletes a base user", async function () {
+      // Fails for base user with __t
+      await agent
+        .delete(`/users/${notAdmin._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .send({__t: "SuperUser"})
+        .expect(404);
+
+      await agent
+        .delete(`/users/${notAdmin._id}`)
+        .set("authorization", `Bearer ${token}`)
+        .expect(204);
+
+      const user = await SuperUserModel.findById(notAdmin._id);
+      assert.isNull(user);
     });
   });
 });
