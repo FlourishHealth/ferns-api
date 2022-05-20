@@ -88,9 +88,9 @@ interface GooseRESTOptions<T> {
   defaultLimit?: number; // defaults to 100
   maxLimit?: number; // defaults to 500
   endpoints?: (router: any) => void;
-  preCreate?: (value: any, request: express.Request) => T | null;
-  preUpdate?: (value: any, request: express.Request) => T | null;
-  preDelete?: (value: any, request: express.Request) => T | null;
+  preCreate?: (value: any, request: express.Request) => T | Promise<T> | null;
+  preUpdate?: (value: any, request: express.Request) => T | Promise<T> | null;
+  preDelete?: (value: any, request: express.Request) => T | Promise<T> | null;
   postCreate?: (value: any, request: express.Request) => void | Promise<void>;
   postUpdate?: (value: any, request: express.Request) => void | Promise<void>;
   postDelete?: (request: express.Request) => void | Promise<void>;
@@ -452,6 +452,10 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     if (!req.user?.id) {
       return res.sendStatus(401);
     }
+    const doc = await userModel.findById(req.user.id);
+    if (!doc) {
+      return res.sendStatus(404);
+    }
     // TODO support limited updates for profile.
     // try {
     //   body = transform(req.body, "update", req.user);
@@ -459,12 +463,11 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     //   return res.status(403).send({message: (e as any).message});
     // }
     try {
-      const data = await userModel.findOneAndUpdate({_id: req.user.id}, req.body, {new: true});
-      if (data === null) {
-        return res.sendStatus(404);
-      }
-      const dataObject = data.toObject();
-      (dataObject as any).id = data._id;
+      Object.assign(doc, req.body);
+      await doc.save();
+
+      const dataObject = doc.toObject();
+      (dataObject as any).id = doc._id;
       return res.json({data: dataObject});
     } catch (e) {
       return res.status(403).send({message: (e as any).message});
@@ -634,7 +637,7 @@ export function gooseRestRouter<T>(
     }
     if (options.preCreate) {
       try {
-        body = options.preCreate(body, req);
+        body = await options.preCreate(body, req);
       } catch (e) {
         return res.status(400).send({message: `Pre Create error: ${(e as any).message}`});
       }
@@ -826,7 +829,7 @@ export function gooseRestRouter<T>(
 
     if (options.preUpdate) {
       try {
-        body = options.preUpdate(body, req);
+        body = await options.preUpdate(body, req);
       } catch (e) {
         logger.warn(`PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`);
         return res
@@ -839,9 +842,11 @@ export function gooseRestRouter<T>(
       }
     }
 
-    let updatedDoc;
+    // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
+    // wind up with corrupted data, just an API error.
     try {
-      updatedDoc = await model.findOneAndUpdate({_id: req.params.id}, body, {new: true});
+      Object.assign(doc, body);
+      await doc.save();
     } catch (e) {
       logger.warn(`PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`);
       return res.status(400).send({message: (e as any).message});
@@ -857,7 +862,7 @@ export function gooseRestRouter<T>(
           .send({message: `PATCH Post Update error on ${req.params.id}: ${(e as any).message}`});
       }
     }
-    return res.json({data: serialize(updatedDoc, req.user)});
+    return res.json({data: serialize(doc, req.user)});
   });
 
   router.delete("/:id", authenticateMiddleware(true), async (req, res) => {
@@ -882,7 +887,7 @@ export function gooseRestRouter<T>(
 
     if (options.preDelete) {
       try {
-        const body = options.preDelete(doc, req);
+        const body = await options.preDelete(doc, req);
         if (body === null) {
           logger.warn(`DELETE Pre Delete for ${req.params.id} returned null`);
           return res.status(403).send({message: `Pre Delete for: ${req.params.id} returned null`});
