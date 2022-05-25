@@ -91,8 +91,8 @@ interface GooseRESTOptions<T> {
   preCreate?: (value: any, request: express.Request) => T | Promise<T> | null;
   preUpdate?: (value: any, request: express.Request) => T | Promise<T> | null;
   preDelete?: (value: any, request: express.Request) => T | Promise<T> | null;
-  postCreate?: (value: any, request: express.Request) => void | Promise<void>;
-  postUpdate?: (value: any, request: express.Request) => void | Promise<void>;
+  postCreate?: (value: T, request: express.Request) => void | Promise<void>;
+  postUpdate?: (value: T, cleanedBody: any, request: express.Request) => void | Promise<void>;
   postDelete?: (request: express.Request) => void | Promise<void>;
   // The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
   // https://mongoosejs.com/docs/discriminators.html
@@ -854,7 +854,7 @@ export function gooseRestRouter<T>(
 
     if (options.postUpdate) {
       try {
-        await options.postUpdate(doc, req);
+        await options.postUpdate(doc, body, req);
       } catch (e) {
         logger.warn(`PATCH Post Update error on ${req.params.id}: ${(e as any).message}`);
         return res
