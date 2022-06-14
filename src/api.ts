@@ -259,11 +259,25 @@ export function firebaseJWTPlugin(schema: Schema) {
 }
 
 export function authenticateMiddleware(anonymous = false) {
-  const strategies = ["jwt"];
-  if (anonymous) {
-    strategies.push("anonymous");
-  }
-  return passport.authenticate(strategies, {session: false});
+  // We want to wrap passport in our own middleware to make debugging easier.
+  return function (req: any, res: any, next: any) {
+    const strategies = ["jwt"];
+    if (anonymous) {
+      strategies.push("anonymous");
+    }
+    passport.authenticate(strategies, {session: false}, function (error, user, info) {
+      if (error) {
+        logger.error(`Error authenticating: ${error}`);
+        return res.status(401).send(error);
+      } else if (!user) {
+        logger.error(`Could not find a user to authenticate to: ${info}`);
+        return res.status(401).send(info);
+      } else {
+        req.user = user;
+        return next();
+      }
+    })(req, res);
+  };
 }
 
 export async function signupUser(
