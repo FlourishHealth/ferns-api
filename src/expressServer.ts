@@ -77,11 +77,7 @@ function logRequests(req: any, res: any, next: any) {
   next();
 }
 
-export function createRouter(
-  rootPath: string,
-  addRoutes: (router: Router) => void,
-  middleware: any[] = []
-) {
+export function createRouter(rootPath: string, addRoutes: AddRoutes, middleware: any[] = []) {
   function routePathMiddleware(req: any, res: any, next: any) {
     if (!req.routeMount) {
       req.routeMount = [];
@@ -109,6 +105,7 @@ export function createRouterWithAuth(
 
 interface InitializeRoutesOptions {
   corsOrigin?: string;
+  addMiddleware?: AddRoutes;
 }
 
 function initializeRoutes(
@@ -123,6 +120,10 @@ function initializeRoutes(
   const app = express();
 
   app.use(Sentry.Handlers.requestHandler());
+
+  if (options.addMiddleware) {
+    options.addMiddleware(app);
+  }
 
   app.use(
     cors({
@@ -164,6 +165,7 @@ export interface SetupServerOptions {
   loggingOptions?: LoggingOptions;
   skipListen?: boolean;
   corsOrigin?: string;
+  addMiddleware: AddRoutes;
 }
 
 // Sets up the routes and returns a function to launch the API.
@@ -175,7 +177,10 @@ export function setupServer(options: SetupServerOptions) {
 
   let app: express.Application;
   try {
-    app = initializeRoutes(UserModel, addRoutes, {corsOrigin: options.corsOrigin});
+    app = initializeRoutes(UserModel, addRoutes, {
+      corsOrigin: options.corsOrigin,
+      addMiddleware: options.addMiddleware,
+    });
   } catch (e) {
     logger.error("Error initializing routes", e);
     throw e;
