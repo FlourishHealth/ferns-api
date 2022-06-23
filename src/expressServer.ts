@@ -165,7 +165,7 @@ export interface SetupServerOptions {
   loggingOptions?: LoggingOptions;
   skipListen?: boolean;
   corsOrigin?: string;
-  addMiddleware: AddRoutes;
+  addMiddleware?: AddRoutes;
 }
 
 // Sets up the routes and returns a function to launch the API.
