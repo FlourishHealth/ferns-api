@@ -174,7 +174,7 @@ export async function checkPermissions<T>(
   return anyTrue;
 }
 
-export function tokenPlugin(schema: Schema, options: {expiresIn?: number} = {}) {
+export function tokenPlugin(schema: Schema) {
   schema.add({token: {type: String, index: true}});
   schema.pre("save", function (next) {
     // Add created when creating the object

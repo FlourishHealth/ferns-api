@@ -1,12 +1,9 @@
-import chai from "chai";
 import express from "express";
 import mongoose, {model, Schema} from "mongoose";
 
 import {logger, tokenPlugin} from ".";
 import {baseUserPlugin, createdDeletedPlugin, gooseRestRouter, Permissions, setupAuth} from "./api";
 import {passportLocalMongoose} from "./passport";
-
-const assert = chai.assert;
 
 mongoose.connect("mongodb://localhost:27017/example");
 
