@@ -658,6 +658,7 @@ export function gooseRestRouter<T>(
         return res.status(400).send({message: `Post Create error: ${(e as any).message}`});
       }
     }
+    // @ts-ignore TS being overprotective of data since we are using generics
     return res.status(201).json({data: serialize(data, req.user)});
   });
 
