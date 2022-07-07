@@ -7,7 +7,7 @@ import supertest from "supertest";
 
 import {
   AdminOwnerTransformer,
-  createdDeletedPlugin,
+  createdUpdatedPlugin,
   gooseRestRouter,
   Permissions,
   setupAuth,
@@ -53,7 +53,7 @@ const userSchema = new Schema<User>({
 
 userSchema.plugin(passportLocalMongoose, {usernameField: "email"});
 userSchema.plugin(tokenPlugin);
-userSchema.plugin(createdDeletedPlugin);
+userSchema.plugin(createdUpdatedPlugin);
 userSchema.methods.postCreate = async function (body: any) {
   this.age = body.age;
   return this.save();
@@ -1349,6 +1349,19 @@ describe("test token auth", function () {
 
     const user = await UserModel.findOne({email: "new@example.com"});
     assert.equal(user?.age, 25);
+  });
+
+  it("login failure", async function () {
+    let res = await server
+      .post("/auth/login")
+      .send({email: "admin@example.com", password: "wrong"})
+      .expect(401);
+    assert.deepEqual(res.body, {message: "Incorrect Password"});
+    res = await server
+      .post("/auth/login")
+      .send({email: "nope@example.com", password: "wrong"})
+      .expect(401);
+    assert.deepEqual(res.body, {message: "User Not Found"});
   });
 
   it("completes token login e2e", async function () {
