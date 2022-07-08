@@ -230,12 +230,12 @@ export interface CreatedDeleted {
   created: Date;
 }
 
-export function createdDeletedPlugin(schema: Schema) {
+export function createdUpdatedPlugin(schema: Schema) {
   schema.add({updated: {type: Date, index: true}});
   schema.add({created: {type: Date, index: true}});
 
   schema.pre("save", function (next) {
-    if (this.disableCreatedDeletedPlugin === true) {
+    if (this.disableCreatedUpdatedPlugin === true) {
       next();
       return;
     }
@@ -263,7 +263,7 @@ export function authenticateMiddleware(anonymous = false) {
   if (anonymous) {
     strategies.push("anonymous");
   }
-  return passport.authenticate(strategies, {session: false});
+  return passport.authenticate(strategies, {session: false, failureMessage: true});
 }
 
 export async function signupUser(
@@ -327,15 +327,14 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
           const user = await userModel.findOne({email});
 
           if (!user) {
-            logger.debug(`Could not find login user for ${email}`);
-            return done(null, false, {message: "User not found"});
+            logger.warn(`Could not find login user for ${email}`);
+            return done(null, false, {message: "User Not Found"});
           }
 
           const validate = await (user as any).authenticate(password);
-
-          if (!validate) {
-            logger.debug("Invalid password for", email);
-            return done(null, false, {message: "Wrong Password"});
+          if (validate.error) {
+            logger.warn("Invalid password for", email);
+            return done(null, false, {message: "Incorrect Password"});
           }
 
           return done(null, user, {message: "Logged in Successfully"});
@@ -416,17 +415,28 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   }
 
   const router = express.Router();
-  router.post(
-    "/login",
-    passport.authenticate("login", {session: false}),
-    function (req: any, res: any) {
-      return res.json({data: {userId: req.user._id, token: req.user.token}});
-    }
-  );
+  router.post("/login", function (req, res, next) {
+    passport.authenticate("login", (err: any, user: any, info: any) => {
+      if (err) {
+        logger.error("Error logging in:", err);
+        return next(err);
+      }
+      if (!user) {
+        logger.warn("Invalid login:", info);
+        return res.status(401).json({message: info?.message});
+      }
+      req.logIn(user, function (loginError: any) {
+        if (loginError) {
+          return next(loginError);
+        }
+        return res.json({data: {userId: req?.user?._id, token: (req?.user as any)?.token}});
+      });
+    })(req, res, next);
+  });
 
   router.post(
     "/signup",
-    passport.authenticate("signup", {session: false}),
+    passport.authenticate("signup", {session: false, failWithError: true}),
     async function (req: any, res: any) {
       return res.json({data: {userId: req.user._id, token: req.user.token}});
     }
