@@ -11,6 +11,15 @@ export const logger = winston.createLogger({
       format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
   ],
+  // TODO is this the right place?
+  // https://github.com/winstonjs/winston#rejections
+  rejectionHandlers: [
+    new winston.transports.Console({
+      debugStdout: true,
+      level: "debug",
+      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+    }),
+  ],
 });
 
 export interface LoggingOptions {
