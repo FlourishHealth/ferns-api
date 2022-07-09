@@ -1,5 +1,4 @@
 import express from "express";
-import session from "express-session";
 import jwt from "jsonwebtoken";
 import mongoose, {Document, Model, ObjectId, Schema} from "mongoose";
 import passport from "passport";
@@ -325,7 +324,6 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       async (email, password, done) => {
         try {
           const user = await userModel.findOne({email});
-
           if (!user) {
             logger.warn(`Could not find login user for ${email}`);
             return done(null, false, {message: "User Not Found"});
@@ -416,7 +414,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
   const router = express.Router();
   router.post("/login", function (req, res, next) {
-    passport.authenticate("login", (err: any, user: any, info: any) => {
+    passport.authenticate("login", {session: true}, (err: any, user: any, info: any) => {
       if (err) {
         logger.error("Error logging in:", err);
         return next(err);
@@ -425,12 +423,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         logger.warn("Invalid login:", info);
         return res.status(401).json({message: info?.message});
       }
-      req.logIn(user, function (loginError: any) {
-        if (loginError) {
-          return next(loginError);
-        }
-        return res.json({data: {userId: req?.user?._id, token: (req?.user as any)?.token}});
-      });
+      return res.json({data: {userId: user?._id, token: (user as any)?.token}});
     })(req, res, next);
   });
 
@@ -484,16 +477,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     }
   });
 
-  app.use(
-    session({
-      secret: (process.env as Env).SESSION_SECRET as string,
-      resave: true,
-      saveUninitialized: true,
-    }) as any
-  );
   app.use(express.urlencoded({extended: false}) as any);
   app.use(passport.initialize() as any);
-  app.use(passport.session());
 
   app.set("etag", false);
   app.use("/auth", router);
