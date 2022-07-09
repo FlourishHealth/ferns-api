@@ -116,6 +116,19 @@ afterAll(() => {
   mongoose.connection.close();
 });
 
+export async function authAsUser(
+  app: express.Application,
+  type: "admin" | "notAdmin"
+): Promise<supertest.SuperAgentTest> {
+  const email = type === "admin" ? "admin@example.com" : "notAdmin@example.com";
+  const password = type === "admin" ? "securePassword" : "password";
+
+  const agent = supertest.agent(app);
+  const res = await agent.post("/auth/login").send({email, password}).expect(200);
+  agent.set("authorization", `Bearer ${res.body.data.token}`);
+  return agent;
+}
+
 async function setupDb() {
   process.env.TOKEN_SECRET = "secret";
   process.env.TOKEN_EXPIRES_IN = "30m";
@@ -146,10 +159,13 @@ describe("ferns-api", () => {
   let app: express.Application;
 
   describe("pre and post hooks", function () {
+    let agent: supertest.SuperAgentTest;
+
     beforeEach(async function () {
       await setupDb();
       app = getBaseServer();
       setupAuth(app, UserModel as any);
+      agent = await authAsUser(app, "notAdmin");
     });
 
     it("pre hooks change data", async function () {
@@ -205,7 +221,7 @@ describe("ferns-api", () => {
       // Updated by the pre update hook
       assert.equal(res.body.data.calories, 15);
 
-      await server.delete(`/food/${broccoli._id}`).expect(204);
+      await agent.delete(`/food/${broccoli._id}`).expect(204);
       assert.isTrue(deleteCalled);
     });
 
@@ -256,7 +272,7 @@ describe("ferns-api", () => {
         })
         .expect(403);
 
-      await server.delete(`/food/${spinach._id}`).expect(403);
+      await agent.delete(`/food/${spinach._id}`).expect(403);
     });
 
     it("post hooks succeed", async function () {
@@ -318,7 +334,7 @@ describe("ferns-api", () => {
       // Updated by the post update hook
       assert.equal(broccoli.calories, 15);
 
-      await server.delete(`/food/${broccoli._id}`).expect(204);
+      await agent.delete(`/food/${broccoli._id}`).expect(204);
       assert.isTrue(deleteCalled);
     });
   });
@@ -407,94 +423,84 @@ describe("ferns-api", () => {
     });
 
     describe("non admin food", function () {
-      let token: string;
+      let agent: supertest.SuperAgentTest;
       beforeEach(async function () {
-        const res = await server
-          .post("/auth/login")
-          .send({email: "notAdmin@example.com", password: "password"})
-          .expect(200);
-        token = res.body.data.token;
+        agent = await authAsUser(app, "notAdmin");
       });
 
       it("list", async function () {
-        const res = await server.get("/food").set("authorization", `Bearer ${token}`);
+        const res = await agent.get("/food").expect(200);
         assert.lengthOf(res.body.data, 2);
       });
 
       it("get", async function () {
-        const res = await server.get("/food").set("authorization", `Bearer ${token}`);
+        const res = await agent.get("/food").expect(200);
         assert.lengthOf(res.body.data, 2);
-        const res2 = await server
-          .get(`/food/${res.body.data[0]._id}`)
-          .set("authorization", `Bearer ${token}`);
+        const res2 = await server.get(`/food/${res.body.data[0]._id}`).expect(200);
         assert.equal(res.body.data[0]._id, res2.body.data._id);
       });
 
       it("post", async function () {
-        const res = await server.post("/food").set("authorization", `Bearer ${token}`).send({
-          name: "Broccoli",
-          calories: 15,
-        });
-        assert.equal(res.status, 201);
+        await agent
+          .post("/food")
+          .send({
+            name: "Broccoli",
+            calories: 15,
+          })
+          .expect(201);
       });
 
       it("patch own item", async function () {
-        const res = await server.get("/food");
+        const res = await agent.get("/food");
         const spinach = res.body.data.find((food: Food) => food.name === "Spinach");
-        const res2 = await server
+        const res2 = await agent
           .patch(`/food/${spinach._id}`)
-          .set("authorization", `Bearer ${token}`)
           .send({
             name: "Broccoli",
-          });
-        assert.equal(res2.status, 200);
+          })
+          .expect(200);
         assert.equal(res2.body.data.name, "Broccoli");
       });
 
       it("patch other item", async function () {
-        const res = await server.get("/food");
+        const res = await agent.get("/food");
         const spinach = res.body.data.find((food: Food) => food.name === "Apple");
-        const res2 = await server
+        await agent
           .patch(`/food/${spinach._id}`)
-          .set("authorization", `Bearer ${token}`)
           .send({
             name: "Broccoli",
-          });
-        assert.equal(res2.status, 403);
+          })
+          .expect(403);
       });
 
       it("delete", async function () {
-        const res = await server.get("/food");
-        const res2 = await server.delete(`/food/${res.body.data[0]._id}`);
+        const res = await agent.get("/food");
+        const res2 = await agent.delete(`/food/${res.body.data[0]._id}`);
         assert.equal(res2.status, 405);
       });
     });
 
     describe("admin food", function () {
-      let token: string;
+      let agent: supertest.SuperAgentTest;
 
       beforeEach(async function () {
-        const res = await server
-          .post("/auth/login")
-          .send({email: "admin@example.com", password: "securePassword"})
-          .expect(200);
-        token = res.body.data.token;
+        agent = await authAsUser(app, "admin");
       });
 
       it("list", async function () {
-        const res = await server.get("/food");
+        const res = await agent.get("/food");
         assert.lengthOf(res.body.data, 2);
       });
 
       it("get", async function () {
-        const res = await server.get("/food");
+        const res = await agent.get("/food");
         assert.lengthOf(res.body.data, 2);
-        const res2 = await server.get(`/food/${res.body.data[0]._id}`);
+        const res2 = await agent.get(`/food/${res.body.data[0]._id}`);
         assert.equal(res.body.data[0]._id, res2.body.data._id);
       });
 
       it("post", async function () {
-        const res = await server.post("/food").set("authorization", `Bearer ${token}`).send({
+        const res = await agent.post("/food").send({
           name: "Broccoli",
           calories: 15,
         });
@@ -502,29 +508,27 @@ describe("ferns-api", () => {
       });
 
       it("patch", async function () {
-        const res = await server.get("/food");
-        const res2 = await server
+        const res = await agent.get("/food");
+        await agent
           .patch(`/food/${res.body.data[0]._id}`)
-          .set("authorization", `Bearer ${token}`)
           .send({
             name: "Broccoli",
-          });
-        assert.equal(res2.status, 200);
+          })
+          .expect(200);
       });
 
       it("delete", async function () {
-        const res = await server.get("/food");
-        const res2 = await server
-          .delete(`/food/${res.body.data[0]._id}`)
-          .set("authorization", `Bearer ${token}`);
-        assert.equal(res2.status, 204);
+        const res = await agent.get("/food");
+        await agent.delete(`/food/${res.body.data[0]._id}`).expect(204);
       });
 
       it("handles validation errors", async function () {
-        const res = await server.post("/required").set("authorization", `Bearer ${token}`).send({
-          about: "Whoops forgot required",
-        });
-        assert.equal(res.status, 400);
+        await agent
+          .post("/required")
+          .send({
+            about: "Whoops forgot required",
+          })
+          .expect(400);
       });
     });
   });
@@ -591,38 +595,20 @@ describe("ferns-api", () => {
     });
 
     it("filters list for non-admin", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "notAdmin@example.com", password: "password"})
-        .expect(200);
-      const foodRes = await server
-        .get("/food")
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .expect(200);
+      const agent = await authAsUser(app, "notAdmin");
+      const foodRes = await agent.get("/food").expect(200);
       assert.lengthOf(foodRes.body.data, 2);
     });
 
     it("does not filter list for admin", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "admin@example.com", password: "securePassword"})
-        .expect(200);
-      const foodRes = await server
-        .get("/food")
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .expect(200);
+      const agent = await authAsUser(app, "admin");
+      const foodRes = await agent.get("/food").expect(200);
       assert.lengthOf(foodRes.body.data, 3);
     });
 
     it("admin read transform", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "admin@example.com", password: "securePassword"})
-        .expect(200);
-      const foodRes = await server
-        .get("/food")
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .expect(200);
+      const agent = await authAsUser(app, "admin");
+      const foodRes = await agent.get("/food").expect(200);
       assert.lengthOf(foodRes.body.data, 3);
       const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
       assert.isDefined(spinach.created);
@@ -634,32 +620,19 @@ describe("ferns-api", () => {
     });
 
     it("admin write transform", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "admin@example.com", password: "securePassword"})
-        .expect(200);
-      const foodRes = await server
-        .get("/food")
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .expect(200);
+      const agent = await authAsUser(app, "admin");
+      const foodRes = await agent.get("/food").expect(200);
       const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      const spinachRes = await server
+      const spinachRes = await agent
         .patch(`/food/${spinach.id}`)
-        .set("authorization", `Bearer ${res.body.data.token}`)
         .send({name: "Lettuce"})
         .expect(200);
       assert.equal(spinachRes.body.data.name, "Lettuce");
     });
 
     it("owner read transform", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "notAdmin@example.com", password: "password"})
-        .expect(200);
-      const foodRes = await server
-        .get("/food")
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .expect(200);
+      const agent = await authAsUser(app, "notAdmin");
+      const foodRes = await agent.get("/food").expect(200);
       assert.lengthOf(foodRes.body.data, 2);
       const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
       assert.isDefined(spinach.id);
@@ -671,45 +644,26 @@ describe("ferns-api", () => {
     });
 
     it("owner write transform", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "notAdmin@example.com", password: "password"})
-        .expect(200);
-      const foodRes = await server
-        .get("/food")
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .expect(200);
+      const agent = await authAsUser(app, "notAdmin");
+      const foodRes = await agent.get("/food").expect(200);
       const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      await server.patch(`/food/${spinach.id}`).send({ownerId: admin.id}).expect(403);
+      await agent.patch(`/food/${spinach.id}`).send({ownerId: admin.id}).expect(403);
     });
 
     it("owner write transform fails", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "notAdmin@example.com", password: "password"})
-        .expect(200);
-      const foodRes = await server
-        .get("/food")
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .expect(200);
+      const agent = await authAsUser(app, "notAdmin");
+      const foodRes = await agent.get("/food").expect(200);
       const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      const spinachRes = await server
+      const spinachRes = await agent
         .patch(`/food/${spinach.id}`)
-        .set("authorization", `Bearer ${res.body.data.token}`)
         .send({ownerId: notAdmin.id})
         .expect(403);
       assert.equal(spinachRes.body.message, "User of type owner cannot write fields: ownerId");
     });
 
     it("auth read transform", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "notAdmin@example.com", password: "password"})
-        .expect(200);
-      const foodRes = await server
-        .get("/food")
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .expect(200);
+      const agent = await authAsUser(app, "notAdmin");
+      const foodRes = await agent.get("/food").expect(200);
       assert.lengthOf(foodRes.body.data, 2);
       const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
       assert.isDefined(spinach.id);
@@ -731,30 +685,19 @@ describe("ferns-api", () => {
     });
 
     it("auth write transform", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "notAdmin@example.com", password: "password"})
-        .expect(200);
-      const foodRes = await server.get("/food");
+      const agent = await authAsUser(app, "notAdmin");
+      const foodRes = await agent.get("/food");
       const carrots = foodRes.body.data.find((food: Food) => food.name === "Carrots");
-      const carrotRes = await server
-        .patch(`/food/${carrots.id}`)
-        .set("authorization", `Bearer ${res.body.data.token}`)
-        .send({calories: 2000})
-        .expect(200);
+      const carrotRes = await agent.patch(`/food/${carrots.id}`).send({calories: 2000}).expect(200);
       assert.equal(carrotRes.body.data.calories, 2000);
     });
 
     it("auth write transform fail", async function () {
-      const res = await server
-        .post("/auth/login")
-        .send({email: "notAdmin@example.com", password: "password"})
-        .expect(200);
-      const foodRes = await server.get("/food");
+      const agent = await authAsUser(app, "notAdmin");
+      const foodRes = await agent.get("/food");
       const carrots = foodRes.body.data.find((food: Food) => food.name === "Carrots");
-      const writeRes = await server
+      const writeRes = await agent
         .patch(`/food/${carrots.id}`)
-        .set("authorization", `Bearer ${res.body.data.token}`)
         .send({created: "2020-01-01T00:00:00Z"})
         .expect(403);
       assert.equal(writeRes.body.message, "User of type auth cannot write fields: created");
@@ -782,6 +725,7 @@ describe("ferns-api", () => {
   describe("list options", function () {
     let notAdmin: any;
     let admin: any;
+    let agent: supertest.SuperAgentTest;
 
     beforeEach(async function () {
       [admin, notAdmin] = await setupDb();
@@ -843,10 +787,11 @@ describe("ferns-api", () => {
         })
       );
       server = supertest(app);
+      agent = await authAsUser(app, "notAdmin");
     });
 
     it("list limit", async function () {
-      const res = await server.get("/food?limit=1").expect(200);
+      const res = await agent.get("/food?limit=1").expect(200);
       assert.lengthOf(res.body.data, 1);
       assert.equal(res.body.data[0].id, (spinach as any).id);
       assert.equal(res.body.data[0].ownerId._id, notAdmin.id);
@@ -862,7 +807,7 @@ describe("ferns-api", () => {
         ownerId: admin._id,
         hidden: false,
       });
-      const res = await server.get("/food?limit=4").expect(200);
+      const res = await agent.get("/food?limit=4").expect(200);
       assert.lengthOf(res.body.data, 3);
       assert.isTrue(res.body.more);
       assert.equal(res.body.data[0].id, (spinach as any).id);
@@ -872,32 +817,32 @@ describe("ferns-api", () => {
 
     it("list page", async function () {
       // Should skip to carrots since apples are hidden
-      const res = await server.get("/food?limit=1&page=2").expect(200);
+      const res = await agent.get("/food?limit=1&page=2").expect(200);
       assert.lengthOf(res.body.data, 1);
       assert.isTrue(res.body.more);
       assert.equal(res.body.data[0].id, (pizza as any).id);
     });
 
     it("list page 0 ", async function () {
-      const res = await server.get("/food?limit=1&page=0").expect(400);
+      const res = await agent.get("/food?limit=1&page=0").expect(400);
       assert.equal(res.body.message, "Invalid page: 0");
     });
 
     it("list page with garbage ", async function () {
-      const res = await server.get("/food?limit=1&page=abc").expect(400);
+      const res = await agent.get("/food?limit=1&page=abc").expect(400);
       assert.equal(res.body.message, "Invalid page: abc");
     });
 
     it("list page over", async function () {
       // Should skip to carrots since apples are hidden
-      const res = await server.get("/food?limit=1&page=5").expect(200);
+      const res = await agent.get("/food?limit=1&page=5").expect(200);
       assert.lengthOf(res.body.data, 0);
       assert.isFalse(res.body.more);
     });
 
     it("list query params", async function () {
       // Should skip to carrots since apples are hidden
-      const res = await server.get("/food?hidden=true").expect(200);
+      const res = await agent.get("/food?hidden=true").expect(200);
       assert.lengthOf(res.body.data, 1);
       assert.isFalse(res.body.more);
       assert.equal(res.body.data[0].id, (apple as any).id);
@@ -905,13 +850,13 @@ describe("ferns-api", () => {
 
     it("list query params not in list", async function () {
       // Should skip to carrots since apples are hidden
-      const res = await server.get("/food?name=Apple").expect(400);
+      const res = await agent.get("/food?name=Apple").expect(400);
       assert.equal(res.body.message, "name is not allowed as a query param.");
     });
 
     it("list query by nested param", async function () {
       // Should skip to carrots since apples are hidden
-      const res = await server.get("/food?source.name=USDA").expect(200);
+      const res = await agent.get("/food?source.name=USDA").expect(200);
       assert.lengthOf(res.body.data, 1);
       assert.equal(res.body.data[0].id, (carrots as any).id);
     });
@@ -977,10 +922,10 @@ describe("ferns-api", () => {
   });
 
   describe("discriminator", function () {
-    let token: string;
     let superUser: mongoose.Document<SuperUser>;
     let staffUser: mongoose.Document<StaffUser>;
     let notAdmin: mongoose.Document;
+    let agent: supertest.SuperAgentTest;
 
     beforeEach(async function () {
       [notAdmin] = await setupDb();
@@ -1007,15 +952,11 @@ describe("ferns-api", () => {
 
       server = supertest(app);
 
-      const res = await server
-        .post("/auth/login")
-        .send({email: "notAdmin@example.com", password: "password"})
-        .expect(200);
-      token = res.body.data.token;
+      agent = await authAsUser(app, "notAdmin");
     });
 
     it("gets all users", async function () {
-      const res = await server.get("/users").set("authorization", `Bearer ${token}`).expect(200);
+      const res = await agent.get("/users").expect(200);
       assert.lengthOf(res.body.data, 4);
 
       const data = sortBy(res.body.data, ["email"]);
@@ -1042,10 +983,7 @@ describe("ferns-api", () => {
     });
 
     it("gets a discriminated user", async function () {
-      const res = await server
-        .get(`/users/${superUser._id}`)
-        .set("authorization", `Bearer ${token}`)
-        .expect(200);
+      const res = await agent.get(`/users/${superUser._id}`).expect(200);
 
       assert.equal(res.body.data.email, "superuser@example.com");
       assert.isUndefined(res.body.data.department);
@@ -1054,15 +992,10 @@ describe("ferns-api", () => {
 
     it("updates a discriminated user", async function () {
       // Fails without __t.
-      await server
-        .patch(`/users/${superUser._id}`)
-        .set("authorization", `Bearer ${token}`)
-        .send({superTitle: "Batman"})
-        .expect(404);
+      await agent.patch(`/users/${superUser._id}`).send({superTitle: "Batman"}).expect(404);
 
-      const res = await server
+      const res = await agent
         .patch(`/users/${superUser._id}`)
-        .set("authorization", `Bearer ${token}`)
         .send({superTitle: "Batman", __t: "SuperUser"})
         .expect(200);
 
@@ -1075,9 +1008,8 @@ describe("ferns-api", () => {
     });
 
     it("updates a base user", async function () {
-      const res = await server
+      const res = await agent
         .patch(`/users/${notAdmin._id}`)
-        .set("authorization", `Bearer ${token}`)
         .send({email: "newemail@example.com", superTitle: "The Boss"})
         .expect(200);
 
@@ -1089,24 +1021,22 @@ describe("ferns-api", () => {
     });
 
     it("cannot update discriminator key", async function () {
-      await server
+      await agent
         .patch(`/users/${notAdmin._id}`)
-        .set("authorization", `Bearer ${token}`)
         .send({superTitle: "Batman", __t: "Staff"})
         .expect(404);
 
-      await server
+      await agent
         .patch(`/users/${staffUser._id}`)
-        .set("authorization", `Bearer ${token}`)
         .send({superTitle: "Batman", __t: "SuperUser"})
         .expect(404);
     });
 
     it("updating a field on another discriminated model does nothing", async function () {
-      const res = await server
+      const res = await agent
         .patch(`/users/${superUser._id}`)
-        .set("authorization", `Bearer ${token}`)
-        .send({department: "Journalism", __t: "SuperUser"});
+        .send({department: "Journalism", __t: "SuperUser"})
+        .expect(200);
 
       assert.isUndefined(res.body.data.department);
 
@@ -1115,12 +1045,15 @@ describe("ferns-api", () => {
     });
 
     it("creates a discriminated user", async function () {
-      const res = await server.post("/users").set("authorization", `Bearer ${token}`).send({
-        email: "brucewayne@example.com",
-        superTitle: "Batman",
-        department: "R&D",
-        __t: "SuperUser",
-      });
+      const res = await agent
+        .post("/users")
+        .send({
+          email: "brucewayne@example.com",
+          superTitle: "Batman",
+          department: "R&D",
+          __t: "SuperUser",
+        })
+        .expect(201);
 
       assert.equal(res.body.data.email, "brucewayne@example.com");
       // Because we pass __t, this should create a SuperUser which has no department, so this is dropped.
@@ -1133,14 +1066,10 @@ describe("ferns-api", () => {
 
     it("deletes a discriminated user", async function () {
       // Fails without __t.
-      await server
-        .delete(`/users/${superUser._id}`)
-        .set("authorization", `Bearer ${token}`)
-        .expect(404);
+      await agent.delete(`/users/${superUser._id}`).expect(404);
 
-      await server
+      await agent
         .delete(`/users/${superUser._id}`)
-        .set("authorization", `Bearer ${token}`)
         .send({
           __t: "SuperUser",
         })
@@ -1152,16 +1081,9 @@ describe("ferns-api", () => {
 
     it("deletes a base user", async function () {
       // Fails for base user with __t
-      await server
-        .delete(`/users/${notAdmin._id}`)
-        .set("authorization", `Bearer ${token}`)
-        .send({__t: "SuperUser"})
-        .expect(404);
+      await agent.delete(`/users/${notAdmin._id}`).send({__t: "SuperUser"}).expect(404);
 
-      await server
-        .delete(`/users/${notAdmin._id}`)
-        .set("authorization", `Bearer ${token}`)
-        .expect(204);
+      await agent.delete(`/users/${notAdmin._id}`).expect(204);
 
       const user = await SuperUserModel.findById(notAdmin._id);
       assert.isNull(user);
@@ -1170,7 +1092,7 @@ describe("ferns-api", () => {
 });
 
 describe("test token auth", function () {
-  let app;
+  let app: express.Application;
   let server: any;
 
   beforeEach(async function () {
@@ -1231,6 +1153,7 @@ describe("test token auth", function () {
   });
 
   it("completes token signup e2e", async function () {
+    const agent = supertest.agent(app);
     let res = await server
       .post("/auth/signup")
       .send({email: "new@example.com", password: "123"})
@@ -1243,6 +1166,8 @@ describe("test token auth", function () {
       .post("/auth/login")
       .send({email: "new@example.com", password: "123"})
       .expect(200);
+    agent.set("authorization", `Bearer ${res.body.data.token}`);
+
     userId = res.body.data.userId;
     token = res.body.data.token;
     assert.isDefined(userId);
@@ -1255,7 +1180,7 @@ describe("test token auth", function () {
       ownerId: userId,
     });
 
-    const meRes = await server.get("/auth/me").set("authorization", `Bearer ${token}`).expect(200);
+    const meRes = await agent.get("/auth/me").expect(200);
     assert.isDefined(meRes.body.data._id);
     assert.isDefined(meRes.body.data.id);
     assert.isUndefined(meRes.body.data.hash);
@@ -1280,14 +1205,13 @@ describe("test token auth", function () {
     assert.isFalse(mePatchRes.body.data.admin);
 
     // Use token to see 2 foods + the one we just created
-    const getRes = await server.get("/food").set("authorization", `Bearer ${token}`).expect(200);
+    const getRes = await agent.get("/food").expect(200);
 
     assert.lengthOf(getRes.body.data, 3);
     assert.isDefined(getRes.body.data.find((f: any) => f.name === "Peas"));
 
-    const updateRes = await server
+    const updateRes = await agent
       .patch(`/food/${food._id}`)
-      .set("authorization", `Bearer ${token}`)
       .send({name: "PeasAndCarrots"})
       .expect(200);
     assert.equal(updateRes.body.data.name, "PeasAndCarrots");
@@ -1320,7 +1244,8 @@ describe("test token auth", function () {
   });
 
   it("completes token login e2e", async function () {
-    const res = await server
+    const agent = supertest.agent(app);
+    const res = await agent
       .post("/auth/login")
       .send({email: "admin@example.com", password: "securePassword"})
       .expect(200);
@@ -1328,7 +1253,9 @@ describe("test token auth", function () {
     assert.isDefined(userId);
     assert.isDefined(token);
 
-    const meRes = await server.get("/auth/me").set("authorization", `Bearer ${token}`).expect(200);
+    agent.set("authorization", `Bearer ${res.body.data.token}`);
+
+    const meRes = await agent.get("/auth/me").expect(200);
     assert.isDefined(meRes.body.data._id);
     assert.isDefined(meRes.body.data.id);
     assert.isUndefined(meRes.body.data.hash);
@@ -1338,10 +1265,9 @@ describe("test token auth", function () {
     assert.isDefined(meRes.body.data.created);
     assert.isTrue(meRes.body.data.admin);
 
-    const mePatchRes = await server
+    const mePatchRes = await agent
       .patch("/auth/me")
       .send({email: "admin2@example.com"})
-      .set("authorization", `Bearer ${token}`)
       .expect(200);
     assert.isDefined(mePatchRes.body.data._id);
     assert.isDefined(mePatchRes.body.data.id);
@@ -1353,7 +1279,7 @@ describe("test token auth", function () {
     assert.isTrue(mePatchRes.body.data.admin);
 
     // Use token to see admin foods
-    const getRes = await server.get("/food").set("Authorization", `Bearer ${token}`).expect(200);
+    const getRes = await agent.get("/food").expect(200);
 
     assert.lengthOf(getRes.body.data, 3);
     const food = getRes.body.data.find((f: any) => f.name === "Apple");
