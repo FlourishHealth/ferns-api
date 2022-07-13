@@ -931,7 +931,7 @@ export function gooseRestRouter<T>(
     res: Response,
     operation: "POST" | "PATCH" | "DELETE"
   ) {
-    // TODO this is very similar to .patch()
+    // TODO Combine array operations and .patch(), as they are very similar.
     const model = getModel(baseModel, req.body, options);
 
     if (!(await checkPermissions("update", options.permissions.update, req.user))) {
