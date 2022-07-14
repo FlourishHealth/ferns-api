@@ -41,7 +41,7 @@ interface FoodCategory {
 }
 
 interface Food {
-  id: string;
+  _id: string;
   name: string;
   calories: number;
   created: Date;
@@ -796,7 +796,7 @@ describe("ferns-api", () => {
     it("add array sub-schema item", async function () {
       // Incorrect way, should have "categories" as a top level key.
       let res = await agent
-        .post(`/food/${apple.id}/categories`)
+        .post(`/food/${apple._id}/categories`)
         .send({name: "Good Seller", show: false})
         .expect(400);
       assert.equal(
@@ -805,14 +805,14 @@ describe("ferns-api", () => {
       );
 
       res = await agent
-        .post(`/food/${apple.id}/categories`)
+        .post(`/food/${apple._id}/categories`)
         .send({categories: {name: "Good Seller", show: false}})
         .expect(200);
       assert.lengthOf(res.body.data.categories, 3);
       assert.equal(res.body.data.categories[2].name, "Good Seller");
 
       res = await agent
-        .post(`/food/${spinach.id}/categories`)
+        .post(`/food/${spinach._id}/categories`)
         .send({categories: {name: "Good Seller", show: false}})
         .expect(200);
       assert.lengthOf(res.body.data.categories, 1);
@@ -820,12 +820,12 @@ describe("ferns-api", () => {
 
     it("update array sub-schema item", async function () {
       let res = await agent
-        .patch(`/food/${apple.id}/categories/xyz`)
+        .patch(`/food/${apple._id}/categories/xyz`)
         .send({categories: {name: "Good Seller", show: false}})
         .expect(404);
       assert.equal(res.body.title, "Could not find categories/xyz");
       res = await agent
-        .patch(`/food/${apple.id}/categories/${apple.categories[1]._id}`)
+        .patch(`/food/${apple._id}/categories/${apple.categories[1]._id}`)
         .send({categories: {name: "Good Seller", show: false}})
         .expect(200);
       assert.lengthOf(res.body.data.categories, 2);
@@ -833,41 +833,41 @@ describe("ferns-api", () => {
     });
 
     it("delete array sub-schema item", async function () {
-      let res = await agent.delete(`/food/${apple.id}/categories/xyz`).expect(404);
+      let res = await agent.delete(`/food/${apple._id}/categories/xyz`).expect(404);
       assert.equal(res.body.title, "Could not find categories/xyz");
       res = await agent
-        .delete(`/food/${apple.id}/categories/${apple.categories[0]._id}`)
+        .delete(`/food/${apple._id}/categories/${apple.categories[0]._id}`)
         .expect(200);
       assert.lengthOf(res.body.data.categories, 1);
       assert.equal(res.body.data.categories[0].name, "Popular");
     });
 
     it("add array item", async function () {
-      let res = await agent.post(`/food/${apple.id}/tags`).send({tags: "popular"}).expect(200);
+      let res = await agent.post(`/food/${apple._id}/tags`).send({tags: "popular"}).expect(200);
       assert.lengthOf(res.body.data.tags, 3);
       assert.deepEqual(res.body.data.tags, ["healthy", "cheap", "popular"]);
 
-      res = await agent.post(`/food/${spinach.id}/tags`).send({tags: "popular"}).expect(200);
+      res = await agent.post(`/food/${spinach._id}/tags`).send({tags: "popular"}).expect(200);
       assert.deepEqual(res.body.data.tags, ["popular"]);
     });
 
     it("update array item", async function () {
       let res = await agent
-        .patch(`/food/${apple.id}/tags/xyz`)
+        .patch(`/food/${apple._id}/tags/xyz`)
         .send({tags: "unhealthy"})
         .expect(404);
       assert.equal(res.body.title, "Could not find tags/xyz");
       res = await agent
-        .patch(`/food/${apple.id}/tags/healthy`)
+        .patch(`/food/${apple._id}/tags/healthy`)
         .send({tags: "unhealthy"})
         .expect(200);
       assert.deepEqual(res.body.data.tags, ["unhealthy", "cheap"]);
     });
 
     it("delete array item", async function () {
-      let res = await agent.delete(`/food/${apple.id}/tags/xyz`).expect(404);
+      let res = await agent.delete(`/food/${apple._id}/tags/xyz`).expect(404);
       assert.equal(res.body.title, "Could not find tags/xyz");
-      res = await agent.delete(`/food/${apple.id}/tags/healthy`).expect(200);
+      res = await agent.delete(`/food/${apple._id}/tags/healthy`).expect(200);
       assert.deepEqual(res.body.data.tags, ["cheap"]);
     });
   });
