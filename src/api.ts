@@ -1,4 +1,4 @@
-import express from "express";
+import express, {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
 import mongoose, {Document, Model, ObjectId, Schema} from "mongoose";
 import passport from "passport";
@@ -6,7 +6,9 @@ import {Strategy as AnonymousStrategy} from "passport-anonymous";
 import {Strategy as JwtStrategy} from "passport-jwt";
 import {Strategy as LocalStrategy} from "passport-local";
 
+import {APIError, getAPIErrorBody, isAPIError} from "./errors";
 import {logger} from "./logger";
+import {isValidObjectId} from "./utils";
 
 export interface Env {
   NODE_ENV?: string;
@@ -924,5 +926,161 @@ export function gooseRestRouter<T>(
     return res.sendStatus(204);
   });
 
+  async function arrayOperation(
+    req: Request,
+    res: Response,
+    operation: "POST" | "PATCH" | "DELETE"
+  ) {
+    // TODO Combine array operations and .patch(), as they are very similar.
+    const model = getModel(baseModel, req.body, options);
+
+    if (!(await checkPermissions("update", options.permissions.update, req.user))) {
+      throw new APIError({
+        title: `Access to PATCH on ${model.name} denied for ${req.user?.id}`,
+        status: 405,
+      });
+    }
+
+    const doc = await model.findById(req.params.id);
+    // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+    if (!doc || (doc.__t && !req.body.__t)) {
+      throw new APIError({
+        title: `Could not find document to PATCH: ${req.params.id}`,
+        status: 404,
+      });
+    }
+
+    if (!(await checkPermissions("update", options.permissions.update, req.user, doc))) {
+      throw new APIError({
+        title: `Patch not allowed for user ${req.user?.id} on doc ${doc._id}`,
+        status: 403,
+      });
+    }
+
+    // We apply the operation *before* the hooks. As far as the callers are concerned, this should
+    // be like PATCHing the field and replacing the whole thing.
+    if (operation !== "DELETE" && req.body[req.params.field] === undefined) {
+      throw new APIError({
+        title: `Malformed body, array operations should have a single, top level key, got: ${Object.keys(
+          req.body
+        ).join(",")}`,
+        status: 400,
+      });
+    }
+
+    const field = req.params.field;
+
+    const array = [...doc[field]];
+    if (operation === "POST") {
+      array.push(req.body[field]);
+    } else if (operation === "PATCH" || operation === "DELETE") {
+      // Check for subschema vs String array:
+      let index;
+      if (isValidObjectId(req.params.itemId)) {
+        index = array.findIndex((x: any) => x.id === req.params.itemId);
+      } else {
+        index = array.findIndex((x: string) => x === req.params.itemId);
+      }
+      if (index === -1) {
+        throw new APIError({
+          title: `Could not find ${field}/${req.params.itemId}`,
+          status: 404,
+        });
+      }
+      if (operation === "PATCH") {
+        array[index] = req.body[field];
+      } else {
+        array.splice(index, 1);
+      }
+    } else {
+      throw new APIError({
+        title: `Invalid array operation: ${operation}`,
+        status: 400,
+      });
+    }
+    let body: Partial<T> | null = {[field]: array} as unknown as Partial<T>;
+
+    try {
+      body = transform(body, "update", req.user) as Partial<T>;
+    } catch (e) {
+      throw new APIError({
+        title: (e as any).message,
+        status: 403,
+      });
+    }
+
+    if (options.preUpdate) {
+      try {
+        body = await options.preUpdate(body, req);
+      } catch (e) {
+        throw new APIError({
+          title: `PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`,
+          status: 400,
+        });
+      }
+      if (body === null) {
+        throw new APIError({
+          title: `PATCH Pre Update on ${req.params.id} returned null`,
+          status: 403,
+        });
+      }
+    }
+
+    // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
+    // wind up with corrupted data, just an API error.
+    try {
+      Object.assign(doc, body);
+      await doc.save();
+    } catch (e) {
+      throw new APIError({
+        title: `PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`,
+        status: 400,
+      });
+    }
+
+    if (options.postUpdate) {
+      try {
+        await options.postUpdate(doc, body, req);
+      } catch (e) {
+        throw new APIError({
+          title: `PATCH Post Update error on ${req.params.id}: ${(e as any).message}`,
+          status: 400,
+        });
+      }
+    }
+    return res.json({data: serialize(doc, req.user)});
+  }
+
+  async function arrayPost(req: Request, res: Response) {
+    return arrayOperation(req, res, "POST");
+  }
+
+  async function arrayPatch(req: Request, res: Response) {
+    return arrayOperation(req, res, "PATCH");
+  }
+
+  async function arrayDelete(req: Request, res: Response) {
+    return arrayOperation(req, res, "DELETE");
+  }
+  // Set up routes for managing array fields. Check if there any array fields to add this for.
+  if (Object.values(baseModel.schema.paths).find((config) => config.instance === "Array")) {
+    router.post(`/:id/:field`, authenticateMiddleware(true), asyncHandler(arrayPost));
+    router.patch(`/:id/:field/:itemId`, authenticateMiddleware(true), asyncHandler(arrayPatch));
+    router.delete(`/:id/:field/:itemId`, authenticateMiddleware(true), asyncHandler(arrayDelete));
+    router.use(apiErrorMiddleware);
+  }
+
   return router;
 }
+
+function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
+  if (isAPIError(err)) {
+    return res.status(err.status).json(getAPIErrorBody(err));
+  }
+  return next(err);
+}
+
+// Since express doesn't handle async routes well, wrap them with this function.
+const asyncHandler = (fn: any) => (req: Request, res: Response, next: NextFunction) => {
+  return Promise.resolve(fn(req, res, next)).catch(next);
+};

@@ -34,7 +34,14 @@ interface StaffUser extends User {
   department: string;
 }
 
+interface FoodCategory {
+  _id?: string;
+  name: string;
+  show: boolean;
+}
+
 interface Food {
+  _id: string;
   name: string;
   calories: number;
   created: Date;
@@ -43,6 +50,8 @@ interface Food {
   source: {
     name: string;
   };
+  tags: string[];
+  categories: FoodCategory[];
 }
 
 const userSchema = new Schema<User>({
@@ -71,7 +80,12 @@ const staffUserSchema = new Schema<StaffUser>({
 });
 const StaffUserModel = UserModel.discriminator("Staff", staffUserSchema);
 
-const schema = new Schema<Food>({
+const foodCategorySchema = new Schema<FoodCategory>({
+  name: String,
+  show: Boolean,
+});
+
+const foodSchema = new Schema<Food>({
   name: String,
   calories: Number,
   created: Date,
@@ -80,9 +94,11 @@ const schema = new Schema<Food>({
     name: String,
   },
   hidden: {type: Boolean, default: false},
+  tags: [String],
+  categories: [foodCategorySchema],
 });
 
-const FoodModel = model<Food>("Food", schema);
+const FoodModel = model<Food>("Food", foodSchema);
 
 interface RequiredField {
   name: string;
@@ -717,15 +733,154 @@ describe("ferns-api", () => {
     });
   });
 
-  let spinach: Food;
-  let apple: Food;
-  let carrots: Food;
-  let pizza: Food;
+  describe("model array operations", function () {
+    let admin: any;
+    let spinach: Food;
+    let apple: Food;
+    let agent: supertest.SuperAgentTest;
+
+    beforeEach(async function () {
+      [admin] = await setupDb();
+
+      [spinach, apple] = await Promise.all([
+        FoodModel.create({
+          name: "Spinach",
+          calories: 1,
+          created: new Date("2021-12-03T00:00:20.000Z"),
+          ownerId: admin._id,
+          hidden: false,
+          source: {
+            name: "Brand",
+          },
+        }),
+        FoodModel.create({
+          name: "Apple",
+          calories: 100,
+          created: new Date("2021-12-03T00:00:30.000Z"),
+          ownerId: admin._id,
+          hidden: false,
+          categories: [
+            {
+              name: "Fruit",
+              show: true,
+            },
+            {
+              name: "Popular",
+              show: false,
+            },
+          ],
+          tags: ["healthy", "cheap"],
+        }),
+      ]);
+
+      app = getBaseServer();
+      setupAuth(app, UserModel as any);
+      app.use(
+        "/food",
+        gooseRestRouter(FoodModel, {
+          permissions: {
+            list: [Permissions.IsAdmin],
+            create: [Permissions.IsAdmin],
+            read: [Permissions.IsAdmin],
+            update: [Permissions.IsAdmin],
+            delete: [Permissions.IsAdmin],
+          },
+          sort: {created: "descending"},
+          queryFields: ["hidden", "calories", "created", "source.name"],
+        })
+      );
+      server = supertest(app);
+      agent = await authAsUser(app, "admin");
+    });
+
+    it("add array sub-schema item", async function () {
+      // Incorrect way, should have "categories" as a top level key.
+      let res = await agent
+        .post(`/food/${apple._id}/categories`)
+        .send({name: "Good Seller", show: false})
+        .expect(400);
+      assert.equal(
+        res.body.title,
+        "Malformed body, array operations should have a single, top level key, got: name,show"
+      );
+
+      res = await agent
+        .post(`/food/${apple._id}/categories`)
+        .send({categories: {name: "Good Seller", show: false}})
+        .expect(200);
+      assert.lengthOf(res.body.data.categories, 3);
+      assert.equal(res.body.data.categories[2].name, "Good Seller");
+
+      res = await agent
+        .post(`/food/${spinach._id}/categories`)
+        .send({categories: {name: "Good Seller", show: false}})
+        .expect(200);
+      assert.lengthOf(res.body.data.categories, 1);
+    });
+
+    it("update array sub-schema item", async function () {
+      let res = await agent
+        .patch(`/food/${apple._id}/categories/xyz`)
+        .send({categories: {name: "Good Seller", show: false}})
+        .expect(404);
+      assert.equal(res.body.title, "Could not find categories/xyz");
+      res = await agent
+        .patch(`/food/${apple._id}/categories/${apple.categories[1]._id}`)
+        .send({categories: {name: "Good Seller", show: false}})
+        .expect(200);
+      assert.lengthOf(res.body.data.categories, 2);
+      assert.equal(res.body.data.categories[1].name, "Good Seller");
+    });
+
+    it("delete array sub-schema item", async function () {
+      let res = await agent.delete(`/food/${apple._id}/categories/xyz`).expect(404);
+      assert.equal(res.body.title, "Could not find categories/xyz");
+      res = await agent
+        .delete(`/food/${apple._id}/categories/${apple.categories[0]._id}`)
+        .expect(200);
+      assert.lengthOf(res.body.data.categories, 1);
+      assert.equal(res.body.data.categories[0].name, "Popular");
+    });
+
+    it("add array item", async function () {
+      let res = await agent.post(`/food/${apple._id}/tags`).send({tags: "popular"}).expect(200);
+      assert.lengthOf(res.body.data.tags, 3);
+      assert.deepEqual(res.body.data.tags, ["healthy", "cheap", "popular"]);
+
+      res = await agent.post(`/food/${spinach._id}/tags`).send({tags: "popular"}).expect(200);
+      assert.deepEqual(res.body.data.tags, ["popular"]);
+    });
+
+    it("update array item", async function () {
+      let res = await agent
+        .patch(`/food/${apple._id}/tags/xyz`)
+        .send({tags: "unhealthy"})
+        .expect(404);
+      assert.equal(res.body.title, "Could not find tags/xyz");
+      res = await agent
+        .patch(`/food/${apple._id}/tags/healthy`)
+        .send({tags: "unhealthy"})
+        .expect(200);
+      assert.deepEqual(res.body.data.tags, ["unhealthy", "cheap"]);
+    });
+
+    it("delete array item", async function () {
+      let res = await agent.delete(`/food/${apple._id}/tags/xyz`).expect(404);
+      assert.equal(res.body.title, "Could not find tags/xyz");
+      res = await agent.delete(`/food/${apple._id}/tags/healthy`).expect(200);
+      assert.deepEqual(res.body.data.tags, ["cheap"]);
+    });
+  });
 
   describe("list options", function () {
     let notAdmin: any;
     let admin: any;
     let agent: supertest.SuperAgentTest;
+
+    let spinach: Food;
+    let apple: Food;
+    let carrots: Food;
+    let pizza: Food;
 
     beforeEach(async function () {
       [admin, notAdmin] = await setupDb();
