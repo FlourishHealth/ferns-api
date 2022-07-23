@@ -1,3 +1,8 @@
+/**
+ * This is the doc comment for api.ts
+ *
+ * @packageDocumentation
+ */
 import express, {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
 import mongoose, {Document, Model, ObjectId, Schema} from "mongoose";
@@ -30,9 +35,14 @@ export interface Env {
 
 const SPECIAL_QUERY_PARAMS = ["limit", "page"];
 
+/**
+ * @param a - the first number
+ * @param b - the second number
+ * @returns The sum of `a` and `b`
+ */
 export type RESTMethod = "list" | "create" | "read" | "update" | "delete";
 
-interface GooseTransformer<T> {
+export interface GooseTransformer<T> {
   // Runs before create or update operations. Allows throwing out fields that the user should be
   // able to write to, modify data, check permissions, etc.
   transform?: (obj: Partial<T>, method: "create" | "update", user?: User) => Partial<T> | undefined;
@@ -43,10 +53,13 @@ interface GooseTransformer<T> {
 
 type UserType = "anon" | "auth" | "owner" | "admin";
 
-interface User {
+export interface User {
   _id: ObjectId | string;
   id: string;
+  // Whether the user should be treated as an admin or not. Admins can have extra abilities in permissions
+  // declarations
   admin: boolean;
+  /** We support anonymous users, which do not yet have login information. This can be helpful for pre-signup users. */
   isAnonymous?: boolean;
   token?: string;
 }
@@ -69,7 +82,7 @@ export type PermissionMethod<T> = (
   obj?: T
 ) => boolean | Promise<boolean>;
 
-interface RESTPermissions<T> {
+export interface RESTPermissions<T> {
   create: PermissionMethod<T>[];
   list: PermissionMethod<T>[];
   read: PermissionMethod<T>[];
@@ -77,8 +90,16 @@ interface RESTPermissions<T> {
   delete: PermissionMethod<T>[];
 }
 
-interface GooseRESTOptions<T> {
+/**
+ * This is the main configuration.
+ * @param T - the base document type. This should not include Mongoose models, just the types of the object.
+ */
+export interface GooseRESTOptions<T> {
+  /** A group of method-level (create/read/update/delete/list) permissions. Determine if the user can perform the
+   * operation at all, and for read/update/delete methods, whether the user can perform the operation on the object
+   * referenced. */
   permissions: RESTPermissions<T>;
+  // Query field are cool
   queryFields?: string[];
   // return null to prevent the query from running
   queryFilter?: (user?: User, query?: Record<string, any>) => Record<string, any> | null;
@@ -212,7 +233,9 @@ export function baseUserPlugin(schema: Schema) {
   schema.add({email: {type: String, index: true}});
 }
 
+/** For models with the isDeletedPlugin, extend this interface to add the appropriate fields. */
 export interface IsDeleted {
+  // Whether the model should be treated as deleted or not.
   deleted: boolean;
 }
 
@@ -573,6 +596,12 @@ function getModel(baseModel: Model<any>, body?: any, options?: GooseRESTOptions<
   }
 }
 
+/**
+ * Create a set of CRUD routes given a Mongoose model $baseModel and configuration options.
+ *
+ * @param baseModel A Mongoose Model
+ * @param options Options for configuring the REST API, such as permissions, transformers, and hooks.
+ */
 export function gooseRestRouter<T>(
   baseModel: Model<any>,
   options: GooseRESTOptions<T>
