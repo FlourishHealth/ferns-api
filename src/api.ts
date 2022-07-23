@@ -10,6 +10,7 @@ import {authenticateMiddleware, getUserType, User} from "./auth";
 import {APIError, getAPIErrorBody, isAPIError} from "./errors";
 import {logger} from "./logger";
 import {checkPermissions, RESTPermissions} from "./permissions";
+import {serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
 
 // TODOS:
@@ -152,40 +153,6 @@ export function gooseRestRouter<T>(
 ): express.Router {
   const router = express.Router();
 
-  function transform(data: Partial<T> | Partial<T>[], method: "create" | "update", user?: User) {
-    if (!options.transformer?.transform) {
-      return data;
-    }
-
-    // TS doesn't realize this is defined otherwise...
-    const transformFn = options.transformer?.transform;
-
-    if (!Array.isArray(data)) {
-      return transformFn(data, method, user);
-    } else {
-      return data.map((d) => transformFn(d, method, user));
-    }
-  }
-
-  function serialize(data: Document<T, {}, {}> | Document<T, {}, {}>[], user?: User) {
-    const serializeFn = (serializeData: Document<T, {}, {}>, seralizeUser?: User) => {
-      const dataObject = serializeData.toObject() as T;
-      (dataObject as any).id = serializeData._id;
-
-      if (options.transformer?.serialize) {
-        return options.transformer?.serialize(dataObject, seralizeUser);
-      } else {
-        return dataObject;
-      }
-    };
-
-    if (!Array.isArray(data)) {
-      return serializeFn(data, user);
-    } else {
-      return data.map((d) => serializeFn(d, user));
-    }
-  }
-
   // Do before the other router options so endpoints take priority.
   if (options.endpoints) {
     options.endpoints(router);
@@ -201,7 +168,7 @@ export function gooseRestRouter<T>(
 
     let body;
     try {
-      body = transform(req.body, "create", req.user);
+      body = transform<T>(options, req.body, "create", req.user);
     } catch (e) {
       return res.status(403).send({message: (e as any).message});
     }
@@ -326,7 +293,7 @@ export function gooseRestRouter<T>(
     }
     let more;
     try {
-      let serialized = serialize(data, req.user);
+      let serialized = serialize<T>(options, data, req.user);
       if (serialized && Array.isArray(serialized)) {
         more = serialized.length === limit + 1 && serialized.length > 0;
         if (more) {
@@ -363,7 +330,7 @@ export function gooseRestRouter<T>(
       return res.sendStatus(403);
     }
 
-    return res.json({data: serialize(data, req.user)});
+    return res.json({data: serialize<T>(options, data, req.user)});
   });
 
   router.put("/:id", authenticateMiddleware(true), async (req, res) => {
@@ -393,7 +360,7 @@ export function gooseRestRouter<T>(
 
     let body;
     try {
-      body = transform(req.body, "update", req.user);
+      body = transform(options, req.body, "update", req.user);
     } catch (e) {
       logger.warn(
         `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${(e as any).message}`
@@ -436,7 +403,7 @@ export function gooseRestRouter<T>(
           .send({message: `PATCH Post Update error on ${req.params.id}: ${(e as any).message}`});
       }
     }
-    return res.json({data: serialize(doc, req.user)});
+    return res.json({data: serialize<T>(options, doc, req.user)});
   });
 
   router.delete("/:id", authenticateMiddleware(true), async (req, res) => {
@@ -574,7 +541,7 @@ export function gooseRestRouter<T>(
     let body: Partial<T> | null = {[field]: array} as unknown as Partial<T>;
 
     try {
-      body = transform(body, "update", req.user) as Partial<T>;
+      body = transform(options, body, "update", req.user) as Partial<T>;
     } catch (e) {
       throw new APIError({
         title: (e as any).message,
@@ -621,7 +588,7 @@ export function gooseRestRouter<T>(
         });
       }
     }
-    return res.json({data: serialize(doc, req.user)});
+    return res.json({data: serialize<T>(options, doc, req.user)});
   }
 
   async function arrayPost(req: Request, res: Response) {

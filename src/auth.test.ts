@@ -7,7 +7,7 @@ import {setupAuth} from "./auth";
 import {Permissions} from "./permissions";
 import {Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
 
-describe("test token auth", function () {
+describe("auth tests", function () {
   let app: express.Application;
   let server: any;
 
