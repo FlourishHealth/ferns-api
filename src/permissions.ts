@@ -1,5 +1,20 @@
 // Defaults closed
-import {PermissionMethod, RESTMethod, User} from "./api";
+import {RESTMethod} from "./api";
+import {User} from "./auth";
+
+export type PermissionMethod<T> = (
+  method: RESTMethod,
+  user?: User,
+  obj?: T
+) => boolean | Promise<boolean>;
+
+export interface RESTPermissions<T> {
+  create: PermissionMethod<T>[];
+  list: PermissionMethod<T>[];
+  read: PermissionMethod<T>[];
+  update: PermissionMethod<T>[];
+  delete: PermissionMethod<T>[];
+}
 
 export const OwnerQueryFilter = (user?: User) => {
   if (user) {

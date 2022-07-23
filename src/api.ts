@@ -4,8 +4,7 @@
  * @packageDocumentation
  */
 import express, {NextFunction, Request, Response} from "express";
-import jwt from "jsonwebtoken";
-import mongoose, {Document, Model, ObjectId, Schema} from "mongoose";
+import mongoose, {Document, Model, ObjectId} from "mongoose";
 import passport from "passport";
 import {Strategy as AnonymousStrategy} from "passport-anonymous";
 import {Strategy as JwtStrategy} from "passport-jwt";
@@ -13,6 +12,7 @@ import {Strategy as LocalStrategy} from "passport-local";
 
 import {APIError, getAPIErrorBody, isAPIError} from "./errors";
 import {logger} from "./logger";
+import {checkPermissions, RESTPermissions} from "./permissions";
 import {isValidObjectId} from "./utils";
 
 // TODOS:
@@ -63,20 +63,6 @@ export interface UserModel extends Model<User> {
   deserializeUser(): any;
 }
 
-export type PermissionMethod<T> = (
-  method: RESTMethod,
-  user?: User,
-  obj?: T
-) => boolean | Promise<boolean>;
-
-export interface RESTPermissions<T> {
-  create: PermissionMethod<T>[];
-  list: PermissionMethod<T>[];
-  read: PermissionMethod<T>[];
-  update: PermissionMethod<T>[];
-  delete: PermissionMethod<T>[];
-}
-
 /**
  * This is the main configuration.
  * @param T - the base document type. This should not include Mongoose models, just the types of the object.
@@ -106,167 +92,6 @@ export interface GooseRESTOptions<T> {
   // The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
   // https://mongoosejs.com/docs/discriminators.html
   discriminatorKey?: string;
-}
-
-export const OwnerQueryFilter = (user?: User) => {
-  if (user) {
-    return {ownerId: user?.id};
-  }
-  // Return a null, so we know to return no results.
-  return null;
-};
-
-export const Permissions = {
-  IsAuthenticatedOrReadOnly: (method: RESTMethod, user?: User) => {
-    if (user?.id && !user?.isAnonymous) {
-      return true;
-    }
-    return method === "list" || method === "read";
-  },
-  IsOwnerOrReadOnly: (method: RESTMethod, user?: User, obj?: any) => {
-    // When checking if we can possibly perform the action, return true.
-    if (!obj) {
-      return true;
-    }
-    if (user?.admin) {
-      return true;
-    }
-
-    if (user?.id && obj?.ownerId && String(obj?.ownerId) === String(user?.id)) {
-      return true;
-    }
-    return method === "list" || method === "read";
-  },
-  IsAny: () => {
-    return true;
-  },
-  IsOwner: (method: RESTMethod, user?: User, obj?: any) => {
-    // When checking if we can possibly perform the action, return true.
-    if (!obj) {
-      return true;
-    }
-    if (!user) {
-      return false;
-    }
-    if (user?.admin) {
-      return true;
-    }
-    return user?.id && obj?.ownerId && String(obj?.ownerId) === String(user?.id);
-  },
-  IsAdmin: (method: RESTMethod, user?: User) => {
-    return Boolean(user?.admin);
-  },
-  IsAuthenticated: (method: RESTMethod, user?: User) => {
-    if (!user) {
-      return false;
-    }
-    return Boolean(user.id);
-  },
-};
-
-// Defaults closed
-export async function checkPermissions<T>(
-  method: RESTMethod,
-  permissions: PermissionMethod<T>[],
-  user?: User,
-  obj?: T
-): Promise<boolean> {
-  let anyTrue = false;
-  for (const perm of permissions) {
-    // May or may not be a promise.
-    if (!(await perm(method, user, obj))) {
-      return false;
-    } else {
-      anyTrue = true;
-    }
-  }
-  return anyTrue;
-}
-
-export function tokenPlugin(schema: Schema) {
-  schema.add({token: {type: String, index: true}});
-  schema.pre("save", function (next) {
-    // Add created when creating the object
-    if (!this.token) {
-      const tokenOptions: any = {
-        expiresIn: "10h",
-      };
-      if (process.env.TOKEN_EXPIRES_IN) {
-        tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
-      }
-      if (process.env.TOKEN_ISSUER) {
-        tokenOptions.issuer = process.env.TOKEN_ISSUER;
-      }
-
-      const secretOrKey = process.env.TOKEN_SECRET;
-      if (!secretOrKey) {
-        throw new Error(`TOKEN_SECRET must be set in env.`);
-      }
-      this.token = jwt.sign({id: this._id.toString()}, secretOrKey, tokenOptions);
-    }
-    // On any save, update the updated field.
-    this.updated = new Date();
-    next();
-  });
-}
-
-export interface BaseUser {
-  admin: boolean;
-  email: string;
-}
-
-export function baseUserPlugin(schema: Schema) {
-  schema.add({admin: {type: Boolean, default: false}});
-  schema.add({email: {type: String, index: true}});
-}
-
-/** For models with the isDeletedPlugin, extend this interface to add the appropriate fields. */
-export interface IsDeleted {
-  // Whether the model should be treated as deleted or not.
-  deleted: boolean;
-}
-
-export function isDeletedPlugin(schema: Schema, defaultValue = false) {
-  schema.add({deleted: {type: Boolean, default: defaultValue, index: true}});
-  schema.pre("find", function () {
-    const query = this.getQuery();
-    if (query && query.deleted === undefined) {
-      this.where({deleted: {$ne: true}});
-    }
-  });
-}
-
-export interface CreatedDeleted {
-  updated: Date;
-  created: Date;
-}
-
-export function createdUpdatedPlugin(schema: Schema) {
-  schema.add({updated: {type: Date, index: true}});
-  schema.add({created: {type: Date, index: true}});
-
-  schema.pre("save", function (next) {
-    if (this.disableCreatedUpdatedPlugin === true) {
-      next();
-      return;
-    }
-    // If we aren't specifying created, use now.
-    if (!this.created) {
-      this.created = new Date();
-    }
-    // All writes change the updated time.
-    this.updated = new Date();
-    next();
-  });
-
-  schema.pre("update", function (next) {
-    this.update({}, {$set: {updated: new Date()}});
-    next();
-  });
-}
-
-export function firebaseJWTPlugin(schema: Schema) {
-  schema.add({firebaseId: {type: String, index: true}});
 }
 
 export function authenticateMiddleware(anonymous = false) {
