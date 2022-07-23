@@ -10,7 +10,7 @@ import {authenticateMiddleware, getUserType, User} from "./auth";
 import {APIError, getAPIErrorBody, isAPIError} from "./errors";
 import {logger} from "./logger";
 import {checkPermissions, RESTPermissions} from "./permissions";
-import {serialize, transform} from "./transformers";
+import {GooseTransformer, serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
 
 // TODOS:
@@ -27,15 +27,6 @@ const SPECIAL_QUERY_PARAMS = ["limit", "page"];
  */
 export type RESTMethod = "list" | "create" | "read" | "update" | "delete";
 
-export interface GooseTransformer<T> {
-  // Runs before create or update operations. Allows throwing out fields that the user should be
-  // able to write to, modify data, check permissions, etc.
-  transform?: (obj: Partial<T>, method: "create" | "update", user?: User) => Partial<T> | undefined;
-  // Runs after create/update operations but before data is returned from the API. Serialize fetched
-  // data, dropping fields based on user, changing data, etc.
-  serialize?: (obj: T, user?: User) => Partial<T> | undefined;
-}
-
 /**
  * This is the main configuration.
  * @param T - the base document type. This should not include Mongoose models, just the types of the object.
@@ -45,25 +36,89 @@ export interface GooseRESTOptions<T> {
    * operation at all, and for read/update/delete methods, whether the user can perform the operation on the object
    * referenced. */
   permissions: RESTPermissions<T>;
-  // Query field are cool
+  /** A list of fields on the model that can be queried using standard comparisons for booleans, strings, dates
+   *    (as ISOStrings), and numbers.
+   * For example:
+   *  ?foo=true // boolean query
+   *  ?foo=bar // string query
+   *  ?foo=1 // number query
+   *  ?foo=2022-07-23T02:34:07.118Z // date query (should first be encoded for query params, not shown here)
+   * Note: `limit` and `page` are automatically supported and are reserved. */
   queryFields?: string[];
-  // return null to prevent the query from running
+  /** queryFilter is a function to parse the query params and see if the query should be allowed. This can be used for
+   * permissioning to make sure less privileged users are not making privileged queries. If a query should not be
+   * allowed, return `null` from the function and an empty query result will be returned to the client without an error.
+   * You can also throw an APIError to be explicit about the issues. You can transform the given query params by
+   * returning different values. If the query is acceptable as-is, return `query` as-is. */
   queryFilter?: (user?: User, query?: Record<string, any>) => Record<string, any> | null;
+  /** Transformers allow data to be transformed before actions are executed, and serialized before being returned to
+   * the user.
+   *
+   * Transformers can be used to throw out fields that the user should not be able to write to, such as the `admin` flag.
+   * Serializers can be used to hide data from the client or change how it is presented. Serializers run after the data
+   * has been changed or queried but before returning to the client.
+   * */
   transformer?: GooseTransformer<T>;
+  /** Default sort for list operations. Can be a single field, a space-seperated list of fields, or an object.
+   * ?sort=foo // single field: foo ascending
+   * ?sort=-foo // single field: foo descending
+   * ?sort=-foo bar // multi field: foo descending, bar ascending
+   * ?sort={foo: 'ascending', bar: 'descending'} // object: foo ascending, bar descending
+   *
+   * Note: you should have an index field on these fields or Mongo may slow down considerably.
+   * @deprecated Use preCreate/preUpdate/preDelete hooks instead of transformer.transform.
+   * */
   sort?: string | {[key: string]: "ascending" | "descending"};
+  /** Default queries to provide to Mongo before any user queries or transforms happen when making list queries.
+   * Accepts any Mongoose-style queries, and runs for all user types.
+   *    defaultQueryParams: {hidden: false} // By default, don't show objects with hidden=true
+   * These can be overridden by the user if not disallowed by queryFilter. */
   defaultQueryParams?: {[key: string]: any};
+  /** Paths to populate before returning data from list queries. Accepts Mongoose-style populate strings.
+   *    ["ownerId"] // populates the User that matches `ownerId`
+   *    ["ownerId.organizationId"] // Nested. Populates the User that matches `ownerId`, as well as their organization.
+   * */
   populatePaths?: string[];
-  defaultLimit?: number; // defaults to 100
+  /** Default limit applied to list queries if not specified by the user. Defaults to 100. */
+  defaultLimit?: number;
+  /** Maximum query limit the user can request. Defaults to 500, and is the lowest of the limit query, max limit,
+   *  or 500. */
   maxLimit?: number; // defaults to 500
+  /** */
   endpoints?: (router: any) => void;
+  /** Hook that runs after `transformer.transform` but before the object is created. Can update the body fields based on
+   * the request or the user.
+   * Return null to return a generic 403
+   * error. Throw an APIError to return a 400 with specific error information. */
   preCreate?: (value: any, request: express.Request) => T | Promise<T> | null;
+  /** Hook that runs after `transformer.transform` but before changes are made for update operations. Can update the
+   * body fields based on the request or the user. Also applies to all array operations.
+   * Return null to return a generic 403
+   * error. Throw an APIError to return a 400 with specific error information. */
   preUpdate?: (value: any, request: express.Request) => T | Promise<T> | null;
+  /** Hook that runs after `transformer.transform` but before the object is delete.
+   * Return null to return a generic 403
+   * error. Throw an APIError to return a 400 with specific error information. */
   preDelete?: (value: any, request: express.Request) => T | Promise<T> | null;
+  /** Hook that runs after the object is created but before it is serialized and returned. This is a good spot to
+   * perform dependent changes to other models or performing async tasks, such as sending a push notification.
+   * Throw an APIError to return a 400 with an error message. */
   postCreate?: (value: T, request: express.Request) => void | Promise<void>;
+  /** Hook that runs after the object is updated but before it is serialized and returned. This is a good spot to
+   * perform dependent changes to other models or performing async tasks, such as sending a push notification.
+   * Throw an APIError to return a 400 with an error message. */
   postUpdate?: (value: T, cleanedBody: any, request: express.Request) => void | Promise<void>;
+  /** Hook that runs after the object is created but before it is serialized and returned. This is a good spot to
+   * perform dependent changes to other models or performing async tasks, such as cascading object deletions.
+   * Throw an APIError to return a 400 with an error message. */
   postDelete?: (request: express.Request) => void | Promise<void>;
-  // The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
-  // https://mongoosejs.com/docs/discriminators.html
+  /** The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
+   * https://mongoosejs.com/docs/discriminators.html
+   * If this key is provided, you must provide the same key as part of the top level of the body when making performing
+   * update or delete operations on this model.
+   *     {discriminatorKey: "__t"}
+   *
+   *     PATCH {__t: "SuperUser", name: "Foo"} // __t is required or there will be a 404 error. */
   discriminatorKey?: string;
 }
 
@@ -89,6 +144,7 @@ export function AdminOwnerTransformer<T>(options: {
   }
 
   return {
+    // TODO: Migrate AdminOwnerTransform to use pre-hooks.
     transform: (obj: Partial<T>, method: "create" | "update", user?: User) => {
       const userType = getUserType(user, obj);
       let allowedFields: any;
@@ -241,6 +297,7 @@ export function gooseRestRouter<T>(
       mongoose.connection.db.collection(model.collection.collectionName);
     }
 
+    // Check if any of the keys in the query are not allowed by options.queryFilter
     if (options.queryFilter) {
       let queryFilter;
       try {
@@ -360,7 +417,7 @@ export function gooseRestRouter<T>(
 
     let body;
     try {
-      body = transform(options, req.body, "update", req.user);
+      body = transform<T>(options, req.body, "update", req.user);
     } catch (e) {
       logger.warn(
         `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${(e as any).message}`
@@ -541,7 +598,7 @@ export function gooseRestRouter<T>(
     let body: Partial<T> | null = {[field]: array} as unknown as Partial<T>;
 
     try {
-      body = transform(options, body, "update", req.user) as Partial<T>;
+      body = transform<T>(options, body, "update", req.user) as Partial<T>;
     } catch (e) {
       throw new APIError({
         title: (e as any).message,
