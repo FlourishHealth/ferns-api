@@ -7,7 +7,7 @@ import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
 
-import {setupAuth, UserModel as UserMongooseModel} from "./api";
+import {setupAuth, UserModel as UserMongooseModel} from "./auth";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
