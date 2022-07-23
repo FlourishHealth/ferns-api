@@ -15,19 +15,6 @@ import {APIError, getAPIErrorBody, isAPIError} from "./errors";
 import {logger} from "./logger";
 import {isValidObjectId} from "./utils";
 
-export interface Env {
-  NODE_ENV?: string;
-  PORT?: string;
-  SENTRY_DSN?: string;
-  SLACK_WEBHOOK?: string;
-  // JWT
-  TOKEN_SECRET?: string;
-  TOKEN_EXPIRES_IN?: string;
-  TOKEN_ISSUER?: string;
-  // AUTH
-  SESSION_SECRET?: string;
-}
-
 // TODOS:
 // Support bulk actions
 // Support more complex query fields
@@ -204,14 +191,14 @@ export function tokenPlugin(schema: Schema) {
       const tokenOptions: any = {
         expiresIn: "10h",
       };
-      if ((process.env as Env).TOKEN_EXPIRES_IN) {
-        tokenOptions.expiresIn = (process.env as Env).TOKEN_EXPIRES_IN;
+      if (process.env.TOKEN_EXPIRES_IN) {
+        tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
       }
-      if ((process.env as Env).TOKEN_ISSUER) {
-        tokenOptions.issuer = (process.env as Env).TOKEN_ISSUER;
+      if (process.env.TOKEN_ISSUER) {
+        tokenOptions.issuer = process.env.TOKEN_ISSUER;
       }
 
-      const secretOrKey = (process.env as Env).TOKEN_SECRET;
+      const secretOrKey = process.env.TOKEN_SECRET;
       if (!secretOrKey) {
         throw new Error(`TOKEN_SECRET must be set in env.`);
       }
@@ -383,7 +370,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   passport.serializeUser(userModel.serializeUser());
   passport.deserializeUser(userModel.deserializeUser());
 
-  if ((process.env as Env).TOKEN_SECRET) {
+  if (process.env.TOKEN_SECRET) {
     logger.debug("Setting up JWT Authentication");
 
     const customExtractor = function (req: express.Request) {
@@ -395,7 +382,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       }
       return token;
     };
-    const secretOrKey = (process.env as Env).TOKEN_SECRET;
+    const secretOrKey = process.env.TOKEN_SECRET;
     if (!secretOrKey) {
       throw new Error(`TOKEN_SECRET must be set in env.`);
     }
@@ -403,7 +390,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       // jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme("Bearer"),
       jwtFromRequest: customExtractor,
       secretOrKey,
-      issuer: (process.env as Env).TOKEN_ISSUER,
+      issuer: process.env.TOKEN_ISSUER,
     };
     passport.use(
       "jwt",

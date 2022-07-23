@@ -7,14 +7,14 @@ import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
 
-import {Env, setupAuth, UserModel as UserMongooseModel} from "./api";
+import {setupAuth, UserModel as UserMongooseModel} from "./api";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
 
 export function setupErrorLogging() {
-  const dsn = (process.env as Env).SENTRY_DSN;
+  const dsn = process.env.SENTRY_DSN;
   if (process.env.NODE_ENV === "production") {
     if (!dsn) {
       throw new Error("You must set SENTRY_DSN in the environment.");
@@ -226,7 +226,7 @@ export function cronjob(
 
 // Convenience method to send data to a Slack webhook.
 export async function sendToSlack(text: string, channel = "bots") {
-  const slackWebhookUrl = (process.env as Env).SLACK_WEBHOOK;
+  const slackWebhookUrl = process.env.SLACK_WEBHOOK;
   if (!slackWebhookUrl) {
     throw new Error("You must set SLACK_WEBHOOK in the environment.");
   }
