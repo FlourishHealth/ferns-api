@@ -3,10 +3,11 @@ import express from "express";
 import {ObjectId} from "mongoose";
 import supertest from "supertest";
 
-import {AdminOwnerTransformer, gooseRestRouter} from "./api";
+import {fernsRouter} from "./api";
 import {setupAuth} from "./auth";
 import {Permissions} from "./permissions";
 import {authAsUser, Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
+import {AdminOwnerTransformer} from "./transformers";
 
 describe("query and transform", function () {
   let notAdmin: any;
@@ -42,7 +43,7 @@ describe("query and transform", function () {
     setupAuth(app, UserModel as any);
     app.use(
       "/food",
-      gooseRestRouter(FoodModel, {
+      fernsRouter(FoodModel, {
         permissions: {
           list: [Permissions.IsAny],
           create: [Permissions.IsAny],

@@ -2,7 +2,7 @@ import {assert} from "chai";
 import express from "express";
 import supertest from "supertest";
 
-import {gooseRestRouter} from "./api";
+import {fernsRouter} from "./api";
 import {setupAuth} from "./auth";
 import {Permissions} from "./permissions";
 import {
@@ -40,7 +40,7 @@ describe("permissions", function () {
     setupAuth(app, UserModel as any);
     app.use(
       "/food",
-      gooseRestRouter(FoodModel, {
+      fernsRouter(FoodModel, {
         permissions: {
           list: [Permissions.IsAny],
           create: [Permissions.IsAuthenticated],
@@ -52,7 +52,7 @@ describe("permissions", function () {
     );
     app.use(
       "/required",
-      gooseRestRouter(RequiredModel, {
+      fernsRouter(RequiredModel, {
         permissions: {
           list: [Permissions.IsAny],
           create: [Permissions.IsAuthenticated],

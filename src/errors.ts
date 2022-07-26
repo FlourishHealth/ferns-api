@@ -1,4 +1,3 @@
-// This can be attached to any schema to store errors compatible with the JSONAPI spec.
 // https://jsonapi.org/format/#errors
 import {Schema} from "mongoose";
 
@@ -39,6 +38,19 @@ export interface APIErrorConstructor {
   meta?: {[id: string]: string};
 }
 
+/**
+ * APIError is a simple way to throw an error in an API route and control what is shown and the HTTP code displayed.
+ * It follows the JSONAPI spec to standardize the fields, allowing the UI to show more consistent, better error messages.
+ *
+ * ```ts
+ *  throw new APIError({
+ *    title: "Only an admin can update that!",
+ *    status: 403,
+ *    code: "update-admin-error",
+ *    detail: "You must be an admin to change that field"
+ *  });
+ * ```
+ */
 export class APIError extends Error {
   title: string;
 
@@ -96,6 +108,7 @@ export class APIError extends Error {
   }
 }
 
+// This can be attached to any schema to store errors compatible with the JSONAPI spec.
 export const ErrorSchema = new Schema({
   title: {type: String, required: true},
   id: String,

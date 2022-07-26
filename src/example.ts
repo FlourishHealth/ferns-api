@@ -1,7 +1,7 @@
 import express from "express";
 import mongoose, {model, Schema} from "mongoose";
 
-import {gooseRestRouter} from "./api";
+import {fernsRouter} from "./api";
 import {setupAuth} from "./auth";
 import {logger} from "./logger";
 import {passportLocalMongoose} from "./passport";
@@ -61,7 +61,7 @@ function getBaseServer() {
   setupAuth(app, UserModel as any);
   app.use(
     "/food",
-    gooseRestRouter(FoodModel, {
+    fernsRouter(FoodModel, {
       permissions: {
         list: [Permissions.IsAny],
         create: [Permissions.IsAuthenticated],

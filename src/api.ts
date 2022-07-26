@@ -6,11 +6,11 @@
 import express, {NextFunction, Request, Response} from "express";
 import mongoose, {Document, Model} from "mongoose";
 
-import {authenticateMiddleware, getUserType, User} from "./auth";
+import {authenticateMiddleware, User} from "./auth";
 import {APIError, getAPIErrorBody, isAPIError} from "./errors";
 import {logger} from "./logger";
 import {checkPermissions, RESTPermissions} from "./permissions";
-import {GooseTransformer, serialize, transform} from "./transformers";
+import {FernsTransformer, serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
 
 // TODOS:
@@ -31,10 +31,12 @@ export type RESTMethod = "list" | "create" | "read" | "update" | "delete";
  * This is the main configuration.
  * @param T - the base document type. This should not include Mongoose models, just the types of the object.
  */
-export interface GooseRESTOptions<T> {
-  /** A group of method-level (create/read/update/delete/list) permissions. Determine if the user can perform the
+export interface FernsRouterOptions<T> {
+  /**
+   * A group of method-level (create/read/update/delete/list) permissions. Determine if the user can perform the
    * operation at all, and for read/update/delete methods, whether the user can perform the operation on the object
-   * referenced. */
+   * referenced.
+   * */
   permissions: RESTPermissions<T>;
   /** A list of fields on the model that can be queried using standard comparisons for booleans, strings, dates
    *    (as ISOStrings), and numbers.
@@ -58,12 +60,12 @@ export interface GooseRESTOptions<T> {
    * Serializers can be used to hide data from the client or change how it is presented. Serializers run after the data
    * has been changed or queried but before returning to the client.
    * */
-  transformer?: GooseTransformer<T>;
+  transformer?: FernsTransformer<T>;
   /** Default sort for list operations. Can be a single field, a space-seperated list of fields, or an object.
    * ?sort=foo // single field: foo ascending
    * ?sort=-foo // single field: foo descending
    * ?sort=-foo bar // multi field: foo descending, bar ascending
-   * ?sort={foo: 'ascending', bar: 'descending'} // object: foo ascending, bar descending
+   * ?sort=\{foo: 'ascending', bar: 'descending'\} // object: foo ascending, bar descending
    *
    * Note: you should have an index field on these fields or Mongo may slow down considerably.
    * @deprecated Use preCreate/preUpdate/preDelete hooks instead of transformer.transform.
@@ -71,7 +73,7 @@ export interface GooseRESTOptions<T> {
   sort?: string | {[key: string]: "ascending" | "descending"};
   /** Default queries to provide to Mongo before any user queries or transforms happen when making list queries.
    * Accepts any Mongoose-style queries, and runs for all user types.
-   *    defaultQueryParams: {hidden: false} // By default, don't show objects with hidden=true
+   *    defaultQueryParams: \{hidden: false\} // By default, don't show objects with hidden=true
    * These can be overridden by the user if not disallowed by queryFilter. */
   defaultQueryParams?: {[key: string]: any};
   /** Paths to populate before returning data from list queries. Accepts Mongoose-style populate strings.
@@ -116,72 +118,15 @@ export interface GooseRESTOptions<T> {
    * https://mongoosejs.com/docs/discriminators.html
    * If this key is provided, you must provide the same key as part of the top level of the body when making performing
    * update or delete operations on this model.
-   *     {discriminatorKey: "__t"}
+   *    \{discriminatorKey: "__t"\}
    *
-   *     PATCH {__t: "SuperUser", name: "Foo"} // __t is required or there will be a 404 error. */
+   *     PATCH \{__t: "SuperUser", name: "Foo"\} // __t is required or there will be a 404 error.
+   */
   discriminatorKey?: string;
 }
 
-export function AdminOwnerTransformer<T>(options: {
-  // TODO: do something with KeyOf here.
-  anonReadFields?: string[];
-  authReadFields?: string[];
-  ownerReadFields?: string[];
-  adminReadFields?: string[];
-  anonWriteFields?: string[];
-  authWriteFields?: string[];
-  ownerWriteFields?: string[];
-  adminWriteFields?: string[];
-}): GooseTransformer<T> {
-  function pickFields(obj: Partial<T>, fields: any[]): Partial<T> {
-    const newData: Partial<T> = {};
-    for (const field of fields) {
-      if (obj[field] !== undefined) {
-        newData[field] = obj[field];
-      }
-    }
-    return newData;
-  }
-
-  return {
-    // TODO: Migrate AdminOwnerTransform to use pre-hooks.
-    transform: (obj: Partial<T>, method: "create" | "update", user?: User) => {
-      const userType = getUserType(user, obj);
-      let allowedFields: any;
-      if (userType === "admin") {
-        allowedFields = options.adminWriteFields ?? [];
-      } else if (userType === "owner") {
-        allowedFields = options.ownerWriteFields ?? [];
-      } else if (userType === "auth") {
-        allowedFields = options.authWriteFields ?? [];
-      } else {
-        allowedFields = options.anonWriteFields ?? [];
-      }
-      const unallowedFields = Object.keys(obj).filter((k) => !allowedFields.includes(k));
-      if (unallowedFields.length) {
-        throw new Error(
-          `User of type ${userType} cannot write fields: ${unallowedFields.join(", ")}`
-        );
-      }
-      return obj;
-    },
-    serialize: (obj: T, user?: User) => {
-      const userType = getUserType(user, obj);
-      if (userType === "admin") {
-        return pickFields(obj, [...(options.adminReadFields ?? []), "id"]);
-      } else if (userType === "owner") {
-        return pickFields(obj, [...(options.ownerReadFields ?? []), "id"]);
-      } else if (userType === "auth") {
-        return pickFields(obj, [...(options.authReadFields ?? []), "id"]);
-      } else {
-        return pickFields(obj, [...(options.anonReadFields ?? []), "id"]);
-      }
-    },
-  };
-}
-
 // A function to decide which model to use. If no discriminators are provided, just returns the base model. If
-function getModel(baseModel: Model<any>, body?: any, options?: GooseRESTOptions<any>) {
+function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOptions<any>) {
   const discriminatorKey = options?.discriminatorKey ?? "__t";
   const modelName = (body ?? {})[discriminatorKey];
   if (!modelName) {
@@ -203,9 +148,9 @@ function getModel(baseModel: Model<any>, body?: any, options?: GooseRESTOptions<
  * @param baseModel A Mongoose Model
  * @param options Options for configuring the REST API, such as permissions, transformers, and hooks.
  */
-export function gooseRestRouter<T>(
+export function fernsRouter<T>(
   baseModel: Model<any>,
-  options: GooseRESTOptions<T>
+  options: FernsRouterOptions<T>
 ): express.Router {
   const router = express.Router();
 
@@ -681,3 +626,7 @@ function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextF
 const asyncHandler = (fn: any) => (req: Request, res: Response, next: NextFunction) => {
   return Promise.resolve(fn(req, res, next)).catch(next);
 };
+
+// For backwards compatibility with the old names.
+export const gooseRestRouter = fernsRouter;
+export type GooseRESTOptions<T> = FernsRouterOptions<T>;

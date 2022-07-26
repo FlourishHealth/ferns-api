@@ -7,8 +7,6 @@ import {Strategy as LocalStrategy} from "passport-local";
 
 import {logger} from "./logger";
 
-type UserType = "anon" | "auth" | "owner" | "admin";
-
 export interface User {
   _id: ObjectId | string;
   id: string;
@@ -257,17 +255,4 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
   app.set("etag", false);
   app.use("/auth", router);
-}
-
-export function getUserType(user?: User, obj?: any): UserType {
-  if (user?.admin) {
-    return "admin";
-  }
-  if (obj && user && String(obj?.ownerId) === String(user?.id)) {
-    return "owner";
-  }
-  if (user?.id) {
-    return "auth";
-  }
-  return "anon";
 }

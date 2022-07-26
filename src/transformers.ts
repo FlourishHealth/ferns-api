@@ -1,10 +1,10 @@
 import {Document} from "mongoose";
 
-import {GooseRESTOptions} from "./api";
+import {FernsRouterOptions} from "./api";
 import {User} from "./auth";
 import {logger} from "./logger";
 
-export interface GooseTransformer<T> {
+export interface FernsTransformer<T> {
   // Runs before create or update operations. Allows throwing out fields that the user should be
   // able to write to, modify data, check permissions, etc.
   transform?: (obj: Partial<T>, method: "create" | "update", user?: User) => Partial<T> | undefined;
@@ -13,8 +13,79 @@ export interface GooseTransformer<T> {
   serialize?: (obj: T, user?: User) => Partial<T> | undefined;
 }
 
+function getUserType(user?: User, obj?: any): "anon" | "auth" | "owner" | "admin" {
+  if (user?.admin) {
+    return "admin";
+  }
+  if (obj && user && String(obj?.ownerId) === String(user?.id)) {
+    return "owner";
+  }
+  if (user?.id) {
+    return "auth";
+  }
+  return "anon";
+}
+
+export function AdminOwnerTransformer<T>(options: {
+  // TODO: do something with KeyOf here.
+  anonReadFields?: string[];
+  authReadFields?: string[];
+  ownerReadFields?: string[];
+  adminReadFields?: string[];
+  anonWriteFields?: string[];
+  authWriteFields?: string[];
+  ownerWriteFields?: string[];
+  adminWriteFields?: string[];
+}): FernsTransformer<T> {
+  function pickFields(obj: Partial<T>, fields: any[]): Partial<T> {
+    const newData: Partial<T> = {};
+    for (const field of fields) {
+      if (obj[field] !== undefined) {
+        newData[field] = obj[field];
+      }
+    }
+    return newData;
+  }
+
+  return {
+    // TODO: Migrate AdminOwnerTransform to use pre-hooks.
+    transform: (obj: Partial<T>, method: "create" | "update", user?: User) => {
+      const userType = getUserType(user, obj);
+      let allowedFields: any;
+      if (userType === "admin") {
+        allowedFields = options.adminWriteFields ?? [];
+      } else if (userType === "owner") {
+        allowedFields = options.ownerWriteFields ?? [];
+      } else if (userType === "auth") {
+        allowedFields = options.authWriteFields ?? [];
+      } else {
+        allowedFields = options.anonWriteFields ?? [];
+      }
+      const unallowedFields = Object.keys(obj).filter((k) => !allowedFields.includes(k));
+      if (unallowedFields.length) {
+        throw new Error(
+          `User of type ${userType} cannot write fields: ${unallowedFields.join(", ")}`
+        );
+      }
+      return obj;
+    },
+    serialize: (obj: T, user?: User) => {
+      const userType = getUserType(user, obj);
+      if (userType === "admin") {
+        return pickFields(obj, [...(options.adminReadFields ?? []), "id"]);
+      } else if (userType === "owner") {
+        return pickFields(obj, [...(options.ownerReadFields ?? []), "id"]);
+      } else if (userType === "auth") {
+        return pickFields(obj, [...(options.authReadFields ?? []), "id"]);
+      } else {
+        return pickFields(obj, [...(options.anonReadFields ?? []), "id"]);
+      }
+    },
+  };
+}
+
 export function transform<T>(
-  options: GooseRESTOptions<T>,
+  options: FernsRouterOptions<T>,
   data: Partial<T> | Partial<T>[],
   method: "create" | "update",
   user?: User
@@ -38,7 +109,7 @@ export function transform<T>(
 }
 
 export function serialize<T>(
-  options: GooseRESTOptions<T>,
+  options: FernsRouterOptions<T>,
   data: Document<T, {}, {}> | Document<T, {}, {}>[],
   user?: User
 ) {
