@@ -1,9 +1,12 @@
 import express from "express";
 import mongoose, {model, Schema} from "mongoose";
 
-import {logger, tokenPlugin} from ".";
-import {baseUserPlugin, createdUpdatedPlugin, gooseRestRouter, Permissions, setupAuth} from "./api";
+import {fernsRouter} from "./api";
+import {setupAuth} from "./auth";
+import {logger} from "./logger";
 import {passportLocalMongoose} from "./passport";
+import {Permissions} from "./permissions";
+import {baseUserPlugin, createdUpdatedPlugin, tokenPlugin} from "./plugins";
 
 mongoose.connect("mongodb://localhost:27017/example");
 
@@ -58,7 +61,7 @@ function getBaseServer() {
   setupAuth(app, UserModel as any);
   app.use(
     "/food",
-    gooseRestRouter(FoodModel, {
+    fernsRouter(FoodModel, {
       permissions: {
         list: [Permissions.IsAny],
         create: [Permissions.IsAuthenticated],

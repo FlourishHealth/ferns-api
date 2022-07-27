@@ -1,174 +1,27 @@
 import chai from "chai";
-import express, {Express} from "express";
+import express from "express";
 import sortBy from "lodash/sortBy";
-import mongoose, {model, ObjectId, Schema} from "mongoose";
+import mongoose from "mongoose";
 import qs from "qs";
 import supertest from "supertest";
 
+import {fernsRouter} from "./api";
+import {setupAuth} from "./auth";
+import {Permissions} from "./permissions";
 import {
-  AdminOwnerTransformer,
-  createdUpdatedPlugin,
-  gooseRestRouter,
-  Permissions,
-  setupAuth,
-  tokenPlugin,
-} from "./api";
-import {passportLocalMongoose} from "./passport";
+  authAsUser,
+  Food,
+  FoodModel,
+  getBaseServer,
+  setupDb,
+  StaffUser,
+  StaffUserModel,
+  SuperUser,
+  SuperUserModel,
+  UserModel,
+} from "./tests";
 
 const assert = chai.assert;
-
-mongoose.connect("mongodb://localhost:27017/ferns");
-
-interface User {
-  admin: boolean;
-  username: string;
-  email: string;
-  age?: number;
-}
-
-interface SuperUser extends User {
-  superTitle: string;
-}
-
-interface StaffUser extends User {
-  department: string;
-}
-
-interface FoodCategory {
-  _id?: string;
-  name: string;
-  show: boolean;
-}
-
-interface Food {
-  _id: string;
-  name: string;
-  calories: number;
-  created: Date;
-  ownerId: mongoose.Types.ObjectId | User;
-  hidden?: boolean;
-  source: {
-    name: string;
-  };
-  tags: string[];
-  categories: FoodCategory[];
-}
-
-const userSchema = new Schema<User>({
-  username: String,
-  admin: {type: Boolean, default: false},
-  age: Number,
-});
-
-userSchema.plugin(passportLocalMongoose, {usernameField: "email"});
-userSchema.plugin(tokenPlugin);
-userSchema.plugin(createdUpdatedPlugin);
-userSchema.methods.postCreate = async function (body: any) {
-  this.age = body.age;
-  return this.save();
-};
-
-const UserModel = model<User>("User", userSchema);
-
-const superUserSchema = new Schema<SuperUser>({
-  superTitle: {type: String, required: true},
-});
-const SuperUserModel = UserModel.discriminator("SuperUser", superUserSchema);
-
-const staffUserSchema = new Schema<StaffUser>({
-  department: {type: String, required: true},
-});
-const StaffUserModel = UserModel.discriminator("Staff", staffUserSchema);
-
-const foodCategorySchema = new Schema<FoodCategory>({
-  name: String,
-  show: Boolean,
-});
-
-const foodSchema = new Schema<Food>({
-  name: String,
-  calories: Number,
-  created: Date,
-  ownerId: {type: "ObjectId", ref: "User"},
-  source: {
-    name: String,
-  },
-  hidden: {type: Boolean, default: false},
-  tags: [String],
-  categories: [foodCategorySchema],
-});
-
-const FoodModel = model<Food>("Food", foodSchema);
-
-interface RequiredField {
-  name: string;
-  about?: string;
-}
-
-const requiredSchema = new Schema<RequiredField>({
-  name: {type: String, required: true},
-  about: String,
-});
-const RequiredModel = model<RequiredField>("Required", requiredSchema);
-
-function getBaseServer(): Express {
-  const app = express();
-
-  app.all("/*", function (req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "*");
-    // intercepts OPTIONS method
-    if (req.method === "OPTIONS") {
-      res.send(200);
-    } else {
-      next();
-    }
-  });
-  app.use(express.json());
-  return app;
-}
-
-afterAll(() => {
-  mongoose.connection.close();
-});
-
-export async function authAsUser(
-  app: express.Application,
-  type: "admin" | "notAdmin"
-): Promise<supertest.SuperAgentTest> {
-  const email = type === "admin" ? "admin@example.com" : "notAdmin@example.com";
-  const password = type === "admin" ? "securePassword" : "password";
-
-  const agent = supertest.agent(app);
-  const res = await agent.post("/auth/login").send({email, password}).expect(200);
-  agent.set("authorization", `Bearer ${res.body.data.token}`);
-  return agent;
-}
-
-async function setupDb() {
-  process.env.TOKEN_SECRET = "secret";
-  process.env.TOKEN_EXPIRES_IN = "30m";
-  process.env.TOKEN_ISSUER = "example.com";
-  process.env.SESSION_SECRET = "session";
-
-  try {
-    await Promise.all([UserModel.deleteMany({}), FoodModel.deleteMany({})]);
-    const [notAdmin, admin] = await Promise.all([
-      UserModel.create({email: "notAdmin@example.com"}),
-      UserModel.create({email: "admin@example.com", admin: true}),
-    ]);
-    await (notAdmin as any).setPassword("password");
-    await notAdmin.save();
-
-    await (admin as any).setPassword("securePassword");
-    await admin.save();
-
-    return [admin, notAdmin];
-  } catch (e) {
-    console.error("Error setting up DB", e);
-    throw e;
-  }
-}
 
 describe("ferns-api", () => {
   let server: supertest.SuperTest<supertest.Test>;
@@ -188,7 +41,7 @@ describe("ferns-api", () => {
       let deleteCalled = false;
       app.use(
         "/food",
-        gooseRestRouter(FoodModel, {
+        fernsRouter(FoodModel, {
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -256,7 +109,7 @@ describe("ferns-api", () => {
 
       app.use(
         "/food",
-        gooseRestRouter(FoodModel, {
+        fernsRouter(FoodModel, {
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -295,7 +148,7 @@ describe("ferns-api", () => {
       let deleteCalled = false;
       app.use(
         "/food",
-        gooseRestRouter(FoodModel, {
+        fernsRouter(FoodModel, {
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -355,384 +208,6 @@ describe("ferns-api", () => {
     });
   });
 
-  describe("permissions", function () {
-    beforeEach(async function () {
-      const [admin, notAdmin] = await setupDb();
-
-      await Promise.all([
-        FoodModel.create({
-          name: "Spinach",
-          calories: 1,
-          created: new Date(),
-          ownerId: notAdmin._id,
-        }),
-        FoodModel.create({
-          name: "Apple",
-          calories: 100,
-          created: new Date().getTime() - 10,
-          ownerId: admin._id,
-        }),
-      ]);
-      app = getBaseServer();
-      setupAuth(app, UserModel as any);
-      app.use(
-        "/food",
-        gooseRestRouter(FoodModel, {
-          permissions: {
-            list: [Permissions.IsAny],
-            create: [Permissions.IsAuthenticated],
-            read: [Permissions.IsAny],
-            update: [Permissions.IsOwner],
-            delete: [Permissions.IsAdmin],
-          },
-        })
-      );
-      app.use(
-        "/required",
-        gooseRestRouter(RequiredModel, {
-          permissions: {
-            list: [Permissions.IsAny],
-            create: [Permissions.IsAuthenticated],
-            read: [Permissions.IsAny],
-            update: [Permissions.IsOwner],
-            delete: [Permissions.IsAdmin],
-          },
-        })
-      );
-      server = supertest(app);
-    });
-
-    describe("anonymous food", function () {
-      it("list", async function () {
-        const res = await server.get("/food").expect(200);
-        assert.lengthOf(res.body.data, 2);
-      });
-
-      it("get", async function () {
-        const res = await server.get("/food").expect(200);
-        assert.lengthOf(res.body.data, 2);
-        const res2 = await server.get(`/food/${res.body.data[0]._id}`).expect(200);
-        assert.equal(res.body.data[0]._id, res2.body.data._id);
-      });
-
-      it("post", async function () {
-        const res = await server.post("/food").send({
-          name: "Broccoli",
-          calories: 15,
-        });
-        assert.equal(res.status, 405);
-      });
-
-      it("patch", async function () {
-        const res = await server.get("/food");
-        const res2 = await server.patch(`/food/${res.body.data[0]._id}`).send({
-          name: "Broccoli",
-        });
-        assert.equal(res2.status, 403);
-      });
-
-      it("delete", async function () {
-        const res = await server.get("/food");
-        const res2 = await server.delete(`/food/${res.body.data[0]._id}`);
-        assert.equal(res2.status, 405);
-      });
-    });
-
-    describe("non admin food", function () {
-      let agent: supertest.SuperAgentTest;
-      beforeEach(async function () {
-        agent = await authAsUser(app, "notAdmin");
-      });
-
-      it("list", async function () {
-        const res = await agent.get("/food").expect(200);
-        assert.lengthOf(res.body.data, 2);
-      });
-
-      it("get", async function () {
-        const res = await agent.get("/food").expect(200);
-        assert.lengthOf(res.body.data, 2);
-        const res2 = await server.get(`/food/${res.body.data[0]._id}`).expect(200);
-        assert.equal(res.body.data[0]._id, res2.body.data._id);
-      });
-
-      it("post", async function () {
-        await agent
-          .post("/food")
-          .send({
-            name: "Broccoli",
-            calories: 15,
-          })
-          .expect(201);
-      });
-
-      it("patch own item", async function () {
-        const res = await agent.get("/food");
-        const spinach = res.body.data.find((food: Food) => food.name === "Spinach");
-        const res2 = await agent
-          .patch(`/food/${spinach._id}`)
-          .send({
-            name: "Broccoli",
-          })
-          .expect(200);
-        assert.equal(res2.body.data.name, "Broccoli");
-      });
-
-      it("patch other item", async function () {
-        const res = await agent.get("/food");
-        const spinach = res.body.data.find((food: Food) => food.name === "Apple");
-        await agent
-          .patch(`/food/${spinach._id}`)
-          .send({
-            name: "Broccoli",
-          })
-          .expect(403);
-      });
-
-      it("delete", async function () {
-        const res = await agent.get("/food");
-        const res2 = await agent.delete(`/food/${res.body.data[0]._id}`);
-        assert.equal(res2.status, 405);
-      });
-    });
-
-    describe("admin food", function () {
-      let agent: supertest.SuperAgentTest;
-
-      beforeEach(async function () {
-        agent = await authAsUser(app, "admin");
-      });
-
-      it("list", async function () {
-        const res = await agent.get("/food");
-        assert.lengthOf(res.body.data, 2);
-      });
-
-      it("get", async function () {
-        const res = await agent.get("/food");
-        assert.lengthOf(res.body.data, 2);
-        const res2 = await agent.get(`/food/${res.body.data[0]._id}`);
-        assert.equal(res.body.data[0]._id, res2.body.data._id);
-      });
-
-      it("post", async function () {
-        const res = await agent.post("/food").send({
-          name: "Broccoli",
-          calories: 15,
-        });
-        assert.equal(res.status, 201);
-      });
-
-      it("patch", async function () {
-        const res = await agent.get("/food");
-        await agent
-          .patch(`/food/${res.body.data[0]._id}`)
-          .send({
-            name: "Broccoli",
-          })
-          .expect(200);
-      });
-
-      it("delete", async function () {
-        const res = await agent.get("/food");
-        await agent.delete(`/food/${res.body.data[0]._id}`).expect(204);
-      });
-
-      it("handles validation errors", async function () {
-        await agent
-          .post("/required")
-          .send({
-            about: "Whoops forgot required",
-          })
-          .expect(400);
-      });
-    });
-  });
-
-  describe("query and transform", function () {
-    let notAdmin: any;
-    let admin: any;
-
-    beforeEach(async function () {
-      [admin, notAdmin] = await setupDb();
-
-      await Promise.all([
-        FoodModel.create({
-          name: "Spinach",
-          calories: 1,
-          created: new Date(),
-          ownerId: notAdmin._id,
-        }),
-        FoodModel.create({
-          name: "Apple",
-          calories: 100,
-          created: new Date().getTime() - 10,
-          ownerId: admin._id,
-          hidden: true,
-        }),
-        FoodModel.create({
-          name: "Carrots",
-          calories: 100,
-          created: new Date().getTime() - 10,
-          ownerId: admin._id,
-        }),
-      ]);
-      app = getBaseServer();
-      setupAuth(app, UserModel as any);
-      app.use(
-        "/food",
-        gooseRestRouter(FoodModel, {
-          permissions: {
-            list: [Permissions.IsAny],
-            create: [Permissions.IsAny],
-            read: [Permissions.IsAny],
-            update: [Permissions.IsAny],
-            delete: [Permissions.IsAny],
-          },
-          queryFilter: (user?: {_id: ObjectId | string; admin: boolean}) => {
-            if (!user?.admin) {
-              return {hidden: {$ne: true}};
-            }
-            return {};
-          },
-          transformer: AdminOwnerTransformer<Food>({
-            adminReadFields: ["name", "calories", "created", "ownerId"],
-            adminWriteFields: ["name", "calories", "created", "ownerId"],
-            ownerReadFields: ["name", "calories", "created", "ownerId"],
-            ownerWriteFields: ["name", "calories", "created"],
-            authReadFields: ["name", "calories", "created"],
-            authWriteFields: ["name", "calories"],
-            anonReadFields: ["name"],
-            anonWriteFields: [],
-          }),
-        })
-      );
-      server = supertest(app);
-    });
-
-    it("filters list for non-admin", async function () {
-      const agent = await authAsUser(app, "notAdmin");
-      const foodRes = await agent.get("/food").expect(200);
-      assert.lengthOf(foodRes.body.data, 2);
-    });
-
-    it("does not filter list for admin", async function () {
-      const agent = await authAsUser(app, "admin");
-      const foodRes = await agent.get("/food").expect(200);
-      assert.lengthOf(foodRes.body.data, 3);
-    });
-
-    it("admin read transform", async function () {
-      const agent = await authAsUser(app, "admin");
-      const foodRes = await agent.get("/food").expect(200);
-      assert.lengthOf(foodRes.body.data, 3);
-      const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      assert.isDefined(spinach.created);
-      assert.isDefined(spinach.id);
-      assert.isDefined(spinach.ownerId);
-      assert.equal(spinach.name, "Spinach");
-      assert.equal(spinach.calories, 1);
-      assert.isUndefined(spinach.hidden);
-    });
-
-    it("admin write transform", async function () {
-      const agent = await authAsUser(app, "admin");
-      const foodRes = await agent.get("/food").expect(200);
-      const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      const spinachRes = await agent
-        .patch(`/food/${spinach.id}`)
-        .send({name: "Lettuce"})
-        .expect(200);
-      assert.equal(spinachRes.body.data.name, "Lettuce");
-    });
-
-    it("owner read transform", async function () {
-      const agent = await authAsUser(app, "notAdmin");
-      const foodRes = await agent.get("/food").expect(200);
-      assert.lengthOf(foodRes.body.data, 2);
-      const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      assert.isDefined(spinach.id);
-      assert.equal(spinach.name, "Spinach");
-      assert.equal(spinach.calories, 1);
-      assert.isDefined(spinach.created);
-      assert.isDefined(spinach.ownerId);
-      assert.isUndefined(spinach.hidden);
-    });
-
-    it("owner write transform", async function () {
-      const agent = await authAsUser(app, "notAdmin");
-      const foodRes = await agent.get("/food").expect(200);
-      const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      await agent.patch(`/food/${spinach.id}`).send({ownerId: admin.id}).expect(403);
-    });
-
-    it("owner write transform fails", async function () {
-      const agent = await authAsUser(app, "notAdmin");
-      const foodRes = await agent.get("/food").expect(200);
-      const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      const spinachRes = await agent
-        .patch(`/food/${spinach.id}`)
-        .send({ownerId: notAdmin.id})
-        .expect(403);
-      assert.equal(spinachRes.body.message, "User of type owner cannot write fields: ownerId");
-    });
-
-    it("auth read transform", async function () {
-      const agent = await authAsUser(app, "notAdmin");
-      const foodRes = await agent.get("/food").expect(200);
-      assert.lengthOf(foodRes.body.data, 2);
-      const spinach = foodRes.body.data.find((food: Food) => food.name === "Spinach");
-      assert.isDefined(spinach.id);
-      assert.equal(spinach.name, "Spinach");
-      assert.equal(spinach.calories, 1);
-      assert.isDefined(spinach.created);
-      // Owner, so this is defined.
-      assert.isDefined(spinach.ownerId);
-      assert.isUndefined(spinach.hidden);
-
-      const carrots = foodRes.body.data.find((food: Food) => food.name === "Carrots");
-      assert.isDefined(carrots.id);
-      assert.equal(carrots.name, "Carrots");
-      assert.equal(carrots.calories, 100);
-      assert.isDefined(carrots.created);
-      // Not owner, so undefined.
-      assert.isUndefined(carrots.ownerId);
-      assert.isUndefined(spinach.hidden);
-    });
-
-    it("auth write transform", async function () {
-      const agent = await authAsUser(app, "notAdmin");
-      const foodRes = await agent.get("/food");
-      const carrots = foodRes.body.data.find((food: Food) => food.name === "Carrots");
-      const carrotRes = await agent.patch(`/food/${carrots.id}`).send({calories: 2000}).expect(200);
-      assert.equal(carrotRes.body.data.calories, 2000);
-    });
-
-    it("auth write transform fail", async function () {
-      const agent = await authAsUser(app, "notAdmin");
-      const foodRes = await agent.get("/food");
-      const carrots = foodRes.body.data.find((food: Food) => food.name === "Carrots");
-      const writeRes = await agent
-        .patch(`/food/${carrots.id}`)
-        .send({created: "2020-01-01T00:00:00Z"})
-        .expect(403);
-      assert.equal(writeRes.body.message, "User of type auth cannot write fields: created");
-    });
-
-    it("anon read transform", async function () {
-      const res = await server.get("/food");
-      assert.lengthOf(res.body.data, 2);
-      assert.isDefined(res.body.data.find((f: Food) => f.name === "Spinach"));
-      assert.isDefined(res.body.data.find((f: Food) => f.name === "Carrots"));
-    });
-
-    it("anon write transform fails", async function () {
-      const foodRes = await server.get("/food");
-      const carrots = foodRes.body.data.find((food: Food) => food.name === "Carrots");
-      await server.patch(`/food/${carrots.id}`).send({calories: 10}).expect(403);
-    });
-  });
-
   describe("model array operations", function () {
     let admin: any;
     let spinach: Food;
@@ -777,7 +252,7 @@ describe("ferns-api", () => {
       setupAuth(app, UserModel as any);
       app.use(
         "/food",
-        gooseRestRouter(FoodModel, {
+        fernsRouter(FoodModel, {
           permissions: {
             list: [Permissions.IsAdmin],
             create: [Permissions.IsAdmin],
@@ -925,7 +400,7 @@ describe("ferns-api", () => {
       setupAuth(app, UserModel as any);
       app.use(
         "/food",
-        gooseRestRouter(FoodModel, {
+        fernsRouter(FoodModel, {
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAuthenticated],
@@ -1093,7 +568,7 @@ describe("ferns-api", () => {
       setupAuth(app, UserModel as any);
       app.use(
         "/users",
-        gooseRestRouter(UserModel, {
+        fernsRouter(UserModel, {
           permissions: {
             list: [Permissions.IsAuthenticated],
             create: [Permissions.IsAuthenticated],
@@ -1243,208 +718,5 @@ describe("ferns-api", () => {
       const user = await SuperUserModel.findById(notAdmin._id);
       assert.isNull(user);
     });
-  });
-});
-
-describe("test token auth", function () {
-  let app: express.Application;
-  let server: any;
-
-  beforeEach(async function () {
-    const [admin, notAdmin] = await setupDb();
-
-    await Promise.all([
-      FoodModel.create({
-        name: "Spinach",
-        calories: 1,
-        created: new Date(),
-        ownerId: notAdmin._id,
-      }),
-      FoodModel.create({
-        name: "Apple",
-        calories: 100,
-        created: new Date().getTime() - 10,
-        ownerId: admin._id,
-        hidden: true,
-      }),
-      FoodModel.create({
-        name: "Carrots",
-        calories: 100,
-        created: new Date().getTime() - 10,
-        ownerId: admin._id,
-      }),
-    ]);
-    app = getBaseServer();
-    setupAuth(app, UserModel as any);
-    app.use(
-      "/food",
-      gooseRestRouter(FoodModel, {
-        permissions: {
-          list: [Permissions.IsAny],
-          create: [Permissions.IsAuthenticated],
-          read: [Permissions.IsAny],
-          update: [Permissions.IsAuthenticated],
-          delete: [Permissions.IsAuthenticated],
-        },
-        queryFilter: (user?: {admin: boolean}) => {
-          if (!user?.admin) {
-            return {hidden: {$ne: true}};
-          }
-          return {};
-        },
-        transformer: AdminOwnerTransformer<Food>({
-          adminReadFields: ["name", "calories", "created", "ownerId"],
-          adminWriteFields: ["name", "calories", "created", "ownerId"],
-          ownerReadFields: ["name", "calories", "created", "ownerId"],
-          ownerWriteFields: ["name", "calories", "created"],
-          authReadFields: ["name", "calories", "created"],
-          authWriteFields: ["name", "calories"],
-          anonReadFields: ["name"],
-          anonWriteFields: [],
-        }),
-      })
-    );
-    server = supertest(app);
-  });
-
-  it("completes token signup e2e", async function () {
-    const agent = supertest.agent(app);
-    let res = await server
-      .post("/auth/signup")
-      .send({email: "new@example.com", password: "123"})
-      .expect(200);
-    let {userId, token} = res.body.data;
-    assert.isDefined(userId);
-    assert.isDefined(token);
-
-    res = await server
-      .post("/auth/login")
-      .send({email: "new@example.com", password: "123"})
-      .expect(200);
-    agent.set("authorization", `Bearer ${res.body.data.token}`);
-
-    userId = res.body.data.userId;
-    token = res.body.data.token;
-    assert.isDefined(userId);
-    assert.isDefined(token);
-
-    const food = await FoodModel.create({
-      name: "Peas",
-      calories: 1,
-      created: new Date(),
-      ownerId: userId,
-    });
-
-    const meRes = await agent.get("/auth/me").expect(200);
-    assert.isDefined(meRes.body.data._id);
-    assert.isDefined(meRes.body.data.id);
-    assert.isUndefined(meRes.body.data.hash);
-    assert.equal(meRes.body.data.email, "new@example.com");
-    assert.isDefined(meRes.body.data.token);
-    assert.isDefined(meRes.body.data.updated);
-    assert.isDefined(meRes.body.data.created);
-    assert.isFalse(meRes.body.data.admin);
-
-    const mePatchRes = await server
-      .patch("/auth/me")
-      .send({email: "new2@example.com"})
-      .set("authorization", `Bearer ${token}`)
-      .expect(200);
-    assert.isDefined(mePatchRes.body.data._id);
-    assert.isDefined(mePatchRes.body.data.id);
-    assert.isUndefined(mePatchRes.body.data.hash);
-    assert.equal(mePatchRes.body.data.email, "new2@example.com");
-    assert.isDefined(mePatchRes.body.data.token);
-    assert.isDefined(mePatchRes.body.data.updated);
-    assert.isDefined(mePatchRes.body.data.created);
-    assert.isFalse(mePatchRes.body.data.admin);
-
-    // Use token to see 2 foods + the one we just created
-    const getRes = await agent.get("/food").expect(200);
-
-    assert.lengthOf(getRes.body.data, 3);
-    assert.isDefined(getRes.body.data.find((f: any) => f.name === "Peas"));
-
-    const updateRes = await agent
-      .patch(`/food/${food._id}`)
-      .send({name: "PeasAndCarrots"})
-      .expect(200);
-    assert.equal(updateRes.body.data.name, "PeasAndCarrots");
-  });
-
-  it("signup with extra data", async function () {
-    const res = await server
-      .post("/auth/signup")
-      .send({email: "new@example.com", password: "123", age: 25})
-      .expect(200);
-    const {userId, token} = res.body.data;
-    assert.isDefined(userId);
-    assert.isDefined(token);
-
-    const user = await UserModel.findOne({email: "new@example.com"});
-    assert.equal(user?.age, 25);
-  });
-
-  it("login failure", async function () {
-    let res = await server
-      .post("/auth/login")
-      .send({email: "admin@example.com", password: "wrong"})
-      .expect(401);
-    assert.deepEqual(res.body, {message: "Incorrect Password"});
-    res = await server
-      .post("/auth/login")
-      .send({email: "nope@example.com", password: "wrong"})
-      .expect(401);
-    assert.deepEqual(res.body, {message: "User Not Found"});
-  });
-
-  it("completes token login e2e", async function () {
-    const agent = supertest.agent(app);
-    const res = await agent
-      .post("/auth/login")
-      .send({email: "admin@example.com", password: "securePassword"})
-      .expect(200);
-    const {userId, token} = res.body.data;
-    assert.isDefined(userId);
-    assert.isDefined(token);
-
-    agent.set("authorization", `Bearer ${res.body.data.token}`);
-
-    const meRes = await agent.get("/auth/me").expect(200);
-    assert.isDefined(meRes.body.data._id);
-    assert.isDefined(meRes.body.data.id);
-    assert.isUndefined(meRes.body.data.hash);
-    assert.equal(meRes.body.data.email, "admin@example.com");
-    assert.isDefined(meRes.body.data.token);
-    assert.isDefined(meRes.body.data.updated);
-    assert.isDefined(meRes.body.data.created);
-    assert.isTrue(meRes.body.data.admin);
-
-    const mePatchRes = await agent
-      .patch("/auth/me")
-      .send({email: "admin2@example.com"})
-      .expect(200);
-    assert.isDefined(mePatchRes.body.data._id);
-    assert.isDefined(mePatchRes.body.data.id);
-    assert.isUndefined(mePatchRes.body.data.hash);
-    assert.equal(mePatchRes.body.data.email, "admin2@example.com");
-    assert.isDefined(mePatchRes.body.data.token);
-    assert.isDefined(mePatchRes.body.data.updated);
-    assert.isDefined(mePatchRes.body.data.created);
-    assert.isTrue(mePatchRes.body.data.admin);
-
-    // Use token to see admin foods
-    const getRes = await agent.get("/food").expect(200);
-
-    assert.lengthOf(getRes.body.data, 3);
-    const food = getRes.body.data.find((f: any) => f.name === "Apple");
-    assert.isDefined(food);
-
-    const updateRes = await server
-      .patch(`/food/${food.id}`)
-      .set("authorization", `Bearer ${token}`)
-      .send({name: "Apple Pie"})
-      .expect(200);
-    assert.equal(updateRes.body.data.name, "Apple Pie");
   });
 });
