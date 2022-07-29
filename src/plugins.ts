@@ -1,5 +1,7 @@
 import jwt from "jsonwebtoken";
-import {Schema} from "mongoose";
+import {FilterQuery, Schema} from "mongoose";
+
+import {APIError} from "./errors";
 
 export function tokenPlugin(schema: Schema) {
   schema.add({token: {type: String, index: true}});
@@ -85,4 +87,28 @@ export function createdUpdatedPlugin(schema: Schema) {
 
 export function firebaseJWTPlugin(schema: Schema) {
   schema.add({firebaseId: {type: String, index: true}});
+}
+
+/**
+ * This adds a static method `Model.findOneOrThrow` to the schema. This should replace `Model.findOne` in most instances.
+ * `Model.findOne` should only be used with a unique index, but that's not apparent from the docs. Otherwise you can wind
+ * up with a random document that matches the query. The returns either null if no document matches, the actual
+ * document, or throws an exception if multiple are found.
+ * @param schema Mongoose Schema
+ */
+export function findOneOrThrow<T>(schema: Schema) {
+  schema.statics.findOneOrThrow = async function (query: FilterQuery<T>): Promise<T | null> {
+    const results = await this.find(query);
+    if (results.length === 0) {
+      return null;
+    } else if (results.length > 1) {
+      throw new APIError({
+        status: 500,
+        title: "findOne query returned multiple documents",
+        detail: `query: ${JSON.stringify(query)}`,
+      });
+    } else {
+      return results[0];
+    }
+  };
 }
