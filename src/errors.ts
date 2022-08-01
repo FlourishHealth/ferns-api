@@ -1,4 +1,5 @@
 // https://jsonapi.org/format/#errors
+import {NextFunction, Request, Response} from "express";
 import {Schema} from "mongoose";
 
 import {logger} from "./logger";
@@ -154,4 +155,11 @@ export function getAPIErrorBody(error: APIError): {[id: string]: any} {
     }
   }
   return errorData;
+}
+
+export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
+  if (isAPIError(err)) {
+    return res.status(err.status).json(getAPIErrorBody(err));
+  }
+  return next(err);
 }
