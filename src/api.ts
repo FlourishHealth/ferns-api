@@ -7,7 +7,7 @@ import express, {NextFunction, Request, Response} from "express";
 import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
-import {APIError, getAPIErrorBody, isAPIError} from "./errors";
+import {APIError, apiErrorMiddleware} from "./errors";
 import {logger} from "./logger";
 import {checkPermissions, RESTPermissions} from "./permissions";
 import {FernsTransformer, serialize, transform} from "./transformers";
@@ -613,13 +613,6 @@ export function fernsRouter<T>(
   }
 
   return router;
-}
-
-function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
-  if (isAPIError(err)) {
-    return res.status(err.status).json(getAPIErrorBody(err));
-  }
-  return next(err);
 }
 
 // Since express doesn't handle async routes well, wrap them with this function.
