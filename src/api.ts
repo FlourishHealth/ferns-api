@@ -321,7 +321,20 @@ export function fernsRouter<T>(
       return res.sendStatus(405);
     }
 
-    const data = await model.findById(req.params.id);
+    let builtQuery = model.findById(req.params.id);
+    for (const populatePath of options.populatePaths ?? []) {
+      builtQuery = builtQuery.populate(populatePath);
+    }
+
+    let data;
+    try {
+      data = await builtQuery.exec();
+    } catch (e) {
+      throw new APIError({
+        status: 500,
+        title: `GET failed on ${req.params.id}: : ${(e as any).stack}`,
+      });
+    }
 
     if (!data) {
       return res.sendStatus(404);
