@@ -7,7 +7,7 @@ import express, {NextFunction, Request, Response} from "express";
 import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
-import {APIError, getAPIErrorBody, isAPIError} from "./errors";
+import {APIError, apiErrorMiddleware, isAPIError} from "./errors";
 import {logger} from "./logger";
 import {checkPermissions, RESTPermissions} from "./permissions";
 import {FernsTransformer, serialize, transform} from "./transformers";
@@ -177,7 +177,13 @@ export function fernsRouter<T>(
       try {
         body = await options.preCreate(body, req);
       } catch (e) {
-        return res.status(400).send({message: `Pre Create error: ${(e as any).message}`});
+        if (isAPIError(e)) {
+          throw e;
+        } else {
+          throw new APIError({
+            title: `Pre Create error: ${(e as any).message}`,
+          });
+        }
       }
       if (body === null) {
         return res.status(403).send({message: "Pre Create returned null"});
@@ -374,10 +380,13 @@ export function fernsRouter<T>(
       try {
         body = await options.preUpdate(body, req);
       } catch (e) {
-        logger.warn(`PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`);
-        return res
-          .status(400)
-          .send({message: `PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`});
+        if (isAPIError(e)) {
+          throw e;
+        } else {
+          throw new APIError({
+            title: `Pre Update error on ${req.params.id}: ${(e as any).message}`,
+          });
+        }
       }
       if (body === null) {
         logger.warn(`PATCH Pre Update on ${req.params.id} returned null`);
@@ -436,8 +445,13 @@ export function fernsRouter<T>(
           return res.status(403).send({message: `Pre Delete for: ${req.params.id} returned null`});
         }
       } catch (e) {
-        logger.warn(`DELETE Pre Delete error for ${req.params.id} error: ${(e as any).message}`);
-        return res.status(400).send({message: `Pre Delete error: ${(e as any).message}`});
+        if (isAPIError(e)) {
+          throw e;
+        } else {
+          throw new APIError({
+            title: `Pre Delete error on ${req.params.id}: ${(e as any).message}`,
+          });
+        }
       }
     }
 
@@ -609,17 +623,10 @@ export function fernsRouter<T>(
     router.post(`/:id/:field`, authenticateMiddleware(true), asyncHandler(arrayPost));
     router.patch(`/:id/:field/:itemId`, authenticateMiddleware(true), asyncHandler(arrayPatch));
     router.delete(`/:id/:field/:itemId`, authenticateMiddleware(true), asyncHandler(arrayDelete));
-    router.use(apiErrorMiddleware);
   }
+  router.use(apiErrorMiddleware);
 
   return router;
-}
-
-function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
-  if (isAPIError(err)) {
-    return res.status(err.status).json(getAPIErrorBody(err));
-  }
-  return next(err);
 }
 
 // Since express doesn't handle async routes well, wrap them with this function.

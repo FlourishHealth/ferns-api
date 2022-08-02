@@ -8,6 +8,7 @@ import onFinished from "on-finished";
 import passport from "passport";
 
 import {setupAuth, UserModel as UserMongooseModel} from "./auth";
+import {apiErrorMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
@@ -142,6 +143,9 @@ function initializeRoutes(
 
   // The error handler must be before any other error middleware and after all controllers
   app.use(Sentry.Handlers.errorHandler());
+
+  // Catch any thrown APIErrors and return them in an OpenAPI compatible format
+  app.use(apiErrorMiddleware);
 
   app.use(function onError(_err: any, _req: any, res: any, _next: any) {
     logger.error("Fallthrough error", _err);
