@@ -8,7 +8,6 @@ import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
 import {APIError, apiErrorMiddleware, isAPIError} from "./errors";
-import {logger} from "./logger";
 import {checkPermissions, RESTPermissions} from "./permissions";
 import {FernsTransformer, serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
@@ -163,15 +162,20 @@ export function fernsRouter<T>(
   router.post("/", authenticateMiddleware(true), async (req, res) => {
     const model = getModel(baseModel, req.body?.__t, options);
     if (!(await checkPermissions("create", options.permissions.create, req.user))) {
-      logger.warn(`Access to CREATE on ${model.name} denied for ${req.user?.id}`);
-      return res.sendStatus(405);
+      throw new APIError({
+        status: 405,
+        title: `Access to POST on ${model.name} denied for ${req.user?.id}`,
+      });
     }
 
     let body;
     try {
       body = transform<T>(options, req.body, "create", req.user);
     } catch (e) {
-      return res.status(403).send({message: (e as any).message});
+      throw new APIError({
+        status: 403,
+        title: (e as any).message,
+      });
     }
     if (options.preCreate) {
       try {
@@ -181,25 +185,35 @@ export function fernsRouter<T>(
           throw e;
         } else {
           throw new APIError({
-            title: `Pre Create error: ${(e as any).message}`,
+            title: `preCreate hook error: ${(e as any).message}`,
           });
         }
       }
       if (body === null) {
-        return res.status(403).send({message: "Pre Create returned null"});
+        throw new APIError({
+          status: 403,
+          title: "Create not allowed",
+          detail: "preCreate hook returned null",
+        });
       }
     }
     let data;
     try {
       data = await model.create(body);
     } catch (e) {
-      return res.status(400).send({message: (e as any).message});
+      throw new APIError({
+        status: 403,
+        title: (e as any).message,
+      });
     }
     if (options.postCreate) {
       try {
         await options.postCreate(data, req);
       } catch (e) {
-        return res.status(400).send({message: `Post Create error: ${(e as any).message}`});
+        throw new APIError({
+          status: 400,
+          title: `postCreate hook error: ${(e as any).message}`,
+        });
       }
     }
     // @ts-ignore TS being overprotective of data since we are using generics
@@ -212,8 +226,10 @@ export function fernsRouter<T>(
     const model = baseModel;
 
     if (!(await checkPermissions("list", options.permissions.list, req.user))) {
-      logger.warn(`Access to LIST on ${model.name} denied for ${req.user?.id}`);
-      return res.sendStatus(403);
+      throw new APIError({
+        status: 403,
+        title: `Access to LIST on ${model.name} denied for ${req.user?.id}`,
+      });
     }
 
     let query: any = {};
@@ -234,8 +250,10 @@ export function fernsRouter<T>(
           query[queryParam] = req.query[queryParam];
         }
       } else {
-        logger.debug("Unallowed query param", queryParam);
-        return res.status(400).json({message: `${queryParam} is not allowed as a query param.`});
+        throw new APIError({
+          status: 400,
+          title: `${queryParam} is not allowed as a query param.`,
+        });
       }
     }
 
@@ -254,7 +272,10 @@ export function fernsRouter<T>(
       try {
         queryFilter = await options.queryFilter(req.user, query);
       } catch (e) {
-        return res.status(400).json({message: `Query filter error: ${e}`});
+        throw new APIError({
+          status: 400,
+          title: `Query filter error: ${e}`,
+        });
       }
 
       // If the query filter returns null specifically, we know this is a query that shouldn't
@@ -278,7 +299,10 @@ export function fernsRouter<T>(
 
     if (req.query.page) {
       if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
-        return res.status(400).json({message: `Invalid page: ${req.query.page}`});
+        throw new APIError({
+          status: 400,
+          title: `Invalid page: ${req.query.page}`,
+        });
       }
       builtQuery = builtQuery.skip((Number(req.query.page) - 1) * limit);
     }
@@ -296,8 +320,9 @@ export function fernsRouter<T>(
     try {
       data = await builtQuery.exec();
     } catch (e) {
-      logger.error(`List error: ${(e as any).stack}`);
-      return res.sendStatus(500);
+      throw new APIError({
+        title: `List error: ${(e as any).stack}`,
+      });
     }
     let more;
     try {
@@ -313,8 +338,9 @@ export function fernsRouter<T>(
         return res.json({data: serialized});
       }
     } catch (e) {
-      logger.error("Serialization error", e);
-      return res.sendStatus(500);
+      throw new APIError({
+        title: `Serialization error: ${(e as any).message}`,
+      });
     }
   });
 
@@ -323,8 +349,10 @@ export function fernsRouter<T>(
     const model = baseModel;
 
     if (!(await checkPermissions("read", options.permissions.read, req.user))) {
-      logger.warn(`Access to READ on ${model.name} denied for ${req.user?.id}`);
-      return res.sendStatus(405);
+      throw new APIError({
+        status: 405,
+        title: `Access to GET on ${model.name} denied for ${req.user?.id}`,
+      });
     }
 
     let builtQuery = model.findById(req.params.id);
@@ -337,56 +365,68 @@ export function fernsRouter<T>(
       data = await builtQuery.exec();
     } catch (e) {
       throw new APIError({
-        status: 500,
-        title: `GET failed on ${req.params.id}: : ${(e as any).stack}`,
+        title: `GET failed on ${req.params.id}: ${(e as any).stack}`,
       });
     }
 
     if (!data) {
-      return res.sendStatus(404);
+      throw new APIError({
+        status: 404,
+        title: `Document ${req.params.id} not found`,
+      });
     }
 
     if (!(await checkPermissions("read", options.permissions.read, req.user, data))) {
-      logger.warn(`Access to READ on ${model.name}:${req.params.id} denied for ${req.user?.id}`);
-      return res.sendStatus(403);
+      throw new APIError({
+        status: 404,
+        title: `Access to GET on ${model.name}:${req.params.id} denied for ${req.user?.id}`,
+      });
     }
 
     return res.json({data: serialize<T>(options, data, req.user)});
   });
 
-  router.put("/:id", authenticateMiddleware(true), async (req, res) => {
+  router.put("/:id", authenticateMiddleware(true), async (_req, _res) => {
     // Patch is what we want 90% of the time
-    return res.sendStatus(500);
+    throw new APIError({
+      title: `PUT is not supported.`,
+    });
   });
 
   router.patch("/:id", authenticateMiddleware(true), async (req, res) => {
     const model = getModel(baseModel, req.body, options);
 
     if (!(await checkPermissions("update", options.permissions.update, req.user))) {
-      logger.warn(`Access to PATCH on ${model.name} denied for ${req.user?.id}`);
-      return res.sendStatus(405);
+      throw new APIError({
+        status: 405,
+        title: `Access to PATCH on ${model.name} denied for ${req.user?.id}`,
+      });
     }
 
     const doc = await model.findById(req.params.id);
     // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
     if (!doc || (doc.__t && !req.body.__t)) {
-      logger.warn(`Could not find document to PATCH: ${req.params.id}`);
-      return res.sendStatus(404).send();
+      throw new APIError({
+        status: 404,
+        title: `Could not find document to PATCH: ${req.params.id}`,
+      });
     }
 
     if (!(await checkPermissions("update", options.permissions.update, req.user, doc))) {
-      logger.warn(`Patch not allowed for user ${req.user?.id} on doc ${doc._id}`);
-      return res.sendStatus(403);
+      throw new APIError({
+        status: 403,
+        title: `PATCH not allowed for user ${req.user?.id} on doc ${doc._id}`,
+      });
     }
 
     let body;
     try {
       body = transform<T>(options, req.body, "update", req.user);
     } catch (e) {
-      logger.warn(
-        `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${(e as any).message}`
-      );
-      return res.status(403).send({message: (e as any).message});
+      throw new APIError({
+        status: 403,
+        title: `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${(e as any).message}`,
+      });
     }
 
     if (options.preUpdate) {
@@ -397,13 +437,16 @@ export function fernsRouter<T>(
           throw e;
         } else {
           throw new APIError({
-            title: `Pre Update error on ${req.params.id}: ${(e as any).message}`,
+            title: `preUpdate hook error on ${req.params.id}: ${(e as any).message}`,
           });
         }
       }
       if (body === null) {
-        logger.warn(`PATCH Pre Update on ${req.params.id} returned null`);
-        return res.status(403).send({message: "Pre Update returned null"});
+        throw new APIError({
+          status: 403,
+          title: "Update not allowed",
+          detail: `preUpdate hook on ${req.params.id} returned null`,
+        });
       }
     }
 
@@ -413,18 +456,20 @@ export function fernsRouter<T>(
       Object.assign(doc, body);
       await doc.save();
     } catch (e) {
-      logger.warn(`PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`);
-      return res.status(400).send({message: (e as any).message});
+      throw new APIError({
+        status: 400,
+        title: `preUpdate hook error on ${req.params.id}: ${(e as any).message}`,
+      });
     }
 
     if (options.postUpdate) {
       try {
         await options.postUpdate(doc, body, req);
       } catch (e) {
-        logger.warn(`PATCH Post Update error on ${req.params.id}: ${(e as any).message}`);
-        return res
-          .status(400)
-          .send({message: `PATCH Post Update error on ${req.params.id}: ${(e as any).message}`});
+        throw new APIError({
+          status: 400,
+          title: `postUpdate hook error on ${req.params.id}: ${(e as any).message}`,
+        });
       }
     }
     return res.json({data: serialize<T>(options, doc, req.user)});
@@ -433,36 +478,46 @@ export function fernsRouter<T>(
   router.delete("/:id", authenticateMiddleware(true), async (req, res) => {
     const model = getModel(baseModel, req.body, options);
     if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
-      logger.warn(`Access to DELETE on ${model.name} denied for ${req.user?.id}`);
-      return res.sendStatus(405);
+      throw new APIError({
+        status: 405,
+        title: `Access to DELETE on ${model.name} denied for ${req.user?.id}`,
+      });
     }
 
     const doc = await model.findById(req.params.id);
 
     // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
     if (!doc || (doc.__t && !req.body.__t)) {
-      logger.warn(`Could not find document to DELETE: ${req.user?.id}`);
-      return res.sendStatus(404);
+      throw new APIError({
+        status: 404,
+        title: `Could not find document to DELETE: ${req.user?.id}`,
+      });
     }
 
     if (!(await checkPermissions("delete", options.permissions.delete, req.user, doc))) {
-      logger.warn(`Access to DELETE on ${model.name}:${req.params.id} denied for ${req.user?.id}`);
-      return res.sendStatus(403);
+      throw new APIError({
+        status: 403,
+        title: `Access to DELETE on ${model.name}:${req.params.id} denied for ${req.user?.id}`,
+      });
     }
 
     if (options.preDelete) {
       try {
         const body = await options.preDelete(doc, req);
         if (body === null) {
-          logger.warn(`DELETE Pre Delete for ${req.params.id} returned null`);
-          return res.status(403).send({message: `Pre Delete for: ${req.params.id} returned null`});
+          throw new APIError({
+            status: 403,
+            title: "Delete not allowed",
+            detail: `preDelete hook for ${req.params.id} returned null`,
+          });
         }
       } catch (e) {
         if (isAPIError(e)) {
           throw e;
         } else {
           throw new APIError({
-            title: `Pre Delete error on ${req.params.id}: ${(e as any).message}`,
+            status: 403,
+            title: `preDelete hook error on ${req.params.id}: ${(e as any).message}`,
           });
         }
       }
@@ -480,7 +535,10 @@ export function fernsRouter<T>(
       try {
         await doc.remove();
       } catch (e) {
-        return res.status(400).send({message: (e as any).message});
+        throw new APIError({
+          status: 403,
+          title: (e as any).message,
+        });
       }
     }
 
@@ -488,7 +546,10 @@ export function fernsRouter<T>(
       try {
         await options.postDelete(req);
       } catch (e) {
-        return res.status(400).send({message: `Post Delete error: ${(e as any).message}`});
+        throw new APIError({
+          status: 400,
+          title: `postDelete hook error: ${(e as any).message}`,
+        });
       }
     }
 
@@ -583,13 +644,14 @@ export function fernsRouter<T>(
         body = await options.preUpdate(body, req);
       } catch (e) {
         throw new APIError({
-          title: `PATCH Pre Update error on ${req.params.id}: ${(e as any).message}`,
+          title: `preUpdate hook error on ${req.params.id}: ${(e as any).message}`,
           status: 400,
         });
       }
       if (body === null) {
         throw new APIError({
-          title: `PATCH Pre Update on ${req.params.id} returned null`,
+          title: "Update not allowed",
+          detail: `preUpdate hook on ${req.params.id} returned null`,
           status: 403,
         });
       }
