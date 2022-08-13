@@ -140,8 +140,7 @@ describe("ferns-api", () => {
           name: "Broccoli",
         })
         .expect(403);
-
-      await agent.delete(`/food/${spinach._id}`).expect(403);
+      await server.delete(`/food/${spinach._id}`).expect(403);
     });
 
     it("post hooks succeed", async function () {
@@ -455,12 +454,12 @@ describe("ferns-api", () => {
 
     it("list page 0 ", async function () {
       const res = await agent.get("/food?limit=1&page=0").expect(400);
-      assert.equal(res.body.message, "Invalid page: 0");
+      assert.equal(res.body.title, "Invalid page: 0");
     });
 
     it("list page with garbage ", async function () {
       const res = await agent.get("/food?limit=1&page=abc").expect(400);
-      assert.equal(res.body.message, "Invalid page: abc");
+      assert.equal(res.body.title, "Invalid page: abc");
     });
 
     it("list page over", async function () {
@@ -481,7 +480,7 @@ describe("ferns-api", () => {
     it("list query params not in list", async function () {
       // Should skip to carrots since apples are hidden
       const res = await agent.get("/food?name=Apple").expect(400);
-      assert.equal(res.body.message, "name is not allowed as a query param.");
+      assert.equal(res.body.title, "name is not allowed as a query param.");
     });
 
     it("list query by nested param", async function () {

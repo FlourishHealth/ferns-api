@@ -105,7 +105,7 @@ export class APIError extends Error {
     if (fields) {
       this.meta.fields = fields;
     }
-    logger.error(`APIError(${status}): ${title}${detail ? detail : ""}`);
+    logger.error(`APIError(${status}): ${title} ${detail ? detail : ""}`);
   }
 }
 

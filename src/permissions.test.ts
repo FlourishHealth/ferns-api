@@ -207,7 +207,7 @@ describe("permissions", function () {
         .send({
           about: "Whoops forgot required",
         })
-        .expect(400);
+        .expect(403);
     });
   });
 });
