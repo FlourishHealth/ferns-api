@@ -176,7 +176,7 @@ export function fernsRouter<T>(
         body = transform<T>(options, req.body, "create", req.user);
       } catch (e) {
         throw new APIError({
-          status: 403,
+          status: 400,
           title: (e as any).message,
         });
       }
@@ -205,7 +205,7 @@ export function fernsRouter<T>(
         data = await model.create(body);
       } catch (e) {
         throw new APIError({
-          status: 403,
+          status: 400,
           title: (e as any).message,
         });
       }
@@ -389,7 +389,7 @@ export function fernsRouter<T>(
 
       if (!(await checkPermissions("read", options.permissions.read, req.user, data))) {
         throw new APIError({
-          status: 404,
+          status: 403,
           title: `Access to GET on ${model.name}:${req.params.id} denied for ${req.user?.id}`,
         });
       }
@@ -560,7 +560,7 @@ export function fernsRouter<T>(
           await doc.remove();
         } catch (e) {
           throw new APIError({
-            status: 403,
+            status: 400,
             title: (e as any).message,
           });
         }
