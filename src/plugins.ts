@@ -4,7 +4,8 @@ import {FilterQuery, Schema} from "mongoose";
 import {APIError} from "./errors";
 
 export function tokenPlugin(schema: Schema) {
-  schema.add({token: {type: String, index: true}});
+  // Set "select" to false so the token is never leaked.
+  schema.add({token: {type: String, index: true, select: false}});
   schema.pre("save", function (next) {
     // Add created when creating the object
     if (!this.token) {
