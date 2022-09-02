@@ -96,7 +96,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       },
       async (email, password, done) => {
         try {
-          const user = await userModel.findOne({email});
+          // TODO this causes a login error in authenticate()??
+          const user = await userModel.findOne({email}).select("+token").exec();
           if (!user) {
             logger.warn(`Could not find login user for ${email}`);
             return done(null, false, {message: "User Not Found"});
@@ -104,10 +105,9 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
           const validate = await (user as any).authenticate(password);
           if (validate.error) {
-            logger.warn("Invalid password for", email);
+            logger.warn("Invalid password for", email, validate.error);
             return done(null, false, {message: "Incorrect Password"});
           }
-
           return done(null, user, {message: "Logged in Successfully"});
         } catch (error) {
           logger.error("Login error", error);
@@ -164,7 +164,11 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
           return done(null, false);
         }
         try {
-          user = await userModel.findById((payload as any).id);
+          // Explicitly select token, otherwise it is not fetched for security reasons.
+          user = await userModel
+            .findById((payload as any).id)
+            .select("+token")
+            .exec();
         } catch (e) {
           logger.warn("[jwt] Error finding user from id", e);
           return done(e, false);
@@ -213,7 +217,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       logger.debug("Not user found for /me");
       return res.sendStatus(401);
     }
-    const data = await userModel.findById(req.user.id);
+    const data = await userModel.findById(req.user.id).select("+token");
 
     if (!data) {
       logger.debug("Not user data found for /me");
