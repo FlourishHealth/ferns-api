@@ -550,6 +550,38 @@ describe("ferns-api", () => {
     });
   });
 
+  describe("plugins", function () {
+    let agent: supertest.SuperAgentTest;
+
+    beforeEach(async function () {
+      await setupDb();
+      app = getBaseServer();
+      setupAuth(app, UserModel as any);
+      app.use(
+        "/users",
+        fernsRouter(UserModel, {
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+        })
+      );
+      server = supertest(app);
+      agent = await authAsUser(app, "notAdmin");
+    });
+
+    it("check that security fields are filtered", async function () {
+      const res = await agent.get("/users").expect(200);
+      assert.isDefined(res.body.data[0].email);
+      assert.isUndefined(res.body.data[0].token);
+      assert.isUndefined(res.body.data[0].hash);
+      assert.isUndefined(res.body.data[0].salt);
+    });
+  });
+
   describe("discriminator", function () {
     let superUser: mongoose.Document<SuperUser>;
     let staffUser: mongoose.Document<StaffUser>;
