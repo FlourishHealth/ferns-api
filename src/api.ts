@@ -141,6 +141,14 @@ function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOption
   }
 }
 
+function populate(builtQuery: mongoose.Query<any[], any, {}, any>, populatePaths?: string[]) {
+  // TODO: we should handle nested serializers here.
+  for (const populatePath of populatePaths ?? []) {
+    builtQuery = builtQuery.populate(populatePath);
+  }
+  return builtQuery;
+}
+
 /**
  * Create a set of CRUD routes given a Mongoose model $baseModel and configuration options.
  *
@@ -209,6 +217,13 @@ export function fernsRouter<T>(
           title: e.message,
         });
       }
+
+      if (options.populatePaths) {
+        let populateQuery = model.findById(data._id);
+        populateQuery = populate(populateQuery, options.populatePaths);
+        data = await populateQuery.exec();
+      }
+
       if (options.postCreate) {
         try {
           await options.postCreate(data, req);
@@ -318,10 +333,7 @@ export function fernsRouter<T>(
         builtQuery = builtQuery.sort(options.sort);
       }
 
-      // TODO: we should handle nested serializers here.
-      for (const populatePath of options.populatePaths ?? []) {
-        builtQuery = builtQuery.populate(populatePath);
-      }
+      builtQuery = populate(builtQuery, options.populatePaths);
 
       let data: Document<T, {}, {}>[];
       try {
@@ -367,9 +379,7 @@ export function fernsRouter<T>(
       }
 
       let builtQuery = model.findById(req.params.id);
-      for (const populatePath of options.populatePaths ?? []) {
-        builtQuery = builtQuery.populate(populatePath);
-      }
+      builtQuery = populate(builtQuery, options.populatePaths);
 
       let data;
       try {
@@ -422,7 +432,7 @@ export function fernsRouter<T>(
         });
       }
 
-      const doc = await model.findById(req.params.id);
+      let doc = await model.findById(req.params.id);
       // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
       if (!doc || (doc.__t && !req.body.__t)) {
         throw new APIError({
@@ -479,6 +489,12 @@ export function fernsRouter<T>(
           status: 400,
           title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
         });
+      }
+
+      if (options.populatePaths) {
+        let populateQuery = model.findById(doc._id);
+        populateQuery = populate(populateQuery, options.populatePaths);
+        doc = await populateQuery.exec();
       }
 
       if (options.postUpdate) {
