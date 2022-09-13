@@ -9,6 +9,7 @@ import mongoose, {Document, Model} from "mongoose";
 import {authenticateMiddleware, User} from "./auth";
 import {APIError, apiErrorMiddleware, isAPIError} from "./errors";
 import {checkPermissions, RESTPermissions} from "./permissions";
+import {FernsPopulatorOptions} from "./populator";
 import {FernsTransformer, serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
 
@@ -79,7 +80,7 @@ export interface FernsRouterOptions<T> {
    *    ["ownerId"] // populates the User that matches `ownerId`
    *    ["ownerId.organizationId"] // Nested. Populates the User that matches `ownerId`, as well as their organization.
    * */
-  populatePaths?: string[];
+  populatePaths?: FernsPopulatorOptions;
   /** Default limit applied to list queries if not specified by the user. Defaults to 100. */
   defaultLimit?: number;
   /** Maximum query limit the user can request. Defaults to 500, and is the lowest of the limit query, max limit,
@@ -319,8 +320,10 @@ export function fernsRouter<T>(
       }
 
       // TODO: we should handle nested serializers here.
-      for (const populatePath of options.populatePaths ?? []) {
-        builtQuery = builtQuery.populate(populatePath);
+      // TODO: what are the advantages of having a nested serializer over using the populateOptions interface?
+
+      if (options.populatePaths) {
+        builtQuery = builtQuery.populate(options.populatePaths);
       }
 
       let data: Document<T, {}, {}>[];
@@ -367,8 +370,8 @@ export function fernsRouter<T>(
       }
 
       let builtQuery = model.findById(req.params.id);
-      for (const populatePath of options.populatePaths ?? []) {
-        builtQuery = builtQuery.populate(populatePath);
+      if (options.populatePaths) {
+        builtQuery = builtQuery.populate(options.populatePaths);
       }
 
       let data;

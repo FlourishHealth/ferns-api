@@ -412,7 +412,7 @@ describe("ferns-api", () => {
           sort: {created: "descending"},
           defaultQueryParams: {hidden: false},
           queryFields: ["hidden", "calories", "created", "source.name"],
-          populatePaths: ["ownerId"],
+          populatePaths: {path: "ownerId"},
         })
       );
       server = supertest(app);
