@@ -550,6 +550,74 @@ describe("ferns-api", () => {
     });
   });
 
+  describe("populate", function () {
+    let admin: any;
+    let agent: supertest.SuperAgentTest;
+
+    let spinach: Food;
+
+    beforeEach(async function () {
+      [admin] = await setupDb();
+
+      [spinach] = await Promise.all([
+        FoodModel.create({
+          name: "Spinach",
+          calories: 1,
+          created: new Date("2021-12-03T00:00:20.000Z"),
+          ownerId: admin._id,
+          hidden: false,
+          source: {
+            name: "Brand",
+          },
+        }),
+      ]);
+      app = getBaseServer();
+      setupAuth(app, UserModel as any);
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          populatePaths: ["ownerId"],
+        })
+      );
+      server = supertest(app);
+      agent = await authAsUser(app, "notAdmin");
+    });
+
+    it("reads with populate", async function () {
+      const res = await agent.get(`/food/${spinach._id}`).expect(200);
+      assert.equal(res.body.data.ownerId._id, admin._id);
+    });
+
+    it("creates with populate", async function () {
+      const res = await server
+        .post("/food")
+        .send({
+          name: "Broccoli",
+          calories: 15,
+          ownerId: admin._id,
+        })
+        .expect(201);
+      assert.equal(res.body.data.ownerId._id, admin._id);
+    });
+
+    it("updates with populate", async function () {
+      const res = await server
+        .patch(`/food/${spinach._id}`)
+        .send({
+          name: "NotSpinach",
+        })
+        .expect(200);
+      assert.equal(res.body.data.ownerId._id, admin._id);
+    });
+  });
+
   describe("plugins", function () {
     let agent: supertest.SuperAgentTest;
 
