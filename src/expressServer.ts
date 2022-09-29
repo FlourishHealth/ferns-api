@@ -20,7 +20,16 @@ export function setupErrorLogging() {
     if (!dsn) {
       throw new Error("You must set SENTRY_DSN in the environment.");
     }
-    Sentry.init({dsn});
+    Sentry.init({
+      dsn,
+      integrations: [
+        // Enable HTTP calls tracing
+        new Sentry.Integrations.Http({tracing: true}),
+        // Enable Express.js middleware tracing. Need to figure out where to enable this in ferns-api to make it viable,
+        // since we need access to `app` but also want to get Sentry rolling as early as possible.
+        // new Tracing.Integrations.Express({app}),
+      ],
+    });
   }
 }
 
@@ -120,7 +129,7 @@ function initializeRoutes(
 
   const app = express();
 
-  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.requestHandler({user: false}));
 
   if (options.addMiddleware) {
     options.addMiddleware(app);
@@ -137,6 +146,28 @@ function initializeRoutes(
   app.use(logRequests);
 
   setupAuth(app as any, UserModel as any);
+
+  // Add Sentry scopes for session, transaction, and userId if any are set
+  app.all("*", function (req: any, _res: any, next: any) {
+    const transactionId = req.header("X-Transaction-ID");
+    const sessionId = req.header("X-Session-ID");
+    if (transactionId) {
+      Sentry.configureScope((scope) => {
+        scope.setTag("transaction_id", transactionId);
+      });
+    }
+    if (sessionId) {
+      Sentry.configureScope((scope) => {
+        scope.setTag("session_id", sessionId);
+      });
+    }
+    if (req.user?._id) {
+      Sentry.configureScope((scope) => {
+        scope.setUser({id: req.user._id});
+      });
+    }
+    next();
+  });
 
   // Adds all the user
   addRoutes(app);
