@@ -147,8 +147,9 @@ function initializeRoutes(
   // Catch any thrown APIErrors and return them in an OpenAPI compatible format
   app.use(apiErrorMiddleware);
 
-  app.use(function onError(_err: any, _req: any, res: any, _next: any) {
-    logger.error("Fallthrough error", _err);
+  app.use(function onError(err: any, _req: any, res: any, _next: any) {
+    logger.error("Fallthrough error", err);
+    Sentry.captureException(err);
     res.statusCode = 500;
     res.end(`${res.sentry}\n`);
   });
