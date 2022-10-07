@@ -75,7 +75,7 @@ You can create your own permissions functions. Check permissions.ts for some exa
 
 ## Example
 
-To test out how the API works, you can look at and run [example.ts].
+To test out how the API works, you can look at and run [example.ts] by running `yarn build` then running `node dist/example.js` in /ferns-api; while running, you can use a mongoDB client such as Compass to view collections.
 
 ## Dev
 
