@@ -59,7 +59,7 @@ const errors = {
 };
 
 // authenticate function needs refactoring - to avoid bugs we wrapped a bit dirty
-function authenticate(user: any, password: string, options: Partial<Options>, cb?: any) {
+function authenticate(user: any, password: string, options: Options, cb?: any) {
   if (cb) {
     return doAuthenticate(user, password, options, cb);
   }
@@ -71,15 +71,14 @@ function authenticate(user: any, password: string, options: Partial<Options>, cb
   });
 }
 
-function doAuthenticate(user: any, password: string, options: any, cb?: any) {
-  if (options.limitAttempts) {
+function doAuthenticate(user: any, password: string, options: Options, cb?: any) {
+  if (options.rateLimitAttempts) {
+    console.log("RATE LIMIT", options.lastLoginField);
     const attemptsInterval = Math.pow(
       options.interval,
       Math.log(user.get(options.attemptsField) + 1)
     );
-    const calculatedInterval =
-      attemptsInterval < options.maxInterval ? attemptsInterval : options.maxInterval;
-
+    const calculatedInterval = Math.min(attemptsInterval, options.maxInterval);
     if (Date.now() - user.get(options.lastLoginField) < calculatedInterval) {
       user.set(options.lastLoginField, Date.now());
       user.save(function (saveErr: any) {
@@ -94,7 +93,8 @@ function doAuthenticate(user: any, password: string, options: any, cb?: any) {
       });
       return;
     }
-
+  }
+  if (options.limitAttempts) {
     if (user.get(options.attemptsField) >= options.maxAttempts) {
       return cb(
         null,
@@ -118,9 +118,13 @@ function doAuthenticate(user: any, password: string, options: any, cb?: any) {
     }
 
     if (scmp(hashBuffer, Buffer.from(user.get(options.hashField), options.encoding))) {
-      if (options.limitAttempts) {
-        user.set(options.lastLoginField, Date.now());
-        user.set(options.attemptsField, 0);
+      if (options.limitAttempts || options.rateLimitAttempts) {
+        if (options.rateLimitAttempts) {
+          user.set(options.lastLoginField, Date.now());
+        }
+        if (options.limitAttempts) {
+          user.set(options.attemptsField, 0);
+        }
         user.save(function (saveErr: any, savedUser: any) {
           if (saveErr) {
             return cb(saveErr);
@@ -132,13 +136,32 @@ function doAuthenticate(user: any, password: string, options: any, cb?: any) {
       }
     } else {
       if (options.limitAttempts) {
-        user.set(options.lastLoginField, Date.now());
         user.set(options.attemptsField, user.get(options.attemptsField) + 1);
         user.save(function (saveErr: any) {
           if (saveErr) {
             return cb(saveErr);
           }
-          if (user.get(options.attemptsField) >= options.maxAttempts) {
+          if (user.get(options.attemptsField) >= (options.maxAttempts ?? 0)) {
+            return cb(
+              null,
+              false,
+              new errors.TooManyAttemptsError(options.errorMessages.TooManyAttemptsError)
+            );
+          } else {
+            return cb(
+              null,
+              false,
+              new errors.IncorrectPasswordError(options.errorMessages.IncorrectPasswordError)
+            );
+          }
+        });
+      } else if (options.rateLimitAttempts) {
+        user.set(options.lastLoginField, Date.now());
+        user.save(function (saveErr: any) {
+          if (saveErr) {
+            return cb(saveErr);
+          }
+          if (user.get(options.attemptsField) >= (options.maxAttempts ?? 0)) {
             return cb(
               null,
               false,
@@ -167,8 +190,20 @@ export interface Options {
   saltlen: number;
   iterations: number;
   keylen: number;
-  encoding: string;
+  encoding: BufferEncoding;
   digestAlgorithm: string;
+  saltField: string;
+  hashField: string;
+  errorMessages: {[key: string]: string};
+  // Limit number of bad login attempts
+  limitAttempts: boolean;
+  attemptsField: string;
+  maxAttempts: number;
+  // Rate limit login attempts
+  rateLimitAttempts: boolean;
+  lastLoginField: string;
+  interval: number;
+  maxInterval: number;
 }
 
 export const passportLocalMongoose = function (schema: Schema, opts: Partial<Options> = {}) {
@@ -214,11 +249,13 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
   options.saltField = options.saltField || "salt";
 
   if (options.limitAttempts) {
-    options.lastLoginField = options.lastLoginField || "last";
     options.attemptsField = options.attemptsField || "attempts";
+    options.maxAttempts = options.maxAttempts || 5;
+  }
+  if (options.rateLimitAttempts) {
+    options.lastLoginField = options.lastLoginField || "last";
     options.interval = options.interval || 100; // 100 ms
     options.maxInterval = options.maxInterval || 300000; // 5 min
-    options.maxAttempts = options.maxAttempts || Infinity;
   }
 
   options.findByUsername =
@@ -239,9 +276,9 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
     options.errorMessages.NoSaltValueStoredError ||
     "Authentication not possible. No salt value stored";
   options.errorMessages.IncorrectPasswordError =
-    options.errorMessages.IncorrectPasswordError || "Password or username is incorrect";
+    options.errorMessages.IncorrectPasswordError || "Password is incorrect";
   options.errorMessages.IncorrectUsernameError =
-    options.errorMessages.IncorrectUsernameError || "Password or username is incorrect";
+    options.errorMessages.IncorrectUsernameError || "Username is incorrect";
   options.errorMessages.MissingUsernameError =
     options.errorMessages.MissingUsernameError || "No username was given";
   options.errorMessages.UserExistsError =
@@ -257,6 +294,8 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
 
   if (options.limitAttempts) {
     schemaFields[options.attemptsField] = {type: Number, default: 0};
+  }
+  if (options.rateLimitAttempts) {
     schemaFields[options.lastLoginField] = {type: Date, default: Date.now};
   }
 
@@ -325,7 +364,6 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
     return promise.then((result) => cb(null, result)).catch((err) => cb(err));
   };
 
-  // @ts-ignore
   schema.methods.authenticate = function (password: string, cb: any) {
     const promise = Promise.resolve().then(() => {
       if (this.get(options.saltField)) {
@@ -354,7 +392,6 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
   };
 
   if (options.limitAttempts) {
-    // @ts-ignore
     schema.methods.resetAttempts = function (cb: any) {
       const promise = Promise.resolve().then(() => {
         this.set(options.attemptsField, 0);
@@ -491,9 +528,9 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
   };
 };
 
-function pbkdf2Promisified(password: any, salt: any, options: any) {
+function pbkdf2Promisified(password: any, salt: any, options: Partial<Options>) {
   return new Promise((resolve, reject) =>
-    pbkdf2(password, salt, options, (err: any, hashRaw: any) =>
+    pbkdf2(password, salt, options as Options, (err: any, hashRaw: any) =>
       err ? reject(err) : resolve(hashRaw)
     )
   );
