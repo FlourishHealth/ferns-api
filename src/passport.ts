@@ -73,7 +73,6 @@ function authenticate(user: any, password: string, options: Options, cb?: any) {
 
 function doAuthenticate(user: any, password: string, options: Options, cb?: any) {
   if (options.rateLimitAttempts) {
-    console.log("RATE LIMIT", options.lastLoginField);
     const attemptsInterval = Math.pow(
       options.interval,
       Math.log(user.get(options.attemptsField) + 1)

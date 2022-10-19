@@ -154,7 +154,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
-    assert.deepEqual(res.body, {message: "Incorrect Password"});
+    assert.deepEqual(res.body, {message: "Password is incorrect"});
     res = await server
       .post("/auth/login")
       .send({email: "nope@example.com", password: "wrong"})
