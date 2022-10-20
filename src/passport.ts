@@ -22,6 +22,7 @@
 import crypto from "crypto";
 // @ts-ignore
 import generaterr from "generaterr";
+import escapeRegExp from "lodash/escapeRegExp";
 import {Schema} from "mongoose";
 import {Strategy as LocalStrategy} from "passport-local";
 // @ts-ignore
@@ -448,7 +449,7 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
 
     findOpts = findOpts || {};
     findOpts.selectHashSaltFields = !!findOpts.selectHashSaltFields;
-
+    findOpts.selectTokenField = !!findOpts.selectTokenField;
     // if specified, convert the username to lowercase
     if (username !== undefined && options.usernameLowerCase) {
       username = username.toLowerCase();
@@ -459,7 +460,7 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
     for (let i = 0; i < options.usernameQueryFields.length; i++) {
       const parameter = {};
       parameter[options.usernameQueryFields[i]] = options.usernameCaseInsensitive
-        ? new RegExp(`^${username}$`, "i")
+        ? new RegExp(`^${escapeRegExp(username)}$`, "i")
         : username;
       queryOrParameters.push(parameter);
     }
@@ -468,6 +469,9 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
 
     if (findOpts.selectHashSaltFields) {
       query.select(`+${options.hashField} +${options.saltField}`);
+    }
+    if (findOpts.selectTokenField) {
+      query.select("+token");
     }
 
     if (options.selectFields) {

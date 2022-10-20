@@ -48,7 +48,7 @@ const userSchema = new Schema<User>({
   age: Number,
 });
 
-userSchema.plugin(passportLocalMongoose, {usernameField: "email"});
+userSchema.plugin(passportLocalMongoose, {usernameField: "email", usernameCaseInsensitive: true});
 userSchema.plugin(tokenPlugin);
 userSchema.plugin(createdUpdatedPlugin);
 userSchema.methods.postCreate = async function (body: any) {
@@ -141,9 +141,10 @@ export async function setupDb() {
 
   try {
     await Promise.all([UserModel.deleteMany({}), FoodModel.deleteMany({})]);
-    const [notAdmin, admin] = await Promise.all([
+    const [notAdmin, admin, adminOther] = await Promise.all([
       UserModel.create({email: "notAdmin@example.com"}),
       UserModel.create({email: "admin@example.com", admin: true}),
+      UserModel.create({email: "admin+other@example.com", admin: true}),
     ]);
     await (notAdmin as any).setPassword("password");
     await notAdmin.save();
@@ -151,7 +152,10 @@ export async function setupDb() {
     await (admin as any).setPassword("securePassword");
     await admin.save();
 
-    return [admin, notAdmin];
+    await (adminOther as any).setPassword("otherPassword");
+    await adminOther.save();
+
+    return [admin, notAdmin, adminOther];
   } catch (e) {
     console.error("Error setting up DB", e);
     throw e;
