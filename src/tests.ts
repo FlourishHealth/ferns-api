@@ -48,7 +48,12 @@ const userSchema = new Schema<User>({
   age: Number,
 });
 
-userSchema.plugin(passportLocalMongoose, {usernameField: "email"});
+userSchema.plugin(passportLocalMongoose, {
+  usernameField: "email",
+  limitAttempts: true,
+  attemptsField: "attempts",
+  maxAttempts: 3,
+});
 userSchema.plugin(tokenPlugin);
 userSchema.plugin(createdUpdatedPlugin);
 userSchema.methods.postCreate = async function (body: any) {
@@ -141,6 +146,7 @@ export async function setupDb() {
 
   try {
     await Promise.all([UserModel.deleteMany({}), FoodModel.deleteMany({})]);
+
     const [notAdmin, admin] = await Promise.all([
       UserModel.create({email: "notAdmin@example.com"}),
       UserModel.create({email: "admin@example.com", admin: true}),
