@@ -53,6 +53,7 @@ userSchema.plugin(passportLocalMongoose, {
   limitAttempts: true,
   attemptsField: "attempts",
   maxAttempts: 3,
+  usernameCaseInsensitive: true,
 });
 userSchema.plugin(tokenPlugin);
 userSchema.plugin(createdUpdatedPlugin);
@@ -146,10 +147,10 @@ export async function setupDb() {
 
   try {
     await Promise.all([UserModel.deleteMany({}), FoodModel.deleteMany({})]);
-
-    const [notAdmin, admin] = await Promise.all([
+    const [notAdmin, admin, adminOther] = await Promise.all([
       UserModel.create({email: "notAdmin@example.com"}),
       UserModel.create({email: "admin@example.com", admin: true}),
+      UserModel.create({email: "admin+other@example.com", admin: true}),
     ]);
     await (notAdmin as any).setPassword("password");
     await notAdmin.save();
@@ -157,7 +158,10 @@ export async function setupDb() {
     await (admin as any).setPassword("securePassword");
     await admin.save();
 
-    return [admin, notAdmin];
+    await (adminOther as any).setPassword("otherPassword");
+    await adminOther.save();
+
+    return [admin, notAdmin, adminOther];
   } catch (e) {
     console.error("Error setting up DB", e);
     throw e;

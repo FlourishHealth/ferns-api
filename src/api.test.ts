@@ -686,29 +686,34 @@ describe("ferns-api", () => {
 
     it("gets all users", async function () {
       const res = await agent.get("/users").expect(200);
-      assert.lengthOf(res.body.data, 4);
+      assert.lengthOf(res.body.data, 5);
 
       const data = sortBy(res.body.data, ["email"]);
 
-      assert.equal(data[0].email, "admin@example.com");
+      assert.equal(data[0].email, "admin+other@example.com");
       assert.isUndefined(data[0].department);
       assert.isUndefined(data[0].supertitle);
       assert.isUndefined(data[0].__t);
 
-      assert.equal(data[1].email, "notAdmin@example.com");
+      assert.equal(data[1].email, "admin@example.com");
       assert.isUndefined(data[1].department);
       assert.isUndefined(data[1].supertitle);
       assert.isUndefined(data[1].__t);
 
-      assert.equal(data[2].email, "staff@example.com");
-      assert.equal(data[2].department, "Accounting");
+      assert.equal(data[2].email, "notAdmin@example.com");
+      assert.isUndefined(data[2].department);
       assert.isUndefined(data[2].supertitle);
-      assert.equal(data[2].__t, "Staff");
+      assert.isUndefined(data[2].__t);
 
-      assert.equal(data[3].email, "superuser@example.com");
-      assert.isUndefined(data[3].department);
-      assert.equal(data[3].superTitle, "Super Man");
-      assert.equal(data[3].__t, "SuperUser");
+      assert.equal(data[3].email, "staff@example.com");
+      assert.equal(data[3].department, "Accounting");
+      assert.isUndefined(data[3].supertitle);
+      assert.equal(data[3].__t, "Staff");
+
+      assert.equal(data[4].email, "superuser@example.com");
+      assert.isUndefined(data[4].department);
+      assert.equal(data[4].superTitle, "Super Man");
+      assert.equal(data[4].__t, "SuperUser");
     });
 
     it("gets a discriminated user", async function () {

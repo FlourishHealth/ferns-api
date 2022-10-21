@@ -162,6 +162,24 @@ describe("auth tests", function () {
     assert.deepEqual(res.body, {message: "User Not Found"});
   });
 
+  it("case insensitive email", async function () {
+    const agent = supertest.agent(app);
+    const res = await agent
+      .post("/auth/login")
+      .send({email: "ADMIN@example.com", password: "securePassword"})
+      .expect(200);
+    assert.isDefined(res.body.data.token);
+  });
+
+  it("case insensitive email with emails with symbols", async function () {
+    const agent = supertest.agent(app);
+    const res = await agent
+      .post("/auth/login")
+      .send({email: "ADMIN+other@example.com", password: "otherPassword"})
+      .expect(200);
+    assert.isDefined(res.body.data.token);
+  });
+
   it("completes token login e2e", async function () {
     const agent = supertest.agent(app);
     const res = await agent

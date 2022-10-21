@@ -6,6 +6,7 @@ import {Strategy as JwtStrategy} from "passport-jwt";
 import {Strategy as LocalStrategy} from "passport-local";
 
 import {logger} from "./logger";
+import {UserModel} from "./tests";
 
 export interface User {
   _id: ObjectId | string;
@@ -26,6 +27,7 @@ export interface UserModel extends Model<User> {
   createStrategy(): any;
   serializeUser(): any;
   deserializeUser(): any;
+  findByUsername(username: string, findOpts: any): any;
 }
 
 export function authenticateMiddleware(anonymous = false) {
@@ -95,7 +97,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       async (email, password, done) => {
         try {
           // TODO this causes a login error in authenticate()??
-          const user = await userModel.findOne({email}).select("+token").exec();
+          const user = await userModel.findByUsername(email, {selectTokenField: true});
           if (!user) {
             logger.warn(`Could not find login user for ${email}`);
             return done(null, false, {message: "User Not Found"});
