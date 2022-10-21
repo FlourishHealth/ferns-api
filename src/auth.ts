@@ -21,13 +21,11 @@ export interface User {
 
 export interface UserModel extends Model<User> {
   createAnonymousUser?: (id?: string) => Promise<User>;
+  // Allows additional setup during signup. This will be passed the rest of req.body from the signup
   postCreate?: (body: any) => Promise<void>;
 
   createStrategy(): any;
-
   serializeUser(): any;
-
-  // Allows additional setup during signup. This will be passed the rest of req.body from the signup
   deserializeUser(): any;
   findByUsername(username: string, findOpts: any): any;
 }
@@ -108,7 +106,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
           const validate = await (user as any).authenticate(password);
           if (validate.error) {
             logger.warn("Invalid password for", email, validate.error);
-            return done(null, false, {message: "Incorrect Password"});
+            return done(null, false, {message: validate.error?.message ?? "Incorrect Password"});
           }
           return done(null, user, {message: "Logged in Successfully"});
         } catch (error) {

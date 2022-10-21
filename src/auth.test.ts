@@ -11,9 +11,11 @@ import {AdminOwnerTransformer} from "./transformers";
 describe("auth tests", function () {
   let app: express.Application;
   let server: any;
+  let admin: any;
+  let notAdmin: any;
 
   beforeEach(async function () {
-    const [admin, notAdmin] = await setupDb();
+    [admin, notAdmin] = await setupDb();
 
     await Promise.all([
       FoodModel.create({
@@ -152,7 +154,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
-    assert.deepEqual(res.body, {message: "Incorrect Password"});
+    assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     res = await server
       .post("/auth/login")
       .send({email: "nope@example.com", password: "wrong"})
@@ -226,5 +228,39 @@ describe("auth tests", function () {
       .send({name: "Apple Pie"})
       .expect(200);
     assert.equal(updateRes.body.data.name, "Apple Pie");
+  });
+
+  it("locks out after failed password attempts", async function () {
+    let res = await server
+      .post("/auth/login")
+      .send({email: "admin@example.com", password: "wrong"})
+      .expect(401);
+    assert.deepEqual(res.body, {message: "Password or username is incorrect"});
+    let user = await UserModel.findById(admin._id);
+    assert.equal((user as any)?.attempts, 1);
+    res = await server
+      .post("/auth/login")
+      .send({email: "admin@example.com", password: "wrong"})
+      .expect(401);
+    assert.deepEqual(res.body, {message: "Password or username is incorrect"});
+    user = await UserModel.findById(admin._id);
+    assert.equal((user as any)?.attempts, 2);
+    res = await server
+      .post("/auth/login")
+      .send({email: "admin@example.com", password: "wrong"})
+      .expect(401);
+    assert.deepEqual(res.body, {message: "Account locked due to too many failed login attempts"});
+    user = await UserModel.findById(admin._id);
+    assert.equal((user as any)?.attempts, 3);
+
+    // Logging in with correct password fails because account is locked
+    res = await server
+      .post("/auth/login")
+      .send({email: "admin@example.com", password: "securePassword"})
+      .expect(401);
+    assert.deepEqual(res.body, {message: "Account locked due to too many failed login attempts"});
+    user = await UserModel.findById(admin._id);
+    // Not incremented
+    assert.equal((user as any)?.attempts, 3);
   });
 });

@@ -48,7 +48,13 @@ const userSchema = new Schema<User>({
   age: Number,
 });
 
-userSchema.plugin(passportLocalMongoose, {usernameField: "email", usernameCaseInsensitive: true});
+userSchema.plugin(passportLocalMongoose, {
+  usernameField: "email",
+  limitAttempts: true,
+  attemptsField: "attempts",
+  maxAttempts: 3,
+  usernameCaseInsensitive: true,
+});
 userSchema.plugin(tokenPlugin);
 userSchema.plugin(createdUpdatedPlugin);
 userSchema.methods.postCreate = async function (body: any) {
