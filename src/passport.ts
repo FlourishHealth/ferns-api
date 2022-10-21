@@ -275,9 +275,9 @@ export const passportLocalMongoose = function (schema: Schema, opts: Partial<Opt
     options.errorMessages.NoSaltValueStoredError ||
     "Authentication not possible. No salt value stored";
   options.errorMessages.IncorrectPasswordError =
-    options.errorMessages.IncorrectPasswordError || "Password is incorrect";
+    options.errorMessages.IncorrectPasswordError || "Password or username is incorrect";
   options.errorMessages.IncorrectUsernameError =
-    options.errorMessages.IncorrectUsernameError || "Username is incorrect";
+    options.errorMessages.IncorrectUsernameError || "Password or username is incorrect";
   options.errorMessages.MissingUsernameError =
     options.errorMessages.MissingUsernameError || "No username was given";
   options.errorMessages.UserExistsError =

@@ -154,7 +154,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
-    assert.deepEqual(res.body, {message: "Password is incorrect"});
+    assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     res = await server
       .post("/auth/login")
       .send({email: "nope@example.com", password: "wrong"})
@@ -217,14 +217,14 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
-    assert.deepEqual(res.body, {message: "Password is incorrect"});
+    assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     let user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 1);
     res = await server
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
-    assert.deepEqual(res.body, {message: "Password is incorrect"});
+    assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 2);
     res = await server
