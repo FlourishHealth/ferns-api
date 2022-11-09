@@ -355,7 +355,6 @@ export function fernsRouter<T>(
       }
 
       if (options.postList) {
-        logger.debug({postList: "POSTList STARTING"});
         try {
           data = await options.postList(data, req);
         } catch (e: any) {
@@ -428,7 +427,6 @@ export function fernsRouter<T>(
       }
 
       if (options.postGet) {
-        logger.debug({postGet: "POSTGET STARTING"});
         try {
           data = await options.postGet(data, req);
         } catch (e: any) {
