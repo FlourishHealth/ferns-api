@@ -205,6 +205,73 @@ describe("ferns-api", () => {
       await agent.delete(`/food/${broccoli._id}`).expect(204);
       assert.isTrue(deleteCalled);
     });
+
+    it("post get/list hooks succeed", async function () {
+      const notAdmin = await UserModel.findOne({email: "notAdmin@example.com"});
+      const admin = await UserModel.findOne({email: "admin@example.com"});
+
+      const [spinach, apple] = await Promise.all([
+        FoodModel.create({
+          name: "Spinach",
+          calories: 1,
+          created: new Date(),
+          ownerId: notAdmin?._id,
+        }),
+        FoodModel.create({
+          name: "Apple",
+          calories: 100,
+          created: new Date().getTime() - 10,
+          ownerId: admin?._id,
+          hidden: true,
+        }),
+        FoodModel.create({
+          name: "Carrots",
+          calories: 100,
+          created: new Date().getTime() - 10,
+          ownerId: admin?._id,
+        }),
+      ]);
+
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          postGet: async (data: any) => {
+            if (data?.name === "Spinach") {
+              data.name = "Popeye's meal";
+            }
+            return data;
+          },
+          postList: async (data: any) => {
+            return data.map((item: any) => {
+              if (item?.name === "Apple") {
+                item.name = "Bravery";
+              }
+              if (item?.name === "Carrots") {
+                item.name = "Bunny food";
+              }
+              return item;
+            });
+          },
+          queryFields: ["name"],
+        })
+      );
+
+      const resList = await agent.get("/food").expect(200);
+
+      const resApple = resList.body.data.find((f: Food) => f._id === apple._id.toString());
+      const resOne = await agent.get(`/food/${spinach?._id}`).expect(200);
+
+      assert.equal(resApple.name, "Bravery");
+
+      assert.equal(resOne.body.data.name, "Popeye's meal");
+    });
   });
 
   describe("model array operations", function () {
