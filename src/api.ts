@@ -113,6 +113,16 @@ export interface FernsRouterOptions<T> {
    * perform dependent changes to other models or performing async tasks, such as cascading object deletions.
    * Throw an APIError to return a 400 with an error message. */
   postDelete?: (request: express.Request) => void | Promise<void>;
+  /** Hook that runs after the object is fetched but before it is serialized.
+   * Returns a promise so that asynchonous actions can be included in the function.
+   * Throw an APIError to return a 400 with an error message.
+   */
+  postGet?: (value: T, request: express.Request) => void | Promise<T>;
+  /** Hook that runs after the list of objects is fetched but before they are serialized.
+   * Returns a promise so that asynchonous actions can be included in the function.
+   * Throw an APIError to return a 400 with an error message.
+   */
+  postList?: (value: Document<T, {}, {}>[], request: express.Request) => Promise<Document[]>;
   /** The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
    * https://mongoosejs.com/docs/discriminators.html
    * If this key is provided, you must provide the same key as part of the top level of the body when making performing
@@ -343,6 +353,18 @@ export function fernsRouter<T>(
           title: `List error: ${e.stack}`,
         });
       }
+
+      if (options.postList) {
+        try {
+          data = await options.postList(data, req);
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `postList hook error on ${req.params.id}: ${e.message}`,
+          });
+        }
+      }
+
       let more;
       try {
         let serialized = serialize<T>(options, data, req.user);
@@ -404,7 +426,18 @@ export function fernsRouter<T>(
         });
       }
 
-      return res.json({data: serialize<T>(options, data, req.user)});
+      if (options.postGet) {
+        try {
+          data = await options.postGet(data, req);
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `postGet hook error on ${req.params.id}: ${e.message}`,
+          });
+        }
+      }
+
+      return res.json({data: await serialize<T>(options, data, req.user)});
     })
   );
 
