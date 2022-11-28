@@ -17,7 +17,7 @@ import {isValidObjectId} from "./utils";
 // Support more complex query fields
 // Rate limiting
 
-const SPECIAL_QUERY_PARAMS = ["limit", "page"];
+const SPECIAL_QUERY_PARAMS = ["limit", "page", "period"];
 
 /**
  * @param a - the first number
@@ -272,7 +272,10 @@ export function fernsRouter<T>(
       // TODO we can make this much more complicated with ands and ors, but for now, simple queries
       // will do.
       for (const queryParam of Object.keys(req.query)) {
-        if ((options.queryFields ?? []).concat(SPECIAL_QUERY_PARAMS).includes(queryParam)) {
+        if (SPECIAL_QUERY_PARAMS.includes(queryParam)) {
+          continue;
+        }
+        if ((options.queryFields ?? []).includes(queryParam)) {
           // Not sure if this is necessary or if mongoose does the right thing.
           if (req.query[queryParam] === "true") {
             query[queryParam] = true;
@@ -321,10 +324,6 @@ export function fernsRouter<T>(
       let limit = options.defaultLimit ?? 100;
       if (Number(req.query.limit)) {
         limit = Math.min(Number(req.query.limit), options.maxLimit ?? 500);
-      }
-      if (query.period) {
-        // need to remove 'period' since it isn't part of any schemas but parsed and applied in queryFilter instead
-        delete query.period;
       }
 
       let builtQuery = model.find(query).limit(limit + 1);
