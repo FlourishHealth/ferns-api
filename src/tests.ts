@@ -74,23 +74,29 @@ const staffUserSchema = new Schema<StaffUser>({
 });
 export const StaffUserModel = UserModel.discriminator("Staff", staffUserSchema);
 
-const foodCategorySchema = new Schema<FoodCategory>({
-  name: String,
-  show: Boolean,
-});
-
-const foodSchema = new Schema<Food>({
-  name: String,
-  calories: Number,
-  created: Date,
-  ownerId: {type: "ObjectId", ref: "User"},
-  source: {
+const foodCategorySchema = new Schema<FoodCategory>(
+  {
     name: String,
+    show: Boolean,
   },
-  hidden: {type: Boolean, default: false},
-  tags: [String],
-  categories: [foodCategorySchema],
-});
+  {strict: "throw"}
+);
+
+const foodSchema = new Schema<Food>(
+  {
+    name: String,
+    calories: Number,
+    created: Date,
+    ownerId: {type: "ObjectId", ref: "User"},
+    source: {
+      name: String,
+    },
+    hidden: {type: Boolean, default: false},
+    tags: [String],
+    categories: [foodCategorySchema],
+  },
+  {strict: "throw"}
+);
 
 export const FoodModel = model<Food>("Food", foodSchema);
 
@@ -99,10 +105,13 @@ interface RequiredField {
   about?: string;
 }
 
-const requiredSchema = new Schema<RequiredField>({
-  name: {type: String, required: true},
-  about: String,
-});
+const requiredSchema = new Schema<RequiredField>(
+  {
+    name: {type: String, required: true},
+    about: String,
+  },
+  {strict: "throw"}
+);
 export const RequiredModel = model<RequiredField>("Required", requiredSchema);
 
 export function getBaseServer(): Express {
