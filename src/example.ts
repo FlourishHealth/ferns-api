@@ -1,12 +1,12 @@
 import express from "express";
 import mongoose, {model, Schema} from "mongoose";
+import passportLocalMongoose from "passport-local-mongoose";
 
 import {fernsRouter} from "./api";
 import {setupAuth} from "./auth";
 import {logger} from "./logger";
-import {passportLocalMongoose} from "./passport";
 import {Permissions} from "./permissions";
-import {baseUserPlugin, createdUpdatedPlugin, tokenPlugin} from "./plugins";
+import {baseUserPlugin, createdUpdatedPlugin} from "./plugins";
 
 mongoose.connect("mongodb://localhost:27017/example");
 
@@ -29,7 +29,7 @@ const userSchema = new Schema<User>({
 });
 
 userSchema.plugin(passportLocalMongoose, {usernameField: "email"});
-userSchema.plugin(tokenPlugin);
+// userSchema.plugin(tokenPlugin);
 userSchema.plugin(createdUpdatedPlugin);
 userSchema.plugin(baseUserPlugin);
 const UserModel = model<User>("User", userSchema);

@@ -1,9 +1,9 @@
 import express, {Express} from "express";
 import mongoose, {model, Schema} from "mongoose";
+import passportLocalMongoose from "passport-local-mongoose";
 import supertest from "supertest";
 
-import {passportLocalMongoose} from "./passport";
-import {createdUpdatedPlugin, tokenPlugin} from "./plugins";
+import {createdUpdatedPlugin} from "./plugins";
 
 mongoose.connect("mongodb://localhost:27017/ferns");
 
@@ -55,7 +55,7 @@ userSchema.plugin(passportLocalMongoose, {
   maxAttempts: 3,
   usernameCaseInsensitive: true,
 });
-userSchema.plugin(tokenPlugin);
+// userSchema.plugin(tokenPlugin);
 userSchema.plugin(createdUpdatedPlugin);
 userSchema.methods.postCreate = async function (body: any) {
   this.age = body.age;
