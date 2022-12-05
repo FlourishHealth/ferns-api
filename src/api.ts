@@ -17,7 +17,7 @@ import {isValidObjectId} from "./utils";
 // Support more complex query fields
 // Rate limiting
 
-const SPECIAL_QUERY_PARAMS = ["limit", "page", "period"];
+const SPECIAL_QUERY_PARAMS = ["limit", "page"];
 
 /**
  * @param a - the first number
@@ -324,6 +324,11 @@ export function fernsRouter<T>(
       let limit = options.defaultLimit ?? 100;
       if (Number(req.query.limit)) {
         limit = Math.min(Number(req.query.limit), options.maxLimit ?? 500);
+      }
+
+      if (query.period) {
+        // need to remove 'period' since it isn't part of any schemas but parsed and applied in queryFilter instead
+        delete query.period;
       }
 
       let builtQuery = model.find(query).limit(limit + 1);
