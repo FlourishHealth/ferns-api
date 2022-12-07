@@ -175,7 +175,6 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
           return done(e, false);
         }
         if (user) {
-          console.log({user});
           return done(null, user);
         } else {
           if (userModel.createAnonymousUser) {
