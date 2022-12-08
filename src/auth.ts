@@ -164,7 +164,6 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         done: any
       ) {
         let user;
-        console.log("jwt");
         if (!payload) {
           return done(null, false);
         }
@@ -193,7 +192,6 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   const router = express.Router();
   router.post("/login", async function (req, res, next) {
     passport.authenticate("local", {session: true}, async (err: any, user: any, info: any) => {
-      console.log({user, info});
       if (err) {
         logger.error("Error logging in:", err);
         return next(err);
@@ -209,7 +207,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     })(req, res, next);
   });
 
-  router.post("/refresh_token", async function (req, res, next) {
+  router.post("/refresh_token", async function (req, res) {
     if (!req.body.refreshToken) {
       return res
         .status(401)
