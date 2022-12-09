@@ -16,6 +16,8 @@ describe("query and transform", function () {
   let app: express.Application;
 
   beforeEach(async function () {
+    process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
+
     [admin, notAdmin] = await setupDb();
 
     await Promise.all([
@@ -44,6 +46,7 @@ describe("query and transform", function () {
     app.use(
       "/food",
       fernsRouter(FoodModel, {
+        allowAnonymous: true,
         permissions: {
           list: [Permissions.IsAny],
           create: [Permissions.IsAny],
