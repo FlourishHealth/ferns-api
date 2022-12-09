@@ -1,6 +1,6 @@
 {
   "name": "ferns-api",
-  "version": "0.20.2",
+  "version": "0.21.0",
   "description": "Styled after the Django & Django REST Framework, a batteries-include framework for building REST APIs with Node/Express/Mongoose.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
