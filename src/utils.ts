@@ -8,3 +8,7 @@ export function isValidObjectId(id: string): boolean {
     return false;
   }
 }
+
+export const timeout = async (ms: number): Promise<NodeJS.Timeout> => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};

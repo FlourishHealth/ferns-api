@@ -7,6 +7,7 @@ import {setupAuth} from "./auth";
 import {Permissions} from "./permissions";
 import {Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
 import {AdminOwnerTransformer} from "./transformers";
+import {timeout} from "./utils";
 
 describe("auth tests", function () {
   let app: express.Application;
@@ -15,6 +16,8 @@ describe("auth tests", function () {
   let notAdmin: any;
 
   beforeEach(async function () {
+    process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
+
     [admin, notAdmin] = await setupDb();
 
     await Promise.all([
@@ -50,6 +53,7 @@ describe("auth tests", function () {
           update: [Permissions.IsAuthenticated],
           delete: [Permissions.IsAuthenticated],
         },
+        allowAnonymous: true,
         queryFilter: (user?: {admin: boolean}) => {
           if (!user?.admin) {
             return {hidden: {$ne: true}};
@@ -78,8 +82,10 @@ describe("auth tests", function () {
       .send({email: "new@example.com", password: "123"})
       .expect(200);
     let {userId, token} = res.body.data;
+    const refreshToken = res.body.data.refreshToken;
     assert.isDefined(userId);
     assert.isDefined(token);
+    assert.isDefined(refreshToken);
 
     res = await server
       .post("/auth/login")
@@ -91,6 +97,7 @@ describe("auth tests", function () {
     token = res.body.data.token;
     assert.isDefined(userId);
     assert.isDefined(token);
+    assert.isDefined(refreshToken);
 
     const food = await FoodModel.create({
       name: "Peas",
@@ -104,7 +111,6 @@ describe("auth tests", function () {
     assert.isDefined(meRes.body.data.id);
     assert.isUndefined(meRes.body.data.hash);
     assert.equal(meRes.body.data.email, "new@example.com");
-    assert.isDefined(meRes.body.data.token);
     assert.isDefined(meRes.body.data.updated);
     assert.isDefined(meRes.body.data.created);
     assert.isFalse(meRes.body.data.admin);
@@ -118,7 +124,6 @@ describe("auth tests", function () {
     assert.isDefined(mePatchRes.body.data.id);
     assert.isUndefined(mePatchRes.body.data.hash);
     assert.equal(mePatchRes.body.data.email, "new2@example.com");
-    assert.isDefined(mePatchRes.body.data.token);
     assert.isDefined(mePatchRes.body.data.updated);
     assert.isDefined(mePatchRes.body.data.created);
     assert.isFalse(mePatchRes.body.data.admin);
@@ -141,9 +146,10 @@ describe("auth tests", function () {
       .post("/auth/signup")
       .send({email: "new@example.com", password: "123", age: 25})
       .expect(200);
-    const {userId, token} = res.body.data;
+    const {userId, token, refreshToken} = res.body.data;
     assert.isDefined(userId);
     assert.isDefined(token);
+    assert.isDefined(refreshToken);
 
     const user = await UserModel.findOne({email: "new@example.com"});
     assert.equal(user?.age, 25);
@@ -159,7 +165,8 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "nope@example.com", password: "wrong"})
       .expect(401);
-    assert.deepEqual(res.body, {message: "User Not Found"});
+    // we don't really want to expose if a given email address has an account in our system or not
+    assert.deepEqual(res.body, {message: "Password or username is incorrect"});
   });
 
   it("case insensitive email", async function () {
@@ -197,7 +204,6 @@ describe("auth tests", function () {
     assert.isDefined(meRes.body.data.id);
     assert.isUndefined(meRes.body.data.hash);
     assert.equal(meRes.body.data.email, "admin@example.com");
-    assert.isDefined(meRes.body.data.token);
     assert.isDefined(meRes.body.data.updated);
     assert.isDefined(meRes.body.data.created);
     assert.isTrue(meRes.body.data.admin);
@@ -210,7 +216,6 @@ describe("auth tests", function () {
     assert.isDefined(mePatchRes.body.data.id);
     assert.isUndefined(mePatchRes.body.data.hash);
     assert.equal(mePatchRes.body.data.email, "admin2@example.com");
-    assert.isDefined(mePatchRes.body.data.token);
     assert.isDefined(mePatchRes.body.data.updated);
     assert.isDefined(mePatchRes.body.data.created);
     assert.isTrue(mePatchRes.body.data.admin);
@@ -235,6 +240,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
+    await timeout(1000);
     assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     let user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 1);
@@ -242,6 +248,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
+    await timeout(1000);
     assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 2);
@@ -249,6 +256,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
+    await timeout(1000);
     assert.deepEqual(res.body, {message: "Account locked due to too many failed login attempts"});
     user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 3);
@@ -258,9 +266,39 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "securePassword"})
       .expect(401);
+    await timeout(1000);
     assert.deepEqual(res.body, {message: "Account locked due to too many failed login attempts"});
     user = await UserModel.findById(admin._id);
     // Not incremented
     assert.equal((user as any)?.attempts, 3);
+  });
+
+  it("refresh token allows refresh of auth token", async function () {
+    const agent = supertest.agent(app);
+    // initial login
+    const initialLoginRes = await agent
+      .post("/auth/login")
+      .send({email: "ADMIN@example.com", password: "securePassword"})
+      .expect(200);
+    assert.isDefined(initialLoginRes.body.data.token);
+    assert.isDefined(initialLoginRes.body.data.refreshToken);
+    const initialToken = initialLoginRes.body.data.token;
+    agent.set("authorization", `Bearer ${initialToken}`);
+
+    // get new auth token from refresh token
+    const refreshRes = await agent
+      .post("/auth/refresh_token")
+      .send({refreshToken: initialLoginRes.body.data.refreshToken})
+      .expect(200);
+    assert.isDefined(refreshRes.body.data.token);
+    assert.isDefined(refreshRes.body.data.refreshToken);
+    const newToken = refreshRes.body.data.token;
+    // note that new token will most likely be the same as the old token because
+    // an HMAC signature will always be the same for a header + payload combination that is equal.
+
+    // make sure new token works
+    agent.set("authorization", `Bearer ${newToken}`);
+    const meRes = await agent.get("/auth/me").expect(200);
+    assert.isDefined(meRes.body.data._id);
   });
 });

@@ -65,7 +65,7 @@ export async function signupUser(
 
 const generateTokens = async (user: any) => {
   const tokenOptions: any = {
-    expiresIn: "1m",
+    expiresIn: "15m",
   };
   if (process.env.TOKEN_EXPIRES_IN) {
     tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
@@ -96,6 +96,8 @@ const generateTokens = async (user: any) => {
   } else {
     logger.info("REFRESH_TOKEN_SECRET not set so refresh tokens will not be issued");
   }
+  console.log("new tokens");
+  console.log({token, refreshToken});
   return {token, refreshToken};
 };
 
@@ -236,7 +238,10 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     "/signup",
     passport.authenticate("signup", {session: false, failWithError: true}),
     async function (req: any, res: any) {
-      return res.json({data: {userId: req.user._id, token: req.user.token}});
+      const tokens = await generateTokens(req.user);
+      return res.json({
+        data: {userId: req.user._id, token: tokens.token, refreshToken: tokens.refreshToken},
+      });
     }
   );
 
