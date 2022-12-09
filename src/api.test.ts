@@ -42,6 +42,7 @@ describe("ferns-api", () => {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -110,6 +111,7 @@ describe("ferns-api", () => {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -148,6 +150,7 @@ describe("ferns-api", () => {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -235,6 +238,7 @@ describe("ferns-api", () => {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -281,6 +285,8 @@ describe("ferns-api", () => {
     let agent: supertest.SuperAgentTest;
 
     beforeEach(async function () {
+      process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
+
       [admin] = await setupDb();
 
       [spinach, apple] = await Promise.all([
@@ -319,6 +325,7 @@ describe("ferns-api", () => {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAdmin],
             create: [Permissions.IsAdmin],
@@ -467,6 +474,7 @@ describe("ferns-api", () => {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAuthenticated],
@@ -643,6 +651,7 @@ describe("ferns-api", () => {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -695,6 +704,7 @@ describe("ferns-api", () => {
       app.use(
         "/users",
         fernsRouter(UserModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
             create: [Permissions.IsAny],
@@ -735,6 +745,7 @@ describe("ferns-api", () => {
       app.use(
         "/users",
         fernsRouter(UserModel, {
+          allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAuthenticated],
             create: [Permissions.IsAuthenticated],

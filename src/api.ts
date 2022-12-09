@@ -37,6 +37,11 @@ export interface FernsRouterOptions<T> {
    * referenced.
    * */
   permissions: RESTPermissions<T>;
+  /**
+   * Allow anonymous users to access the resource.
+   * Defaults to false.
+   */
+  allowAnonymous?: boolean;
   /** A list of fields on the model that can be queried using standard comparisons for booleans, strings, dates
    *    (as ISOStrings), and numbers.
    * For example:
@@ -179,7 +184,7 @@ export function fernsRouter<T>(
   // TODO Toggle anonymous auth middleware based on settings for route.
   router.post(
     "/",
-    authenticateMiddleware(true),
+    authenticateMiddleware(options.allowAnonymous),
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body?.__t, options);
       if (!(await checkPermissions("create", options.permissions.create, req.user))) {
@@ -252,7 +257,7 @@ export function fernsRouter<T>(
   // TODO add rate limit
   router.get(
     "/",
-    authenticateMiddleware(true),
+    authenticateMiddleware(options.allowAnonymous),
     asyncHandler(async (req: Request, res: Response) => {
       // For pure read queries, Mongoose will return the correct data with just the base model.
       const model = baseModel;
@@ -392,7 +397,7 @@ export function fernsRouter<T>(
 
   router.get(
     "/:id",
-    authenticateMiddleware(true),
+    authenticateMiddleware(options.allowAnonymous),
     asyncHandler(async (req: Request, res: Response) => {
       // For pure read queries, Mongoose will return the correct data with just the base model.
       const model = baseModel;
@@ -447,7 +452,7 @@ export function fernsRouter<T>(
 
   router.put(
     "/:id",
-    authenticateMiddleware(true),
+    authenticateMiddleware(options.allowAnonymous),
     asyncHandler(async (_req: Request, _res: Response) => {
       // Patch is what we want 90% of the time
       throw new APIError({
@@ -458,7 +463,7 @@ export function fernsRouter<T>(
 
   router.patch(
     "/:id",
-    authenticateMiddleware(true),
+    authenticateMiddleware(options.allowAnonymous),
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body, options);
 
@@ -550,7 +555,7 @@ export function fernsRouter<T>(
 
   router.delete(
     "/:id",
-    authenticateMiddleware(true),
+    authenticateMiddleware(options.allowAnonymous),
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body, options);
       if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
@@ -773,9 +778,21 @@ export function fernsRouter<T>(
   }
   // Set up routes for managing array fields. Check if there any array fields to add this for.
   if (Object.values(baseModel.schema.paths).find((config) => config.instance === "Array")) {
-    router.post(`/:id/:field`, authenticateMiddleware(true), asyncHandler(arrayPost));
-    router.patch(`/:id/:field/:itemId`, authenticateMiddleware(true), asyncHandler(arrayPatch));
-    router.delete(`/:id/:field/:itemId`, authenticateMiddleware(true), asyncHandler(arrayDelete));
+    router.post(
+      `/:id/:field`,
+      authenticateMiddleware(options.allowAnonymous),
+      asyncHandler(arrayPost)
+    );
+    router.patch(
+      `/:id/:field/:itemId`,
+      authenticateMiddleware(options.allowAnonymous),
+      asyncHandler(arrayPatch)
+    );
+    router.delete(
+      `/:id/:field/:itemId`,
+      authenticateMiddleware(options.allowAnonymous),
+      asyncHandler(arrayDelete)
+    );
   }
   router.use(apiErrorMiddleware);
 

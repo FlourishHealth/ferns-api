@@ -1,4 +1,5 @@
 import express from "express";
+import jwt, {JwtPayload} from "jsonwebtoken";
 import {Model, ObjectId} from "mongoose";
 import passport from "passport";
 import {Strategy as AnonymousStrategy} from "passport-anonymous";
@@ -16,7 +17,6 @@ export interface User {
   admin: boolean;
   /** We support anonymous users, which do not yet have login information. This can be helpful for pre-signup users. */
   isAnonymous?: boolean;
-  token?: string;
 }
 
 export interface UserModel extends Model<User> {
@@ -57,18 +57,52 @@ export async function signupUser(
       }
     }
     await user.save();
-    if (!user.token) {
-      throw new Error("Token not created");
-    }
     return user;
   } catch (error) {
     throw error;
   }
 }
 
+const generateTokens = async (user: any) => {
+  const tokenOptions: any = {
+    expiresIn: "15m",
+  };
+  if (process.env.TOKEN_EXPIRES_IN) {
+    tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
+  }
+  if (process.env.TOKEN_ISSUER) {
+    tokenOptions.issuer = process.env.TOKEN_ISSUER;
+  }
+
+  const tokenSecretOrKey = process.env.TOKEN_SECRET;
+  if (!tokenSecretOrKey) {
+    throw new Error(`TOKEN_SECRET and REFRESH_TOKEN_SECRET must be set in env.`);
+  }
+  const token = jwt.sign({id: user._id.toString()}, tokenSecretOrKey, tokenOptions);
+  const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
+  let refreshToken;
+  if (refreshTokenSecretOrKey) {
+    const refreshTokenOptions: any = {
+      expiresIn: "30d",
+    };
+    if (process.env.REFRESH_TOKEN_EXPIRES_IN) {
+      refreshTokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
+    }
+    refreshToken = jwt.sign(
+      {id: user._id.toString()},
+      refreshTokenSecretOrKey,
+      refreshTokenOptions
+    );
+  } else {
+    logger.info("REFRESH_TOKEN_SECRET not set so refresh tokens will not be issued");
+  }
+  return {token, refreshToken};
+};
+
 // TODO allow customization
 export function setupAuth(app: express.Application, userModel: UserModel) {
   passport.use(new AnonymousStrategy());
+  passport.use(userModel.createStrategy());
   passport.use(
     "signup",
     new LocalStrategy(
@@ -82,36 +116,6 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
           done(undefined, await signupUser(userModel, email, password, req.body));
         } catch (e) {
           return done(e);
-        }
-      }
-    )
-  );
-
-  passport.use(
-    "login",
-    new LocalStrategy(
-      {
-        usernameField: "email",
-        passwordField: "password",
-      },
-      async (email, password, done) => {
-        try {
-          // TODO this causes a login error in authenticate()??
-          const user = await userModel.findByUsername(email, {selectTokenField: true});
-          if (!user) {
-            logger.warn(`Could not find login user for ${email}`);
-            return done(null, false, {message: "User Not Found"});
-          }
-
-          const validate = await (user as any).authenticate(password);
-          if (validate.error) {
-            logger.warn("Invalid password for", email, validate.error);
-            return done(null, false, {message: validate.error?.message ?? "Incorrect Password"});
-          }
-          return done(null, user, {message: "Logged in Successfully"});
-        } catch (error) {
-          logger.error("Login error", error);
-          return done(error);
         }
       }
     )
@@ -164,11 +168,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
           return done(null, false);
         }
         try {
-          // Explicitly select token, otherwise it is not fetched for security reasons.
-          user = await userModel
-            .findById((payload as any).id)
-            .select("+token")
-            .exec();
+          user = await userModel.findById((payload as any).id);
         } catch (e) {
           logger.warn("[jwt] Error finding user from id", e);
           return done(e, false);
@@ -190,8 +190,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   }
 
   const router = express.Router();
-  router.post("/login", function (req, res, next) {
-    passport.authenticate("login", {session: true}, (err: any, user: any, info: any) => {
+  router.post("/login", async function (req, res, next) {
+    passport.authenticate("local", {session: true}, async (err: any, user: any, info: any) => {
       if (err) {
         logger.error("Error logging in:", err);
         return next(err);
@@ -200,15 +200,46 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         logger.warn("Invalid login:", info);
         return res.status(401).json({message: info?.message});
       }
-      return res.json({data: {userId: user?._id, token: (user as any)?.token}});
+      const tokens = await generateTokens(user);
+      return res.json({
+        data: {userId: user?._id, token: tokens.token, refreshToken: tokens.refreshToken},
+      });
     })(req, res, next);
+  });
+
+  router.post("/refresh_token", async function (req, res) {
+    if (!req.body.refreshToken) {
+      return res
+        .status(401)
+        .json({message: "No refresh token provided, must provide refreshToken in body"});
+    }
+    if (!process.env.REFRESH_TOKEN_SECRET) {
+      return res.status(401).json({message: "No REFRESH_TOKEN_SECRET set, cannot refresh token"});
+    }
+    const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
+    let decoded;
+    try {
+      decoded = jwt.verify(req.body.refreshToken, refreshTokenSecretOrKey) as JwtPayload;
+    } catch (e: any) {
+      logger.error("Error refreshing token:", e);
+      return res.status(401).json({message: e?.message});
+    }
+    if (decoded && decoded.id) {
+      const user = await userModel.findById(decoded.id);
+      const tokens = await generateTokens(user);
+      return res.json({data: {token: tokens.token, refreshToken: tokens.refreshToken}});
+    }
+    return res.status(401).json({message: "Invalid refresh token"});
   });
 
   router.post(
     "/signup",
     passport.authenticate("signup", {session: false, failWithError: true}),
     async function (req: any, res: any) {
-      return res.json({data: {userId: req.user._id, token: req.user.token}});
+      const tokens = await generateTokens(req.user);
+      return res.json({
+        data: {userId: req.user._id, token: tokens.token, refreshToken: tokens.refreshToken},
+      });
     }
   );
 
@@ -217,7 +248,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       logger.debug("Not user found for /me");
       return res.sendStatus(401);
     }
-    const data = await userModel.findById(req.user.id).select("+token");
+    const data = await userModel.findById(req.user.id);
 
     if (!data) {
       logger.debug("Not user data found for /me");
@@ -255,7 +286,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   });
 
   app.use(express.urlencoded({extended: false}) as any);
-  app.use(passport.initialize() as any);
+  app.use(passport.initialize());
 
   app.set("etag", false);
   app.use("/auth", router);

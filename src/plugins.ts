@@ -1,35 +1,6 @@
-import jwt from "jsonwebtoken";
 import {FilterQuery, Schema} from "mongoose";
 
 import {APIError} from "./errors";
-
-export function tokenPlugin(schema: Schema) {
-  // Set "select" to false so the token is never leaked.
-  schema.add({token: {type: String, index: true, select: false}});
-  schema.pre("save", function (next) {
-    // Add created when creating the object
-    if (!this.token) {
-      const tokenOptions: any = {
-        expiresIn: "10h",
-      };
-      if (process.env.TOKEN_EXPIRES_IN) {
-        tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
-      }
-      if (process.env.TOKEN_ISSUER) {
-        tokenOptions.issuer = process.env.TOKEN_ISSUER;
-      }
-
-      const secretOrKey = process.env.TOKEN_SECRET;
-      if (!secretOrKey) {
-        throw new Error(`TOKEN_SECRET must be set in env.`);
-      }
-      this.token = jwt.sign({id: this._id.toString()}, secretOrKey, tokenOptions);
-    }
-    // On any save, update the updated field.
-    this.updated = new Date();
-    next();
-  });
-}
 
 export interface BaseUser {
   admin: boolean;
