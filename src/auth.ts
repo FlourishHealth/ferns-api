@@ -96,8 +96,6 @@ const generateTokens = async (user: any) => {
   } else {
     logger.info("REFRESH_TOKEN_SECRET not set so refresh tokens will not be issued");
   }
-  console.log("new tokens");
-  console.log({token, refreshToken});
   return {token, refreshToken};
 };
 
