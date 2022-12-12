@@ -20,6 +20,7 @@ export function setupErrorLogging() {
       throw new Error("You must set SENTRY_DSN in the environment.");
     }
     Sentry.init({dsn});
+    logger.debug(`Initialized Sentry with DSN ${dsn}`);
   }
 }
 
