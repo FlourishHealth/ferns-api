@@ -3,7 +3,7 @@ const esModules = ["@sentry"].join("|");
 module.exports = {
   roots: ["<rootDir>/src"],
   verbose: true,
-  maxWorkers: 8,
+  maxWorkers: 1,
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
   setupFiles: ["<rootDir>/jestSetupFile.js"],
   transform: {

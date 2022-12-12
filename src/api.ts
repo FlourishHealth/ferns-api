@@ -1,26 +1,16 @@
-import express from "express";
-import session from "express-session";
-import jwt from "jsonwebtoken";
-import mongoose, {Document, Model, ObjectId, Schema} from "mongoose";
-import passport from "passport";
-import {Strategy as AnonymousStrategy} from "passport-anonymous";
-import {Strategy as JwtStrategy} from "passport-jwt";
-import {Strategy as LocalStrategy} from "passport-local";
+/**
+ * This is the doc comment for api.ts
+ *
+ * @packageDocumentation
+ */
+import express, {NextFunction, Request, Response} from "express";
+import mongoose, {Document, Model} from "mongoose";
 
-import {logger} from "./logger";
-
-export interface Env {
-  NODE_ENV?: string;
-  PORT?: string;
-  SENTRY_DSN?: string;
-  SLACK_WEBHOOK?: string;
-  // JWT
-  TOKEN_SECRET?: string;
-  TOKEN_EXPIRES_IN?: string;
-  TOKEN_ISSUER?: string;
-  // AUTH
-  SESSION_SECRET?: string;
-}
+import {authenticateMiddleware, User} from "./auth";
+import {APIError, apiErrorMiddleware, isAPIError} from "./errors";
+import {checkPermissions, RESTPermissions} from "./permissions";
+import {FernsTransformer, serialize, transform} from "./transformers";
+import {isValidObjectId} from "./utils";
 
 // TODOS:
 // Support bulk actions
@@ -29,567 +19,162 @@ export interface Env {
 
 const SPECIAL_QUERY_PARAMS = ["limit", "page"];
 
+/**
+ * @param a - the first number
+ * @param b - the second number
+ * @returns The sum of `a` and `b`
+ */
 export type RESTMethod = "list" | "create" | "read" | "update" | "delete";
 
-interface GooseTransformer<T> {
-  // Runs before create or update operations. Allows throwing out fields that the user should be
-  // able to write to, modify data, check permissions, etc.
-  transform?: (obj: Partial<T>, method: "create" | "update", user?: User) => Partial<T> | undefined;
-  // Runs after create/update operations but before data is returned from the API. Serialize fetched
-  // data, dropping fields based on user, changing data, etc.
-  serialize?: (obj: T, user?: User) => Partial<T> | undefined;
-}
-
-type UserType = "anon" | "auth" | "owner" | "admin";
-
-interface User {
-  _id: ObjectId | string;
-  id: string;
-  admin: boolean;
-  isAnonymous?: boolean;
-  token?: string;
-}
-
-export interface UserModel extends Model<User> {
-  createAnonymousUser?: (id?: string) => Promise<User>;
-  postCreate?: (body: any) => Promise<void>;
-
-  createStrategy(): any;
-
-  serializeUser(): any;
-
-  // Allows additional setup during signup. This will be passed the rest of req.body from the signup
-  deserializeUser(): any;
-}
-
-export type PermissionMethod<T> = (
-  method: RESTMethod,
-  user?: User,
-  obj?: T
-) => boolean | Promise<boolean>;
-
-interface RESTPermissions<T> {
-  create: PermissionMethod<T>[];
-  list: PermissionMethod<T>[];
-  read: PermissionMethod<T>[];
-  update: PermissionMethod<T>[];
-  delete: PermissionMethod<T>[];
-}
-
-interface GooseRESTOptions<T> {
+/**
+ * This is the main configuration.
+ * @param T - the base document type. This should not include Mongoose models, just the types of the object.
+ */
+export interface FernsRouterOptions<T> {
+  /**
+   * A group of method-level (create/read/update/delete/list) permissions. Determine if the user can perform the
+   * operation at all, and for read/update/delete methods, whether the user can perform the operation on the object
+   * referenced.
+   * */
   permissions: RESTPermissions<T>;
+  /**
+   * Allow anonymous users to access the resource.
+   * Defaults to false.
+   */
+  allowAnonymous?: boolean;
+  /** A list of fields on the model that can be queried using standard comparisons for booleans, strings, dates
+   *    (as ISOStrings), and numbers.
+   * For example:
+   *  ?foo=true // boolean query
+   *  ?foo=bar // string query
+   *  ?foo=1 // number query
+   *  ?foo=2022-07-23T02:34:07.118Z // date query (should first be encoded for query params, not shown here)
+   * Note: `limit` and `page` are automatically supported and are reserved. */
   queryFields?: string[];
-  // return null to prevent the query from running
+  /** queryFilter is a function to parse the query params and see if the query should be allowed. This can be used for
+   * permissioning to make sure less privileged users are not making privileged queries. If a query should not be
+   * allowed, return `null` from the function and an empty query result will be returned to the client without an error.
+   * You can also throw an APIError to be explicit about the issues. You can transform the given query params by
+   * returning different values. If the query is acceptable as-is, return `query` as-is. */
   queryFilter?: (user?: User, query?: Record<string, any>) => Record<string, any> | null;
-  transformer?: GooseTransformer<T>;
+  /** Transformers allow data to be transformed before actions are executed, and serialized before being returned to
+   * the user.
+   *
+   * Transformers can be used to throw out fields that the user should not be able to write to, such as the `admin` flag.
+   * Serializers can be used to hide data from the client or change how it is presented. Serializers run after the data
+   * has been changed or queried but before returning to the client.
+   * */
+  transformer?: FernsTransformer<T>;
+  /** Default sort for list operations. Can be a single field, a space-seperated list of fields, or an object.
+   * ?sort=foo // single field: foo ascending
+   * ?sort=-foo // single field: foo descending
+   * ?sort=-foo bar // multi field: foo descending, bar ascending
+   * ?sort=\{foo: 'ascending', bar: 'descending'\} // object: foo ascending, bar descending
+   *
+   * Note: you should have an index field on these fields or Mongo may slow down considerably.
+   * @deprecated Use preCreate/preUpdate/preDelete hooks instead of transformer.transform.
+   * */
   sort?: string | {[key: string]: "ascending" | "descending"};
+  /** Default queries to provide to Mongo before any user queries or transforms happen when making list queries.
+   * Accepts any Mongoose-style queries, and runs for all user types.
+   *    defaultQueryParams: \{hidden: false\} // By default, don't show objects with hidden=true
+   * These can be overridden by the user if not disallowed by queryFilter. */
   defaultQueryParams?: {[key: string]: any};
+  /** Paths to populate before returning data from list queries. Accepts Mongoose-style populate strings.
+   *    ["ownerId"] // populates the User that matches `ownerId`
+   *    ["ownerId.organizationId"] // Nested. Populates the User that matches `ownerId`, as well as their organization.
+   * */
   populatePaths?: string[];
-  defaultLimit?: number; // defaults to 100
+  /** Default limit applied to list queries if not specified by the user. Defaults to 100. */
+  defaultLimit?: number;
+  /** Maximum query limit the user can request. Defaults to 500, and is the lowest of the limit query, max limit,
+   *  or 500. */
   maxLimit?: number; // defaults to 500
+  /** */
   endpoints?: (router: any) => void;
-  preCreate?: (value: any, request: express.Request) => T | null;
-  preUpdate?: (value: any, request: express.Request) => T | null;
-  preDelete?: (value: any, request: express.Request) => T | null;
-  postCreate?: (value: any, request: express.Request) => void | Promise<void>;
-  postUpdate?: (value: any, request: express.Request) => void | Promise<void>;
+  /** Hook that runs after `transformer.transform` but before the object is created. Can update the body fields based on
+   * the request or the user.
+   * Return null to return a generic 403
+   * error. Throw an APIError to return a 400 with specific error information. */
+  preCreate?: (value: any, request: express.Request) => T | Promise<T> | null;
+  /** Hook that runs after `transformer.transform` but before changes are made for update operations. Can update the
+   * body fields based on the request or the user. Also applies to all array operations.
+   * Return null to return a generic 403
+   * error. Throw an APIError to return a 400 with specific error information. */
+  preUpdate?: (value: any, request: express.Request) => T | Promise<T> | null;
+  /** Hook that runs after `transformer.transform` but before the object is delete.
+   * Return null to return a generic 403
+   * error. Throw an APIError to return a 400 with specific error information. */
+  preDelete?: (value: any, request: express.Request) => T | Promise<T> | null;
+  /** Hook that runs after the object is created but before it is serialized and returned. This is a good spot to
+   * perform dependent changes to other models or performing async tasks, such as sending a push notification.
+   * Throw an APIError to return a 400 with an error message. */
+  postCreate?: (value: T, request: express.Request) => void | Promise<void>;
+  /** Hook that runs after the object is updated but before it is serialized and returned. This is a good spot to
+   * perform dependent changes to other models or performing async tasks, such as sending a push notification.
+   * Throw an APIError to return a 400 with an error message. */
+  postUpdate?: (value: T, cleanedBody: any, request: express.Request) => void | Promise<void>;
+  /** Hook that runs after the object is created but before it is serialized and returned. This is a good spot to
+   * perform dependent changes to other models or performing async tasks, such as cascading object deletions.
+   * Throw an APIError to return a 400 with an error message. */
   postDelete?: (request: express.Request) => void | Promise<void>;
+  /** Hook that runs after the object is fetched but before it is serialized.
+   * Returns a promise so that asynchonous actions can be included in the function.
+   * Throw an APIError to return a 400 with an error message.
+   */
+  postGet?: (value: T, request: express.Request) => void | Promise<T>;
+  /** Hook that runs after the list of objects is fetched but before they are serialized.
+   * Returns a promise so that asynchonous actions can be included in the function.
+   * Throw an APIError to return a 400 with an error message.
+   */
+  postList?: (value: Document<T, {}, {}>[], request: express.Request) => Promise<Document[]>;
+  /** The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
+   * https://mongoosejs.com/docs/discriminators.html
+   * If this key is provided, you must provide the same key as part of the top level of the body when making performing
+   * update or delete operations on this model.
+   *    \{discriminatorKey: "__t"\}
+   *
+   *     PATCH \{__t: "SuperUser", name: "Foo"\} // __t is required or there will be a 404 error.
+   */
+  discriminatorKey?: string;
 }
 
-export const OwnerQueryFilter = (user?: User) => {
-  if (user) {
-    return {ownerId: user?.id};
-  }
-  // Return a null, so we know to return no results.
-  return null;
-};
-
-export const Permissions = {
-  IsAuthenticatedOrReadOnly: (method: RESTMethod, user?: User) => {
-    if (user?.id && !user?.isAnonymous) {
-      return true;
+// A function to decide which model to use. If no discriminators are provided, just returns the base model. If
+function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOptions<any>) {
+  const discriminatorKey = options?.discriminatorKey ?? "__t";
+  const modelName = (body ?? {})[discriminatorKey];
+  if (!modelName) {
+    return baseModel;
+  } else {
+    const model = (baseModel.discriminators ?? {})[modelName];
+    if (!model) {
+      throw new Error(
+        `Could not find discriminator model for key ${modelName}, baseModel: ${baseModel}`
+      );
     }
-    return method === "list" || method === "read";
-  },
-  IsOwnerOrReadOnly: (method: RESTMethod, user?: User, obj?: any) => {
-    // When checking if we can possibly perform the action, return true.
-    if (!obj) {
-      return true;
-    }
-    if (user?.admin) {
-      return true;
-    }
-
-    if (user?.id && obj?.ownerId && String(obj?.ownerId) === String(user?.id)) {
-      return true;
-    }
-    return method === "list" || method === "read";
-  },
-  IsAny: () => {
-    return true;
-  },
-  IsOwner: (method: RESTMethod, user?: User, obj?: any) => {
-    // When checking if we can possibly perform the action, return true.
-    if (!obj) {
-      return true;
-    }
-    if (!user) {
-      return false;
-    }
-    if (user?.admin) {
-      return true;
-    }
-    return user?.id && obj?.ownerId && String(obj?.ownerId) === String(user?.id);
-  },
-  IsAdmin: (method: RESTMethod, user?: User) => {
-    return Boolean(user?.admin);
-  },
-  IsAuthenticated: (method: RESTMethod, user?: User) => {
-    if (!user) {
-      return false;
-    }
-    return Boolean(user.id);
-  },
-};
-
-// Defaults closed
-export async function checkPermissions<T>(
-  method: RESTMethod,
-  permissions: PermissionMethod<T>[],
-  user?: User,
-  obj?: T
-): Promise<boolean> {
-  let anyTrue = false;
-  for (const perm of permissions) {
-    // May or may not be a promise.
-    if (!(await perm(method, user, obj))) {
-      return false;
-    } else {
-      anyTrue = true;
-    }
-  }
-  return anyTrue;
-}
-
-export function tokenPlugin(schema: Schema, options: {expiresIn?: number} = {}) {
-  schema.add({token: {type: String, index: true}});
-  schema.pre("save", function (next) {
-    // Add created when creating the object
-    if (!this.token) {
-      const tokenOptions: any = {
-        expiresIn: "10h",
-      };
-      if ((process.env as Env).TOKEN_EXPIRES_IN) {
-        tokenOptions.expiresIn = (process.env as Env).TOKEN_EXPIRES_IN;
-      }
-      if ((process.env as Env).TOKEN_ISSUER) {
-        tokenOptions.issuer = (process.env as Env).TOKEN_ISSUER;
-      }
-
-      const secretOrKey = (process.env as Env).TOKEN_SECRET;
-      if (!secretOrKey) {
-        throw new Error(`TOKEN_SECRET must be set in env.`);
-      }
-      this.token = jwt.sign({id: this._id.toString()}, secretOrKey, tokenOptions);
-    }
-    // On any save, update the updated field.
-    this.updated = new Date();
-    next();
-  });
-}
-
-export interface BaseUser {
-  admin: boolean;
-  email: string;
-}
-
-export function baseUserPlugin(schema: Schema) {
-  schema.add({admin: {type: Boolean, default: false}});
-  schema.add({email: {type: String, index: true}});
-}
-
-export interface IsDeleted {
-  deleted: boolean;
-}
-
-export function isDeletedPlugin(schema: Schema, defaultValue = false) {
-  schema.add({deleted: {type: Boolean, default: defaultValue, index: true}});
-  schema.pre("find", function () {
-    const query = this.getQuery();
-    if (query && query.deleted === undefined) {
-      this.where({deleted: {$ne: true}});
-    }
-  });
-}
-
-export interface CreatedDeleted {
-  updated: Date;
-  created: Date;
-}
-
-export function createdDeletedPlugin(schema: Schema) {
-  schema.add({updated: {type: Date, index: true}});
-  schema.add({created: {type: Date, index: true}});
-
-  schema.pre("save", function (next) {
-    if (this.disableCreatedDeletedPlugin === true) {
-      next();
-      return;
-    }
-    // If we aren't specifying created, use now.
-    if (!this.created) {
-      this.created = new Date();
-    }
-    // All writes change the updated time.
-    this.updated = new Date();
-    next();
-  });
-
-  schema.pre("update", function (next) {
-    this.update({}, {$set: {updated: new Date()}});
-    next();
-  });
-}
-
-export function firebaseJWTPlugin(schema: Schema) {
-  schema.add({firebaseId: {type: String, index: true}});
-}
-
-export function authenticateMiddleware(anonymous = false) {
-  const strategies = ["jwt"];
-  if (anonymous) {
-    strategies.push("anonymous");
-  }
-  return passport.authenticate(strategies, {session: false});
-}
-
-export async function signupUser(
-  userModel: UserModel,
-  email: string,
-  password: string,
-  body?: any
-) {
-  try {
-    const user = await (userModel as any).register({email}, password);
-    if (user.postCreate) {
-      delete body.email;
-      delete body.password;
-      try {
-        await user.postCreate(body);
-      } catch (e) {
-        logger.error("Error in user.postCreate", e);
-        throw e;
-      }
-    }
-    await user.save();
-    if (!user.token) {
-      throw new Error("Token not created");
-    }
-    return user;
-  } catch (error) {
-    throw error;
+    return model;
   }
 }
 
-// TODO allow customization
-export function setupAuth(app: express.Application, userModel: UserModel) {
-  passport.use(new AnonymousStrategy());
-  passport.use(
-    "signup",
-    new LocalStrategy(
-      {
-        usernameField: "email",
-        passwordField: "password",
-        passReqToCallback: true,
-      },
-      async (req, email, password, done) => {
-        try {
-          done(undefined, await signupUser(userModel, email, password, req.body));
-        } catch (e) {
-          return done(e);
-        }
-      }
-    )
-  );
-
-  passport.use(
-    "login",
-    new LocalStrategy(
-      {
-        usernameField: "email",
-        passwordField: "password",
-      },
-      async (email, password, done) => {
-        try {
-          const user = await userModel.findOne({email});
-
-          if (!user) {
-            logger.debug("Could not find login user for", email);
-            return done(null, false, {message: "User not found"});
-          }
-
-          const validate = await (user as any).authenticate(password);
-
-          if (!validate) {
-            logger.debug("Invalid password for", email);
-            return done(null, false, {message: "Wrong Password"});
-          }
-
-          return done(null, user, {message: "Logged in Successfully"});
-        } catch (error) {
-          logger.error("Login error", error);
-          return done(error);
-        }
-      }
-    )
-  );
-
-  if (!userModel.createStrategy) {
-    throw new Error("setupAuth userModel must have .createStrategy()");
+function populate(builtQuery: mongoose.Query<any[], any, {}, any>, populatePaths?: string[]) {
+  // TODO: we should handle nested serializers here.
+  for (const populatePath of populatePaths ?? []) {
+    builtQuery = builtQuery.populate(populatePath);
   }
-  if (!userModel.serializeUser) {
-    throw new Error("setupAuth userModel must have .serializeUser()");
-  }
-  if (!userModel.deserializeUser) {
-    throw new Error("setupAuth userModel must have .deserializeUser()");
-  }
-
-  // use static serialize and deserialize of model for passport session support
-  passport.serializeUser(userModel.serializeUser());
-  passport.deserializeUser(userModel.deserializeUser());
-
-  if ((process.env as Env).TOKEN_SECRET) {
-    logger.debug("Setting up JWT Authentication");
-
-    const customExtractor = function (req: express.Request) {
-      let token = null;
-      if (req?.cookies?.jwt) {
-        token = req.cookies.jwt;
-      } else if (req?.headers?.authorization) {
-        token = req?.headers?.authorization.split(" ")[1];
-      }
-      return token;
-    };
-    const secretOrKey = (process.env as Env).TOKEN_SECRET;
-    if (!secretOrKey) {
-      throw new Error(`TOKEN_SECRET must be set in env.`);
-    }
-    const jwtOpts = {
-      // jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme("Bearer"),
-      jwtFromRequest: customExtractor,
-      secretOrKey,
-      issuer: (process.env as Env).TOKEN_ISSUER,
-    };
-    passport.use(
-      "jwt",
-      new JwtStrategy(jwtOpts, async function (
-        payload: {id: string; iat: number; exp: number},
-        done: any
-      ) {
-        let user;
-        if (!payload) {
-          return done(null, false);
-        }
-        try {
-          user = await userModel.findById((payload as any).id);
-        } catch (e) {
-          logger.warn("[jwt] Error finding user from id", e);
-          return done(e, false);
-        }
-        if (user) {
-          return done(null, user);
-        } else {
-          if (userModel.createAnonymousUser) {
-            logger.info("[jwt] Creating anonymous user");
-            user = await userModel.createAnonymousUser();
-            return done(null, user);
-          } else {
-            logger.info("[jwt] No user found from token");
-            return done(null, false);
-          }
-        }
-      })
-    );
-  }
-
-  const router = express.Router();
-  router.post(
-    "/login",
-    passport.authenticate("login", {session: false}),
-    function (req: any, res: any) {
-      return res.json({data: {userId: req.user._id, token: req.user.token}});
-    }
-  );
-
-  router.post(
-    "/signup",
-    passport.authenticate("signup", {session: false}),
-    async function (req: any, res: any) {
-      return res.json({data: {userId: req.user._id, token: req.user.token}});
-    }
-  );
-
-  router.get("/me", authenticateMiddleware(), async (req, res) => {
-    if (!req.user?.id) {
-      return res.status(401).send();
-    }
-    const data = await userModel.findById(req.user.id);
-
-    if (!data) {
-      return res.status(404).send();
-    }
-    const dataObject = data.toObject();
-    (dataObject as any).id = data._id;
-    return res.json({data: dataObject});
-  });
-
-  router.patch("/me", authenticateMiddleware(), async (req, res) => {
-    if (!req.user?.id) {
-      return res.status(401).send();
-    }
-    // TODO support limited updates for profile.
-    // try {
-    //   body = transform(req.body, "update", req.user);
-    // } catch (e) {
-    //   return res.status(403).send({message: (e as any).message});
-    // }
-    try {
-      const data = await userModel.findOneAndUpdate({_id: req.user.id}, req.body, {new: true});
-      if (data === null) {
-        return res.status(404).send();
-      }
-      const dataObject = data.toObject();
-      (dataObject as any).id = data._id;
-      return res.json({data: dataObject});
-    } catch (e) {
-      return res.status(403).send({message: (e as any).message});
-    }
-  });
-
-  app.use(
-    session({
-      secret: (process.env as Env).SESSION_SECRET as string,
-      resave: true,
-      saveUninitialized: true,
-    }) as any
-  );
-  app.use(express.urlencoded({extended: false}) as any);
-  app.use(passport.initialize() as any);
-  app.use(passport.session());
-
-  app.set("etag", false);
-  app.use("/auth", router);
+  return builtQuery;
 }
 
-function getUserType(user?: User, obj?: any): UserType {
-  if (user?.admin) {
-    return "admin";
-  }
-  if (obj && user && String(obj?.ownerId) === String(user?.id)) {
-    return "owner";
-  }
-  if (user?.id) {
-    return "auth";
-  }
-  return "anon";
-}
-
-export function AdminOwnerTransformer<T>(options: {
-  // TODO: do something with KeyOf here.
-  anonReadFields?: string[];
-  authReadFields?: string[];
-  ownerReadFields?: string[];
-  adminReadFields?: string[];
-  anonWriteFields?: string[];
-  authWriteFields?: string[];
-  ownerWriteFields?: string[];
-  adminWriteFields?: string[];
-}): GooseTransformer<T> {
-  function pickFields(obj: Partial<T>, fields: any[]): Partial<T> {
-    const newData: Partial<T> = {};
-    for (const field of fields) {
-      if (obj[field] !== undefined) {
-        newData[field] = obj[field];
-      }
-    }
-    return newData;
-  }
-
-  return {
-    transform: (obj: Partial<T>, method: "create" | "update", user?: User) => {
-      const userType = getUserType(user, obj);
-      let allowedFields: any;
-      if (userType === "admin") {
-        allowedFields = options.adminWriteFields ?? [];
-      } else if (userType === "owner") {
-        allowedFields = options.ownerWriteFields ?? [];
-      } else if (userType === "auth") {
-        allowedFields = options.authWriteFields ?? [];
-      } else {
-        allowedFields = options.anonWriteFields ?? [];
-      }
-      const unallowedFields = Object.keys(obj).filter((k) => !allowedFields.includes(k));
-      if (unallowedFields.length) {
-        throw new Error(
-          `User of type ${userType} cannot write fields: ${unallowedFields.join(", ")}`
-        );
-      }
-      return obj;
-    },
-    serialize: (obj: T, user?: User) => {
-      const userType = getUserType(user, obj);
-      if (userType === "admin") {
-        return pickFields(obj, [...(options.adminReadFields ?? []), "id"]);
-      } else if (userType === "owner") {
-        return pickFields(obj, [...(options.ownerReadFields ?? []), "id"]);
-      } else if (userType === "auth") {
-        return pickFields(obj, [...(options.authReadFields ?? []), "id"]);
-      } else {
-        return pickFields(obj, [...(options.anonReadFields ?? []), "id"]);
-      }
-    },
-  };
-}
-
-export function gooseRestRouter<T>(
-  model: Model<any>,
-  options: GooseRESTOptions<T>
+/**
+ * Create a set of CRUD routes given a Mongoose model $baseModel and configuration options.
+ *
+ * @param baseModel A Mongoose Model
+ * @param options Options for configuring the REST API, such as permissions, transformers, and hooks.
+ */
+export function fernsRouter<T>(
+  baseModel: Model<any>,
+  options: FernsRouterOptions<T>
 ): express.Router {
   const router = express.Router();
-
-  function transform(data: Partial<T> | Partial<T>[], method: "create" | "update", user?: User) {
-    if (!options.transformer?.transform) {
-      return data;
-    }
-
-    // TS doesn't realize this is defined otherwise...
-    const transformFn = options.transformer?.transform;
-
-    if (!Array.isArray(data)) {
-      return transformFn(data, method, user);
-    } else {
-      return data.map((d) => transformFn(d, method, user));
-    }
-  }
-
-  function serialize(data: Document<T, {}, {}> | Document<T, {}, {}>[], user?: User) {
-    const serializeFn = (serializeData: Document<T, {}, {}>, seralizeUser?: User) => {
-      const dataObject = serializeData.toObject() as T;
-      (dataObject as any).id = serializeData._id;
-
-      if (options.transformer?.serialize) {
-        return options.transformer?.serialize(dataObject, seralizeUser);
-      } else {
-        return dataObject;
-      }
-    };
-
-    if (!Array.isArray(data)) {
-      return serializeFn(data, user);
-    } else {
-      return data.map((d) => serializeFn(d, user));
-    }
-  }
 
   // Do before the other router options so endpoints take priority.
   if (options.endpoints) {
@@ -597,280 +182,628 @@ export function gooseRestRouter<T>(
   }
 
   // TODO Toggle anonymous auth middleware based on settings for route.
-  router.post("/", authenticateMiddleware(true), async (req, res) => {
-    if (!(await checkPermissions("create", options.permissions.create, req.user))) {
-      logger.warn(`Access to CREATE on ${model.name} denied for ${req.user?.id}`);
-      return res.status(405).send();
-    }
+  router.post(
+    "/",
+    authenticateMiddleware(options.allowAnonymous),
+    asyncHandler(async (req: Request, res: Response) => {
+      const model = getModel(baseModel, req.body?.__t, options);
+      if (!(await checkPermissions("create", options.permissions.create, req.user))) {
+        throw new APIError({
+          status: 405,
+          title: `Access to POST on ${model.name} denied for ${req.user?.id}`,
+        });
+      }
 
-    let body;
-    try {
-      body = transform(req.body, "create", req.user);
-    } catch (e) {
-      return res.status(403).send({message: (e as any).message});
-    }
-    if (options.preCreate) {
+      let body;
       try {
-        body = options.preCreate(body, req);
-      } catch (e) {
-        return res.status(400).send({message: `Pre Create error: ${(e as any).message}`});
+        body = transform<T>(options, req.body, "create", req.user);
+      } catch (e: any) {
+        throw new APIError({
+          status: 400,
+          title: e.message,
+        });
       }
-      if (body === null) {
-        return res.status(403).send({message: "Pre Create returned null"});
+      if (options.preCreate) {
+        try {
+          body = await options.preCreate(body, req);
+        } catch (e: any) {
+          if (isAPIError(e)) {
+            throw e;
+          } else {
+            throw new APIError({
+              title: `preCreate hook error: ${e.message}`,
+            });
+          }
+        }
+        if (body === null) {
+          throw new APIError({
+            status: 403,
+            title: "Create not allowed",
+            detail: "preCreate hook returned null",
+          });
+        }
       }
-    }
-    let data;
-    try {
-      data = await model.create(body);
-    } catch (e) {
-      return res.status(400).send({message: (e as any).message});
-    }
-    if (options.postCreate) {
+      let data;
       try {
-        await options.postCreate(data, req);
-      } catch (e) {
-        return res.status(400).send({message: `Post Create error: ${(e as any).message}`});
+        data = await model.create(body);
+      } catch (e: any) {
+        throw new APIError({
+          status: 400,
+          title: e.message,
+        });
       }
-    }
-    return res.status(201).json({data: serialize(data, req.user)});
-  });
+
+      if (options.populatePaths) {
+        let populateQuery = model.findById(data._id);
+        populateQuery = populate(populateQuery, options.populatePaths);
+        data = await populateQuery.exec();
+      }
+
+      if (options.postCreate) {
+        try {
+          await options.postCreate(data, req);
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `postCreate hook error: ${e.message}`,
+          });
+        }
+      }
+      // @ts-ignore TS being overprotective of data since we are using generics
+      return res.status(201).json({data: serialize<T>(options, data, req.user)});
+    })
+  );
 
   // TODO add rate limit
-  router.get("/", authenticateMiddleware(true), async (req, res) => {
-    if (!(await checkPermissions("list", options.permissions.list, req.user))) {
-      logger.warn(`Access to LIST on ${model.name} denied for ${req.user?.id}`);
-      return res.status(403).send();
-    }
+  router.get(
+    "/",
+    authenticateMiddleware(options.allowAnonymous),
+    asyncHandler(async (req: Request, res: Response) => {
+      // For pure read queries, Mongoose will return the correct data with just the base model.
+      const model = baseModel;
 
-    let query = {};
+      if (!(await checkPermissions("list", options.permissions.list, req.user))) {
+        throw new APIError({
+          status: 403,
+          title: `Access to LIST on ${model.name} denied for ${req.user?.id}`,
+        });
+      }
 
-    for (const queryParam of Object.keys(options.defaultQueryParams ?? [])) {
-      query[queryParam] = (options.defaultQueryParams ?? {})[queryParam];
-    }
+      let query: any = {};
+      for (const queryParam of Object.keys(options.defaultQueryParams ?? [])) {
+        query[queryParam] = (options.defaultQueryParams ?? {})[queryParam];
+      }
 
-    // TODO we can make this much more complicated with ands and ors, but for now, simple queries
-    // will do.
-    for (const queryParam of Object.keys(req.query)) {
-      if ((options.queryFields ?? []).concat(SPECIAL_QUERY_PARAMS).includes(queryParam)) {
-        // Not sure if this is necessary or if mongoose does the right thing.
-        if (req.query[queryParam] === "true") {
-          query[queryParam] = true;
-        } else if (req.query[queryParam] === "false") {
-          query[queryParam] = false;
+      // TODO we can make this much more complicated with ands and ors, but for now, simple queries
+      // will do.
+      for (const queryParam of Object.keys(req.query)) {
+        if (SPECIAL_QUERY_PARAMS.includes(queryParam)) {
+          continue;
+        }
+        if ((options.queryFields ?? []).includes(queryParam)) {
+          // Not sure if this is necessary or if mongoose does the right thing.
+          if (req.query[queryParam] === "true") {
+            query[queryParam] = true;
+          } else if (req.query[queryParam] === "false") {
+            query[queryParam] = false;
+          } else {
+            query[queryParam] = req.query[queryParam];
+          }
         } else {
-          query[queryParam] = req.query[queryParam];
+          throw new APIError({
+            status: 400,
+            title: `${queryParam} is not allowed as a query param.`,
+          });
         }
-      } else {
-        logger.debug("Unallowed query param", queryParam);
-        return res.status(400).json({message: `${queryParam} is not allowed as a query param.`});
       }
-    }
 
-    // Special operators. NOTE: these request Mongo Atlas.
-    if (req.query.$search) {
-      mongoose.connection.db.collection(model.collection.collectionName);
-    }
+      // Special operators. NOTE: these request Mongo Atlas.
+      if (req.query.$search) {
+        mongoose.connection.db.collection(model.collection.collectionName);
+      }
 
-    if (req.query.$autocomplete) {
-      mongoose.connection.db.collection(model.collection.collectionName);
-    }
+      if (req.query.$autocomplete) {
+        mongoose.connection.db.collection(model.collection.collectionName);
+      }
 
-    if (options.queryFilter) {
-      let queryFilter;
+      // Check if any of the keys in the query are not allowed by options.queryFilter
+      if (options.queryFilter) {
+        let queryFilter;
+        try {
+          queryFilter = await options.queryFilter(req.user, query);
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `Query filter error: ${e}`,
+          });
+        }
+
+        // If the query filter returns null specifically, we know this is a query that shouldn't
+        // return any results.
+        if (queryFilter === null) {
+          return res.json({data: []});
+        }
+        query = {...query, ...queryFilter};
+      }
+
+      let limit = options.defaultLimit ?? 100;
+      if (Number(req.query.limit)) {
+        limit = Math.min(Number(req.query.limit), options.maxLimit ?? 500);
+      }
+
+      if (query.period) {
+        // need to remove 'period' since it isn't part of any schemas but parsed and applied in queryFilter instead
+        delete query.period;
+      }
+
+      let builtQuery = model.find(query).limit(limit + 1);
+
+      if (req.query.page) {
+        if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
+          throw new APIError({
+            status: 400,
+            title: `Invalid page: ${req.query.page}`,
+          });
+        }
+        builtQuery = builtQuery.skip((Number(req.query.page) - 1) * limit);
+      }
+
+      if (options.sort) {
+        builtQuery = builtQuery.sort(options.sort);
+      }
+
+      builtQuery = populate(builtQuery, options.populatePaths);
+
+      let data: Document<T, {}, {}>[];
       try {
-        queryFilter = await options.queryFilter(req.user, query);
-      } catch (e) {
-        return res.status(400).json({message: `Query filter error: ${e}`});
+        data = await builtQuery.exec();
+      } catch (e: any) {
+        throw new APIError({
+          title: `List error: ${e.stack}`,
+        });
       }
 
-      // If the query filter returns null specifically, we know this is a query that shouldn't
-      // return any results.
-      if (queryFilter === null) {
-        return res.json({data: []});
-      }
-      query = {...query, ...queryFilter};
-    }
-
-    let limit = options.defaultLimit ?? 100;
-    if (Number(req.query.limit)) {
-      limit = Math.min(Number(req.query.limit), options.maxLimit ?? 500);
-    }
-
-    let builtQuery = model.find(query).limit(limit + 1);
-
-    if (req.query.page) {
-      if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
-        return res.status(400).json({message: `Invalid page: ${req.query.page}`});
-      }
-      builtQuery = builtQuery.skip((Number(req.query.page) - 1) * limit);
-    }
-
-    if (options.sort) {
-      builtQuery = builtQuery.sort(options.sort);
-    }
-
-    // TODO: we should handle nested serializers here.
-    for (const populatePath of options.populatePaths ?? []) {
-      builtQuery = builtQuery.populate(populatePath);
-    }
-
-    let data: Document<T, {}, {}>[];
-    try {
-      data = await builtQuery.exec();
-    } catch (e) {
-      logger.error(`List error: ${(e as any).stack}`);
-      return res.status(500).send();
-    }
-    let more;
-    try {
-      let serialized = serialize(data, req.user);
-      if (serialized && Array.isArray(serialized)) {
-        more = serialized.length === limit + 1 && serialized.length > 0;
-        if (more) {
-          // Slice off the extra document we fetched to determine if more is true or not.
-          serialized = serialized.slice(0, limit);
+      if (options.postList) {
+        try {
+          data = await options.postList(data, req);
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `postList hook error on ${req.params.id}: ${e.message}`,
+          });
         }
-        return res.json({data: serialized, more, page: req.query.page, limit});
-      } else {
-        return res.json({data: serialized});
       }
-    } catch (e) {
-      logger.error("Serialization error", e);
-      return res.status(500).send();
-    }
-  });
 
-  router.get("/:id", authenticateMiddleware(true), async (req, res) => {
-    if (!(await checkPermissions("read", options.permissions.read, req.user))) {
-      logger.warn(`Access to READ on ${model.name} denied for ${req.user?.id}`);
-      return res.status(405).send();
-    }
+      let more;
+      try {
+        let serialized = serialize<T>(options, data, req.user);
+        if (serialized && Array.isArray(serialized)) {
+          more = serialized.length === limit + 1 && serialized.length > 0;
+          if (more) {
+            // Slice off the extra document we fetched to determine if more is true or not.
+            serialized = serialized.slice(0, limit);
+          }
+          return res.json({data: serialized, more, page: req.query.page, limit});
+        } else {
+          return res.json({data: serialized});
+        }
+      } catch (e: any) {
+        throw new APIError({
+          title: `Serialization error: ${e.message}`,
+        });
+      }
+    })
+  );
 
-    const data = await model.findById(req.params.id);
+  router.get(
+    "/:id",
+    authenticateMiddleware(options.allowAnonymous),
+    asyncHandler(async (req: Request, res: Response) => {
+      // For pure read queries, Mongoose will return the correct data with just the base model.
+      const model = baseModel;
 
-    if (!data) {
-      return res.status(404).send();
-    }
+      if (!(await checkPermissions("read", options.permissions.read, req.user))) {
+        throw new APIError({
+          status: 405,
+          title: `Access to GET on ${model.name} denied for ${req.user?.id}`,
+        });
+      }
 
-    if (!(await checkPermissions("read", options.permissions.read, req.user, data))) {
-      logger.warn(`Access to READ on ${model.name}:${req.params.id} denied for ${req.user?.id}`);
-      return res.status(403).send();
-    }
+      let builtQuery = model.findById(req.params.id);
+      builtQuery = populate(builtQuery, options.populatePaths);
 
-    return res.json({data: serialize(data, req.user)});
-  });
+      let data;
+      try {
+        data = await builtQuery.exec();
+      } catch (e: any) {
+        throw new APIError({
+          title: `GET failed on ${req.params.id}: ${e.stack}`,
+        });
+      }
 
-  router.put("/:id", authenticateMiddleware(true), async (req, res) => {
-    // Patch is what we want 90% of the time
-    return res.status(500);
-  });
+      if (!data) {
+        throw new APIError({
+          status: 404,
+          title: `Document ${req.params.id} not found`,
+        });
+      }
 
-  router.patch("/:id", authenticateMiddleware(true), async (req, res) => {
+      if (!(await checkPermissions("read", options.permissions.read, req.user, data))) {
+        throw new APIError({
+          status: 403,
+          title: `Access to GET on ${model.name}:${req.params.id} denied for ${req.user?.id}`,
+        });
+      }
+
+      if (options.postGet) {
+        try {
+          data = await options.postGet(data, req);
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `postGet hook error on ${req.params.id}: ${e.message}`,
+          });
+        }
+      }
+
+      return res.json({data: await serialize<T>(options, data, req.user)});
+    })
+  );
+
+  router.put(
+    "/:id",
+    authenticateMiddleware(options.allowAnonymous),
+    asyncHandler(async (_req: Request, _res: Response) => {
+      // Patch is what we want 90% of the time
+      throw new APIError({
+        title: `PUT is not supported.`,
+      });
+    })
+  );
+
+  router.patch(
+    "/:id",
+    authenticateMiddleware(options.allowAnonymous),
+    asyncHandler(async (req: Request, res: Response) => {
+      const model = getModel(baseModel, req.body, options);
+
+      if (!(await checkPermissions("update", options.permissions.update, req.user))) {
+        throw new APIError({
+          status: 405,
+          title: `Access to PATCH on ${model.name} denied for ${req.user?.id}`,
+        });
+      }
+
+      let doc = await model.findById(req.params.id);
+      // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+      if (!doc || (doc.__t && !req.body.__t)) {
+        throw new APIError({
+          status: 404,
+          title: `Could not find document to PATCH: ${req.params.id}`,
+        });
+      }
+
+      if (!(await checkPermissions("update", options.permissions.update, req.user, doc))) {
+        throw new APIError({
+          status: 403,
+          title: `PATCH not allowed for user ${req.user?.id} on doc ${doc._id}`,
+        });
+      }
+
+      let body;
+      try {
+        body = transform<T>(options, req.body, "update", req.user);
+      } catch (e: any) {
+        throw new APIError({
+          status: 403,
+          title: `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${e.message}`,
+        });
+      }
+
+      if (options.preUpdate) {
+        try {
+          body = await options.preUpdate(body, req);
+        } catch (e: any) {
+          if (isAPIError(e)) {
+            throw e;
+          } else {
+            throw new APIError({
+              title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
+            });
+          }
+        }
+        if (body === null) {
+          throw new APIError({
+            status: 403,
+            title: "Update not allowed",
+            detail: `preUpdate hook on ${req.params.id} returned null`,
+          });
+        }
+      }
+
+      // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
+      // wind up with corrupted data, just an API error.
+      try {
+        Object.assign(doc, body);
+        await doc.save();
+      } catch (e: any) {
+        throw new APIError({
+          status: 400,
+          title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
+        });
+      }
+
+      if (options.populatePaths) {
+        let populateQuery = model.findById(doc._id);
+        populateQuery = populate(populateQuery, options.populatePaths);
+        doc = await populateQuery.exec();
+      }
+
+      if (options.postUpdate) {
+        try {
+          await options.postUpdate(doc, body, req);
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `postUpdate hook error on ${req.params.id}: ${e.message}`,
+          });
+        }
+      }
+      return res.json({data: serialize<T>(options, doc, req.user)});
+    })
+  );
+
+  router.delete(
+    "/:id",
+    authenticateMiddleware(options.allowAnonymous),
+    asyncHandler(async (req: Request, res: Response) => {
+      const model = getModel(baseModel, req.body, options);
+      if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
+        throw new APIError({
+          status: 405,
+          title: `Access to DELETE on ${model.name} denied for ${req.user?.id}`,
+        });
+      }
+
+      const doc = await model.findById(req.params.id);
+
+      // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+      if (!doc || (doc.__t && !req.body.__t)) {
+        throw new APIError({
+          status: 404,
+          title: `Could not find document to DELETE: ${req.user?.id}`,
+        });
+      }
+
+      if (!(await checkPermissions("delete", options.permissions.delete, req.user, doc))) {
+        throw new APIError({
+          status: 403,
+          title: `Access to DELETE on ${model.name}:${req.params.id} denied for ${req.user?.id}`,
+        });
+      }
+
+      if (options.preDelete) {
+        let body;
+        try {
+          body = await options.preDelete(doc, req);
+        } catch (e: any) {
+          if (isAPIError(e)) {
+            throw e;
+          } else {
+            throw new APIError({
+              status: 403,
+              title: `preDelete hook error on ${req.params.id}: ${e.message}`,
+            });
+          }
+        }
+        if (body === null) {
+          throw new APIError({
+            status: 403,
+            title: "Delete not allowed",
+            detail: `preDelete hook for ${req.params.id} returned null`,
+          });
+        }
+      }
+
+      // Support .deleted from isDeleted plugin
+      if (
+        Object.keys(model.schema.paths).includes("deleted") &&
+        model.schema.paths.deleted.instance === "Boolean"
+      ) {
+        doc.deleted = true;
+        await doc.save();
+      } else {
+        // For models without the isDeleted plugin
+        try {
+          await doc.remove();
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: e.message,
+          });
+        }
+      }
+
+      if (options.postDelete) {
+        try {
+          await options.postDelete(req);
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `postDelete hook error: ${e.message}`,
+          });
+        }
+      }
+
+      return res.sendStatus(204);
+    })
+  );
+
+  async function arrayOperation(
+    req: Request,
+    res: Response,
+    operation: "POST" | "PATCH" | "DELETE"
+  ) {
+    // TODO Combine array operations and .patch(), as they are very similar.
+    const model = getModel(baseModel, req.body, options);
+
     if (!(await checkPermissions("update", options.permissions.update, req.user))) {
-      logger.warn(`Access to PATCH on ${model.name} denied for ${req.user?.id}`);
-      return res.status(405).send();
+      throw new APIError({
+        title: `Access to PATCH on ${model.name} denied for ${req.user?.id}`,
+        status: 405,
+      });
     }
 
-    let doc = await model.findById(req.params.id);
-
-    if (!doc) {
-      return res.status(404).send();
+    const doc = await model.findById(req.params.id);
+    // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+    if (!doc || (doc.__t && !req.body.__t)) {
+      throw new APIError({
+        title: `Could not find document to PATCH: ${req.params.id}`,
+        status: 404,
+      });
     }
 
     if (!(await checkPermissions("update", options.permissions.update, req.user, doc))) {
-      logger.warn(`Patch not allowed for user ${req.user?.id} on doc ${doc._id}`);
-      return res.status(403).send();
+      throw new APIError({
+        title: `Patch not allowed for user ${req.user?.id} on doc ${doc._id}`,
+        status: 403,
+      });
     }
 
-    let body;
+    // We apply the operation *before* the hooks. As far as the callers are concerned, this should
+    // be like PATCHing the field and replacing the whole thing.
+    if (operation !== "DELETE" && req.body[req.params.field] === undefined) {
+      throw new APIError({
+        title: `Malformed body, array operations should have a single, top level key, got: ${Object.keys(
+          req.body
+        ).join(",")}`,
+        status: 400,
+      });
+    }
+
+    const field = req.params.field;
+
+    const array = [...doc[field]];
+    if (operation === "POST") {
+      array.push(req.body[field]);
+    } else if (operation === "PATCH" || operation === "DELETE") {
+      // Check for subschema vs String array:
+      let index;
+      if (isValidObjectId(req.params.itemId)) {
+        index = array.findIndex((x: any) => x.id === req.params.itemId);
+      } else {
+        index = array.findIndex((x: string) => x === req.params.itemId);
+      }
+      if (index === -1) {
+        throw new APIError({
+          title: `Could not find ${field}/${req.params.itemId}`,
+          status: 404,
+        });
+      }
+      if (operation === "PATCH") {
+        array[index] = req.body[field];
+      } else {
+        array.splice(index, 1);
+      }
+    } else {
+      throw new APIError({
+        title: `Invalid array operation: ${operation}`,
+        status: 400,
+      });
+    }
+    let body: Partial<T> | null = {[field]: array} as unknown as Partial<T>;
+
     try {
-      body = transform(req.body, "update", req.user);
-    } catch (e) {
-      logger.warn(`Patch failed for user ${req.user?.id}: ${(e as any).message}`);
-      return res.status(403).send({message: (e as any).message});
+      body = transform<T>(options, body, "update", req.user) as Partial<T>;
+    } catch (e: any) {
+      throw new APIError({
+        title: e.message,
+        status: 403,
+      });
     }
 
     if (options.preUpdate) {
       try {
-        body = options.preUpdate(body, req);
-      } catch (e) {
-        return res.status(400).send({message: `Pre Update error: ${(e as any).message}`});
+        body = await options.preUpdate(body, req);
+      } catch (e: any) {
+        throw new APIError({
+          title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
+          status: 400,
+        });
       }
       if (body === null) {
-        return res.status(403).send({message: "Pre Update returned null"});
+        throw new APIError({
+          title: "Update not allowed",
+          detail: `preUpdate hook on ${req.params.id} returned null`,
+          status: 403,
+        });
       }
     }
 
+    // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
+    // wind up with corrupted data, just an API error.
     try {
-      doc = await model.findOneAndUpdate({_id: req.params.id}, body as any, {new: true});
-    } catch (e) {
-      return res.status(400).send({message: (e as any).message});
+      Object.assign(doc, body);
+      await doc.save();
+    } catch (e: any) {
+      throw new APIError({
+        title: `PATCH Pre Update error on ${req.params.id}: ${e.message}`,
+        status: 400,
+      });
     }
 
     if (options.postUpdate) {
       try {
-        await options.postUpdate(doc, req);
-      } catch (e) {
-        return res.status(400).send({message: `Post Update error: ${(e as any).message}`});
+        await options.postUpdate(doc, body, req);
+      } catch (e: any) {
+        throw new APIError({
+          title: `PATCH Post Update error on ${req.params.id}: ${e.message}`,
+          status: 400,
+        });
       }
     }
-    return res.json({data: serialize(doc, req.user)});
-  });
+    return res.json({data: serialize<T>(options, doc, req.user)});
+  }
 
-  router.delete("/:id", authenticateMiddleware(true), async (req, res) => {
-    if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
-      logger.warn(`Access to DELETE on ${model.name} denied for ${req.user?.id}`);
-      return res.status(405).send();
-    }
+  async function arrayPost(req: Request, res: Response) {
+    return arrayOperation(req, res, "POST");
+  }
 
-    const data = await model.findById(req.params.id);
+  async function arrayPatch(req: Request, res: Response) {
+    return arrayOperation(req, res, "PATCH");
+  }
 
-    if (!data) {
-      return res.status(404).send();
-    }
-
-    if (!(await checkPermissions("delete", options.permissions.delete, req.user, data))) {
-      logger.warn(`Access to DELETE on ${model.name}:${req.params.id} denied for ${req.user?.id}`);
-      return res.status(403).send();
-    }
-
-    if (options.preDelete) {
-      try {
-        const body = options.preDelete(data, req);
-        if (body === null) {
-          return res.status(403).send({message: "Pre Delete returned null"});
-        }
-      } catch (e) {
-        return res.status(400).send({message: `Pre Delete error: ${(e as any).message}`});
-      }
-    }
-
-    // Support .deleted from isDeleted plugin
-    if (
-      Object.keys(model.schema.paths).includes("deleted") &&
-      model.schema.paths.deleted.instance === "Boolean"
-    ) {
-      data.deleted = true;
-      await data.save();
-    } else {
-      // For models without the isDeleted plugin
-      try {
-        await data.remove();
-      } catch (e) {
-        return res.status(400).send({message: (e as any).message});
-      }
-    }
-
-    if (options.postDelete) {
-      try {
-        await options.postDelete(req);
-      } catch (e) {
-        return res.status(400).send({message: `Post Delete error: ${(e as any).message}`});
-      }
-    }
-
-    return res.status(204).send();
-  });
+  async function arrayDelete(req: Request, res: Response) {
+    return arrayOperation(req, res, "DELETE");
+  }
+  // Set up routes for managing array fields. Check if there any array fields to add this for.
+  if (Object.values(baseModel.schema.paths).find((config) => config.instance === "Array")) {
+    router.post(
+      `/:id/:field`,
+      authenticateMiddleware(options.allowAnonymous),
+      asyncHandler(arrayPost)
+    );
+    router.patch(
+      `/:id/:field/:itemId`,
+      authenticateMiddleware(options.allowAnonymous),
+      asyncHandler(arrayPatch)
+    );
+    router.delete(
+      `/:id/:field/:itemId`,
+      authenticateMiddleware(options.allowAnonymous),
+      asyncHandler(arrayDelete)
+    );
+  }
+  router.use(apiErrorMiddleware);
 
   return router;
 }
+
+// Since express doesn't handle async routes well, wrap them with this function.
+export const asyncHandler = (fn: any) => (req: Request, res: Response, next: NextFunction) => {
+  return Promise.resolve(fn(req, res, next)).catch(next);
+};
+
+// For backwards compatibility with the old names.
+export const gooseRestRouter = fernsRouter;
+export type GooseRESTOptions<T> = FernsRouterOptions<T>;

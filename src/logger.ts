@@ -1,10 +1,50 @@
 import fs from "fs";
+import {inspect} from "util";
 import winston from "winston";
+
+function isPrimitive(val: any) {
+  return val === null || (typeof val !== "object" && typeof val !== "function");
+}
+
+function formatWithInspect(val: any) {
+  const prefix = isPrimitive(val) ? "" : "\n";
+  const shouldFormat = typeof val !== "string";
+
+  return prefix + (shouldFormat ? inspect(val, {depth: null, colors: true}) : val);
+}
+
+// Winston doesn't operate like console.log by default, e.g. `logger.error('error', error)` only prints the message
+// and no args. Add handling for all the args, while also supporting splat logging.
+function printf(timestamp = false) {
+  return (info: winston.Logform.TransformableInfo) => {
+    const msg = formatWithInspect(info.message);
+    const splatArgs = info[Symbol.for("splat") as any] || [];
+    const rest = splatArgs.map((data: any) => formatWithInspect(data)).join(" ");
+    if (timestamp) {
+      return `${info.timestamp} - ${info.level}: ${msg} ${rest}`;
+    } else {
+      return `${info.level}: ${msg} ${rest}`;
+    }
+  };
+}
 
 // Setup a default console logger.
 export const logger = winston.createLogger({
   level: "debug",
   transports: [
+    new winston.transports.Console({
+      debugStdout: true,
+      level: "debug",
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple(),
+        winston.format.printf(printf(false))
+      ),
+    }),
+  ],
+  // TODO is this the right place?
+  // https://github.com/winstonjs/winston#rejections
+  rejectionHandlers: [
     new winston.transports.Console({
       debugStdout: true,
       level: "debug",
@@ -19,6 +59,7 @@ export interface LoggingOptions {
   disableFileLogging?: boolean;
   disableConsoleLogging?: boolean;
   disableConsoleColors?: boolean;
+  showConsoleTimestamps?: boolean;
   logDirectory?: string;
 }
 
@@ -29,6 +70,7 @@ export function setupLogging(options?: LoggingOptions) {
     if (!options?.disableConsoleColors) {
       formats.push(winston.format.colorize());
     }
+    formats.push(winston.format.printf(printf(options?.showConsoleTimestamps)));
     logger.add(
       new winston.transports.Console({
         debugStdout: !options?.level || options?.level === "debug",

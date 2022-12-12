@@ -1,18 +1,12 @@
-import chai from "chai";
 import express from "express";
 import mongoose, {model, Schema} from "mongoose";
+import passportLocalMongoose from "passport-local-mongoose";
 
-import {logger, tokenPlugin} from ".";
-import {
-  baseUserPlugin,
-  createdDeletedPlugin,
-  gooseRestRouter,
-  Permissions,
-  setupAuth,
-} from "./api";
-import {passportLocalMongoose} from "./passport";
-
-const assert = chai.assert;
+import {fernsRouter} from "./api";
+import {setupAuth} from "./auth";
+import {logger} from "./logger";
+import {Permissions} from "./permissions";
+import {baseUserPlugin, createdUpdatedPlugin} from "./plugins";
 
 mongoose.connect("mongodb://localhost:27017/example");
 
@@ -35,8 +29,7 @@ const userSchema = new Schema<User>({
 });
 
 userSchema.plugin(passportLocalMongoose, {usernameField: "email"});
-userSchema.plugin(tokenPlugin);
-userSchema.plugin(createdDeletedPlugin);
+userSchema.plugin(createdUpdatedPlugin);
 userSchema.plugin(baseUserPlugin);
 const UserModel = model<User>("User", userSchema);
 
@@ -67,7 +60,7 @@ function getBaseServer() {
   setupAuth(app, UserModel as any);
   app.use(
     "/food",
-    gooseRestRouter(FoodModel, {
+    fernsRouter(FoodModel, {
       permissions: {
         list: [Permissions.IsAny],
         create: [Permissions.IsAuthenticated],

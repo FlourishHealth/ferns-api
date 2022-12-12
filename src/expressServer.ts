@@ -7,19 +7,29 @@ import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
 
-import {Env, setupAuth, UserModel as UserMongooseModel} from "./api";
+import {setupAuth, UserModel as UserMongooseModel} from "./auth";
+import {apiErrorMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
 
 export function setupErrorLogging() {
-  const dsn = (process.env as Env).SENTRY_DSN;
+  const dsn = process.env.SENTRY_DSN;
   if (process.env.NODE_ENV === "production") {
     if (!dsn) {
       throw new Error("You must set SENTRY_DSN in the environment.");
     }
-    Sentry.init({dsn});
+    Sentry.init({
+      dsn,
+      integrations: [
+        // Enable HTTP calls tracing
+        new Sentry.Integrations.Http({tracing: true}),
+        // Enable Express.js middleware tracing. Need to figure out where to enable this in ferns-api to make it viable,
+        // since we need access to `app` but also want to get Sentry rolling as early as possible.
+        // new Tracing.Integrations.Express({app}),
+      ],
+    });
     logger.debug(`Initialized Sentry with DSN ${dsn}`);
   }
 }
@@ -78,11 +88,7 @@ function logRequests(req: any, res: any, next: any) {
   next();
 }
 
-export function createRouter(
-  rootPath: string,
-  addRoutes: (router: Router) => void,
-  middleware: any[] = []
-) {
+export function createRouter(rootPath: string, addRoutes: AddRoutes, middleware: any[] = []) {
   function routePathMiddleware(req: any, res: any, next: any) {
     if (!req.routeMount) {
       req.routeMount = [];
@@ -110,6 +116,7 @@ export function createRouterWithAuth(
 
 interface InitializeRoutesOptions {
   corsOrigin?: string;
+  addMiddleware?: AddRoutes;
 }
 
 function initializeRoutes(
@@ -123,9 +130,12 @@ function initializeRoutes(
 
   const app = express();
 
-  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.requestHandler({user: false}));
 
-  // TODO: Allow specifying the origin in
+  if (options.addMiddleware) {
+    options.addMiddleware(app);
+  }
+
   app.use(
     cors({
       origin: options.corsOrigin ?? "*",
@@ -138,14 +148,40 @@ function initializeRoutes(
 
   setupAuth(app as any, UserModel as any);
 
+  // Add Sentry scopes for session, transaction, and userId if any are set
+  app.all("*", function (req: any, _res: any, next: any) {
+    const transactionId = req.header("X-Transaction-ID");
+    const sessionId = req.header("X-Session-ID");
+    if (transactionId) {
+      Sentry.configureScope((scope) => {
+        scope.setTag("transaction_id", transactionId);
+      });
+    }
+    if (sessionId) {
+      Sentry.configureScope((scope) => {
+        scope.setTag("session_id", sessionId);
+      });
+    }
+    if (req.user?._id) {
+      Sentry.configureScope((scope) => {
+        scope.setUser({id: req.user._id});
+      });
+    }
+    next();
+  });
+
   // Adds all the user
   addRoutes(app);
 
   // The error handler must be before any other error middleware and after all controllers
   app.use(Sentry.Handlers.errorHandler());
 
-  app.use(function onError(_err: any, _req: any, res: any, _next: any) {
-    logger.error("Fallthrough error", _err);
+  // Catch any thrown APIErrors and return them in an OpenAPI compatible format
+  app.use(apiErrorMiddleware);
+
+  app.use(function onError(err: any, _req: any, res: any, _next: any) {
+    logger.error("Fallthrough error", err);
+    Sentry.captureException(err);
     res.statusCode = 500;
     res.end(`${res.sentry}\n`);
   });
@@ -166,6 +202,7 @@ export interface SetupServerOptions {
   loggingOptions?: LoggingOptions;
   skipListen?: boolean;
   corsOrigin?: string;
+  addMiddleware?: AddRoutes;
 }
 
 // Sets up the routes and returns a function to launch the API.
@@ -177,7 +214,10 @@ export function setupServer(options: SetupServerOptions) {
 
   let app: express.Application;
   try {
-    app = initializeRoutes(UserModel, addRoutes, {corsOrigin: options.corsOrigin});
+    app = initializeRoutes(UserModel, addRoutes, {
+      corsOrigin: options.corsOrigin,
+      addMiddleware: options.addMiddleware,
+    });
   } catch (e) {
     logger.error("Error initializing routes", e);
     throw e;
@@ -223,7 +263,7 @@ export function cronjob(
 
 // Convenience method to send data to a Slack webhook.
 export async function sendToSlack(text: string, channel = "bots") {
-  const slackWebhookUrl = (process.env as Env).SLACK_WEBHOOK;
+  const slackWebhookUrl = process.env.SLACK_WEBHOOK;
   if (!slackWebhookUrl) {
     throw new Error("You must set SLACK_WEBHOOK in the environment.");
   }
