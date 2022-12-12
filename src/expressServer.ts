@@ -30,6 +30,7 @@ export function setupErrorLogging() {
         // new Tracing.Integrations.Express({app}),
       ],
     });
+    logger.debug(`Initialized Sentry with DSN ${dsn}`);
   }
 }
 
