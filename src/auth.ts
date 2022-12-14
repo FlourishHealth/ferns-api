@@ -64,7 +64,7 @@ export async function signupUser(
 }
 
 const generateTokens = async (user: any) => {
-  const tokenOptions: any = {
+  const tokenOptions: jwt.SignOptions = {
     expiresIn: "15m",
   };
   if (process.env.TOKEN_EXPIRES_IN) {
@@ -82,11 +82,11 @@ const generateTokens = async (user: any) => {
   const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
   let refreshToken;
   if (refreshTokenSecretOrKey) {
-    const refreshTokenOptions: any = {
+    const refreshTokenOptions: jwt.SignOptions = {
       expiresIn: "30d",
     };
     if (process.env.REFRESH_TOKEN_EXPIRES_IN) {
-      refreshTokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
+      refreshTokenOptions.expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN;
     }
     refreshToken = jwt.sign(
       {id: user._id.toString()},
