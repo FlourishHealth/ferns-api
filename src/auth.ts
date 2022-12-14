@@ -44,7 +44,6 @@ export async function signupUser(
   password: string,
   body?: any
 ) {
-  console.log({userModel, email, password, body});
   try {
     const user = await (userModel as any).register({email}, password);
     if (user.postCreate) {
