@@ -301,4 +301,19 @@ describe("auth tests", function () {
     const meRes = await agent.get("/auth/me").expect(200);
     assert.isDefined(meRes.body.data._id);
   });
+
+  it("signup user with email that is already registered", async function () {
+    const _res = await server
+      .post("/auth/signup")
+      .send({email: "new@example.com", password: "123", age: 25})
+      .expect(200);
+
+    const res2 = await server
+      .post("/auth/signup")
+      .send({email: "new@example.com", password: "456", age: 31})
+      .expect(500);
+
+    await timeout(1000);
+    assert.equal(res2.body.title, "A user with the given username is already registered");
+  });
 });
