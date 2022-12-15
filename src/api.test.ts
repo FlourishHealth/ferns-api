@@ -31,6 +31,7 @@ describe("ferns-api", () => {
     let agent: supertest.SuperAgentTest;
 
     beforeEach(async function () {
+      process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
       await setupDb();
       app = getBaseServer();
       setupAuth(app, UserModel as any);

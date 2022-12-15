@@ -232,16 +232,19 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     return res.status(401).json({message: "Invalid refresh token"});
   });
 
-  router.post(
-    "/signup",
-    passport.authenticate("signup", {session: false, failWithError: true}),
-    async function (req: any, res: any) {
-      const tokens = await generateTokens(req.user);
-      return res.json({
-        data: {userId: req.user._id, token: tokens.token, refreshToken: tokens.refreshToken},
-      });
-    }
-  );
+  const signupDisabled = process.env.SIGNUP_DISABLED === "true";
+  if (!signupDisabled) {
+    router.post(
+      "/signup",
+      passport.authenticate("signup", {session: false, failWithError: true}),
+      async function (req: any, res: any) {
+        const tokens = await generateTokens(req.user);
+        return res.json({
+          data: {userId: req.user._id, token: tokens.token, refreshToken: tokens.refreshToken},
+        });
+      }
+    );
+  }
 
   router.get("/me", authenticateMiddleware(), async (req, res) => {
     if (!req.user?.id) {

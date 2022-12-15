@@ -7,7 +7,6 @@ import {setupAuth} from "./auth";
 import {Permissions} from "./permissions";
 import {Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
 import {AdminOwnerTransformer} from "./transformers";
-import {timeout} from "./utils";
 
 describe("auth tests", function () {
   let app: express.Application;
@@ -240,7 +239,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
-    await timeout(1000);
+
     assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     let user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 1);
@@ -248,7 +247,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
-    await timeout(1000);
+
     assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 2);
@@ -256,7 +255,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
-    await timeout(1000);
+
     assert.deepEqual(res.body, {message: "Account locked due to too many failed login attempts"});
     user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 3);
@@ -266,7 +265,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "admin@example.com", password: "securePassword"})
       .expect(401);
-    await timeout(1000);
+
     assert.deepEqual(res.body, {message: "Account locked due to too many failed login attempts"});
     user = await UserModel.findById(admin._id);
     // Not incremented
