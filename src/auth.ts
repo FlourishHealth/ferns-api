@@ -6,6 +6,7 @@ import {Strategy as AnonymousStrategy} from "passport-anonymous";
 import {Strategy as JwtStrategy} from "passport-jwt";
 import {Strategy as LocalStrategy} from "passport-local";
 
+import {APIError, apiErrorMiddleware} from "./errors";
 import {logger} from "./logger";
 import {UserModel} from "./tests";
 
@@ -51,15 +52,15 @@ export async function signupUser(
       delete body.password;
       try {
         await user.postCreate(body);
-      } catch (e) {
-        logger.error("Error in user.postCreate", e);
-        throw e;
+      } catch (error: any) {
+        logger.error("Error in user.postCreate", error);
+        throw new APIError({title: error.message});
       }
     }
     await user.save();
     return user;
-  } catch (error) {
-    throw error;
+  } catch (error: any) {
+    throw new APIError({title: error.message});
   }
 }
 
@@ -284,6 +285,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       return res.status(403).send({message: (e as any).message});
     }
   });
+
+  router.use(apiErrorMiddleware);
 
   app.use(express.urlencoded({extended: false}) as any);
   app.use(passport.initialize());
