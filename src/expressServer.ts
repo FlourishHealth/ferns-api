@@ -34,6 +34,27 @@ export function setupErrorLogging() {
   }
 }
 
+export function setupEnvironment(): void {
+  if (!process.env.TOKEN_ISSUER) {
+    throw new Error("TOKEN_ISSUER must be set in env.");
+  }
+  if (!process.env.TOKEN_SECRET) {
+    throw new Error("TOKEN_SECRET must be set.");
+  }
+  if (!process.env.REFRESH_TOKEN_SECRET) {
+    logger.warn("REFRESH_TOKEN_SECRET must be set.");
+  }
+  if (!process.env.SESSION_SECRET) {
+    throw new Error("SESSION_SECRET must be set.");
+  }
+  if (!process.env.TOKEN_EXPIRES_IN) {
+    logger.warn("TOKEN_EXPIRES_IN is not set so using default.");
+  }
+  if (!process.env.REFRESH_TOKEN_EXPIRES_IN) {
+    logger.warn("REFRESH_TOKEN_EXPIRES_IN not set so using default.");
+  }
+}
+
 export type AddRoutes = (router: Router) => void;
 
 const logRequestsFinished = function (req: any, res: any, startTime: [number, number]) {
@@ -124,9 +145,7 @@ function initializeRoutes(
   addRoutes: AddRoutes,
   options: InitializeRoutesOptions = {}
 ) {
-  if (!process.env.SESSION_SECRET && process.env.NODE_ENV === "production") {
-    throw new Error("You must provide a SESSION_SECRET in env.");
-  }
+  setupEnvironment();
 
   const app = express();
 

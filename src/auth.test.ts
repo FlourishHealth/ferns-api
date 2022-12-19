@@ -15,8 +15,6 @@ describe("auth tests", function () {
   let notAdmin: any;
 
   beforeEach(async function () {
-    process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
-
     [admin, notAdmin] = await setupDb();
 
     await Promise.all([

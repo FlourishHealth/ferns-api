@@ -76,7 +76,7 @@ const generateTokens = async (user: any) => {
 
   const tokenSecretOrKey = process.env.TOKEN_SECRET;
   if (!tokenSecretOrKey) {
-    throw new Error(`TOKEN_SECRET and REFRESH_TOKEN_SECRET must be set in env.`);
+    throw new Error(`TOKEN_SECRET must be set in env.`);
   }
   const token = jwt.sign({id: user._id.toString()}, tokenSecretOrKey, tokenOptions);
   const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
@@ -139,7 +139,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     logger.debug("Setting up JWT Authentication");
 
     const customExtractor = function (req: express.Request) {
-      let token = null;
+      let token: string | null = null;
       if (req?.cookies?.jwt) {
         token = req.cookies.jwt;
       } else if (req?.headers?.authorization) {
@@ -159,16 +159,13 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     };
     passport.use(
       "jwt",
-      new JwtStrategy(jwtOpts, async function (
-        payload: {id: string; iat: number; exp: number},
-        done: any
-      ) {
+      new JwtStrategy(jwtOpts, async function (jwtPayload: JwtPayload, done) {
         let user;
-        if (!payload) {
+        if (!jwtPayload) {
           return done(null, false);
         }
         try {
-          user = await userModel.findById((payload as any).id);
+          user = await userModel.findById(jwtPayload.id);
         } catch (e) {
           logger.warn("[jwt] Error finding user from id", e);
           return done(e, false);
