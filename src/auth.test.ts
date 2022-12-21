@@ -7,6 +7,7 @@ import {setupAuth} from "./auth";
 import {Permissions} from "./permissions";
 import {Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
 import {AdminOwnerTransformer} from "./transformers";
+import {timeout} from "./utils";
 
 describe("auth tests", function () {
   let app: express.Application;
