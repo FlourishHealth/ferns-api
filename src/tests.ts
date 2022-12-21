@@ -54,6 +54,8 @@ userSchema.plugin(passportLocalMongoose, {
   attemptsField: "attempts",
   maxAttempts: 3,
   usernameCaseInsensitive: true,
+  interval: process.env.NODE_ENV === "test" ? 1 : 100,
+  maxInterval: process.env.NODE_ENV === "test" ? 1 : 300000,
 });
 // userSchema.plugin(tokenPlugin);
 userSchema.plugin(createdUpdatedPlugin);

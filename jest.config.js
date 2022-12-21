@@ -5,7 +5,7 @@ module.exports = {
   verbose: true,
   maxWorkers: 1,
   moduleFileExtensions: ["ts", "tsx", "js", "jsx", "json", "node"],
-  setupFiles: ["<rootDir>/jestSetupFile.js"],
+  setupFilesAfterEnv: ["<rootDir>/src/tests/jestSetup.ts"],
   transform: {
     "^.+\\.tsx?$": "ts-jest",
   },
@@ -13,6 +13,7 @@ module.exports = {
 
   transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
   testPathIgnorePatterns: ["<rootDir>/web", "<rootDir>/dist"],
+  testLocationInResults: true,
   // moduleNameMapper: {
   //   "firebase-admin": "<rootDir>/__mocks__/firebaseMock.ts",
   // },
