@@ -31,6 +31,7 @@ function printf(timestamp = false) {
 // Setup a default console logger.
 export const logger = winston.createLogger({
   level: "debug",
+  exitOnError: false,
   transports: [
     new winston.transports.Console({
       debugStdout: true,
@@ -47,7 +48,7 @@ export const logger = winston.createLogger({
   rejectionHandlers: [
     new winston.transports.Console({
       debugStdout: true,
-      level: "debug",
+      level: "error",
       format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
     }),
   ],
