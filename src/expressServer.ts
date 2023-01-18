@@ -138,6 +138,7 @@ export function createRouterWithAuth(
 interface InitializeRoutesOptions {
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
+  addUnauthenticatedRoutes?: AddRoutes;
 }
 
 function initializeRoutes(
@@ -164,6 +165,10 @@ function initializeRoutes(
   app.use(express.json());
 
   app.use(logRequests);
+
+  if (options.addUnauthenticatedRoutes) {
+    options.addUnauthenticatedRoutes(app);
+  }
 
   setupAuth(app as any, UserModel as any);
 
@@ -222,6 +227,7 @@ export interface SetupServerOptions {
   skipListen?: boolean;
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
+  addUnauthenticatedRoutes?: AddRoutes;
 }
 
 // Sets up the routes and returns a function to launch the API.
@@ -236,6 +242,7 @@ export function setupServer(options: SetupServerOptions) {
     app = initializeRoutes(UserModel, addRoutes, {
       corsOrigin: options.corsOrigin,
       addMiddleware: options.addMiddleware,
+      addUnauthenticatedRoutes: options.addUnauthenticatedRoutes,
     });
   } catch (e) {
     logger.error("Error initializing routes", e);
