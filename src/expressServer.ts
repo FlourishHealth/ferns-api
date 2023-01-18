@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/node";
+import * as Tracing from "@sentry/tracing";
 import axios from "axios";
 import cors from "cors";
 import cron from "cron";
@@ -14,7 +15,7 @@ import {logger, LoggingOptions, setupLogging} from "./logger";
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
 
-export function setupErrorLogging() {
+export function setupErrorLogging(app) {
   const dsn = process.env.SENTRY_DSN;
   if (process.env.NODE_ENV === "production") {
     if (!dsn) {
@@ -23,12 +24,12 @@ export function setupErrorLogging() {
     Sentry.init({
       dsn,
       integrations: [
-        // Enable HTTP calls tracing
+        // enable HTTP calls tracing
         new Sentry.Integrations.Http({tracing: true}),
-        // Enable Express.js middleware tracing. Need to figure out where to enable this in ferns-api to make it viable,
-        // since we need access to `app` but also want to get Sentry rolling as early as possible.
-        // new Tracing.Integrations.Express({app}),
+        // enable Express.js middleware tracing
+        new Tracing.Integrations.Express({app}),
       ],
+      tracesSampleRate: 0.5,
     });
     logger.debug(`Initialized Sentry with DSN ${dsn}`);
   }
@@ -149,7 +150,10 @@ function initializeRoutes(
 
   const app = express();
 
-  app.use(Sentry.Handlers.requestHandler({user: false}));
+  setupErrorLogging(app);
+
+  app.use(Sentry.Handlers.requestHandler());
+  app.use(Sentry.Handlers.tracingHandler());
 
   if (options.addMiddleware) {
     options.addMiddleware(app);

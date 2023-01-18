@@ -1,5 +1,4 @@
 // https://jsonapi.org/format/#errors
-import * as Sentry from "@sentry/node";
 import {NextFunction, Request, Response} from "express";
 import {Schema} from "mongoose";
 
@@ -159,7 +158,6 @@ export function getAPIErrorBody(error: APIError): {[id: string]: any} {
 }
 
 export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
-  Sentry.captureException(err);
   if (isAPIError(err)) {
     return res.status(err.status).json(getAPIErrorBody(err));
   }
