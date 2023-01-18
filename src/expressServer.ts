@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/node";
+import {ProfilingIntegration} from "@sentry/profiling-node";
 import * as Tracing from "@sentry/tracing";
 import axios from "axios";
 import cors from "cors";
@@ -28,8 +29,10 @@ export function setupErrorLogging(app) {
         new Sentry.Integrations.Http({tracing: true}),
         // enable Express.js middleware tracing
         new Tracing.Integrations.Express({app}),
+        new ProfilingIntegration(),
       ],
       tracesSampleRate: 0.5,
+      profilesSampleRate: 0.5,
     });
     logger.debug(`Initialized Sentry with DSN ${dsn}`);
   }
