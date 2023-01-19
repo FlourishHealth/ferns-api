@@ -29,7 +29,8 @@
   },
   "homepage": "https://github.com/FlourishHealth/ferns#readme",
   "dependencies": {
-    "@sentry/node": "^7.3.1",
+    "@sentry/node": "^7.31.1",
+    "@sentry/profiling-node": "^0.0.12",
     "axios": "^0.27.2",
     "cors": "^2.8.5",
     "cron": "^2.0.0",
