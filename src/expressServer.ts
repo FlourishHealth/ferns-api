@@ -4,7 +4,7 @@ import * as Tracing from "@sentry/tracing";
 import axios from "axios";
 import cors from "cors";
 import cron from "cron";
-import express, {Router} from "express";
+import express, {Application, Router} from "express";
 import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
@@ -16,7 +16,7 @@ import {logger, LoggingOptions, setupLogging} from "./logger";
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
 
-export function setupErrorLogging(app) {
+export function setupErrorLogging(app: Application) {
   const dsn = process.env.SENTRY_DSN;
   if (process.env.NODE_ENV === "production") {
     if (!dsn) {
@@ -149,8 +149,6 @@ function initializeRoutes(
   addRoutes: AddRoutes,
   options: InitializeRoutesOptions = {}
 ) {
-  setupEnvironment();
-
   const app = express();
 
   setupErrorLogging(app);
