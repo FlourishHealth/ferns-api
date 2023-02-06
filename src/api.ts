@@ -215,6 +215,13 @@ export function fernsRouter<T>(
             });
           }
         }
+        if (body === undefined) {
+          throw new APIError({
+            status: 403,
+            title: "Create not allowed",
+            detail: "A body must be returned from preCreate",
+          });
+        }
         if (body === null) {
           throw new APIError({
             status: 403,
@@ -512,6 +519,13 @@ export function fernsRouter<T>(
             });
           }
         }
+        if (body === undefined) {
+          throw new APIError({
+            status: 403,
+            title: "Update not allowed",
+            detail: "A body must be returned from preUpdate",
+          });
+        }
         if (body === null) {
           throw new APIError({
             status: 403,
@@ -595,6 +609,13 @@ export function fernsRouter<T>(
               title: `preDelete hook error on ${req.params.id}: ${e.message}`,
             });
           }
+        }
+        if (body === undefined) {
+          throw new APIError({
+            status: 403,
+            title: "Delete not allowed",
+            detail: "A body must be returned from preDelete",
+          });
         }
         if (body === null) {
           throw new APIError({
