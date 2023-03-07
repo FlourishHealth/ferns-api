@@ -195,7 +195,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         return next(err);
       }
       if (!user) {
-        logger.warn(`Invalid login: $info}`);
+        logger.warn(`Invalid login: ${info}`);
         return res.status(401).json({message: info?.message});
       }
       const tokens = await generateTokens(user);

@@ -75,17 +75,21 @@ const logRequestsFinished = function (req: any, res: any, startTime: [number, nu
 
   logger.debug(`${req.method} -> ${req.originalUrl} ${res.statusCode} ${`${diffInMs}ms`}`);
   if (diffInMs > SLOW_READ_MAX && req.method === "GET") {
-    logger.warn("Slow GET request", {
-      requestTime: diffInMs,
-      pathName,
-      url: req.originalUrl,
-    });
+    logger.warn(
+      `Slow GET request, ${JSON.stringify({
+        requestTime: diffInMs,
+        pathName,
+        url: req.originalUrl,
+      })}`
+    );
   } else if (diffInMs > SLOW_WRITE_MAX) {
-    logger.warn("Slow write request", {
-      requestTime: diffInMs,
-      pathName,
-      url: req.originalUrl,
-    });
+    logger.warn(
+      `Slow write request ${JSON.stringify({
+        requestTime: diffInMs,
+        pathName,
+        url: req.originalUrl,
+      })}`
+    );
   }
 };
 
