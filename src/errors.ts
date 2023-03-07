@@ -159,8 +159,8 @@ export function getAPIErrorBody(error: APIError): {[id: string]: any} {
 }
 
 export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
-  Sentry.captureException(err);
   if (isAPIError(err)) {
+    Sentry.captureException(err);
     return res.status(err.status).json(getAPIErrorBody(err));
   }
   return next(err);

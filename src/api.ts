@@ -215,7 +215,13 @@ export function fernsRouter<T>(
             });
           }
         }
-        if (!body === null) {
+        if (body === undefined) {
+          throw new APIError({
+            status: 403,
+            title: "Create not allowed",
+            detail: "A body must be returned from preCreate",
+          });
+        } else if (body === null) {
           throw new APIError({
             status: 403,
             title: "Create not allowed",
@@ -524,7 +530,13 @@ export function fernsRouter<T>(
             });
           }
         }
-        if (body === null) {
+        if (body === undefined) {
+          throw new APIError({
+            status: 403,
+            title: "Update not allowed",
+            detail: "A body must be returned from preUpdate",
+          });
+        } else if (body === null) {
           throw new APIError({
             status: 403,
             title: "Update not allowed",
@@ -608,7 +620,13 @@ export function fernsRouter<T>(
             });
           }
         }
-        if (body === null) {
+        if (body === undefined) {
+          throw new APIError({
+            status: 403,
+            title: "Delete not allowed",
+            detail: "A body must be returned from preDelete",
+          });
+        } else if (body === null) {
           throw new APIError({
             status: 403,
             title: "Delete not allowed",
@@ -743,7 +761,13 @@ export function fernsRouter<T>(
           status: 400,
         });
       }
-      if (body === null) {
+      if (body === undefined) {
+        throw new APIError({
+          status: 403,
+          title: "Update not allowed",
+          detail: "A body must be returned from preUpdate",
+        });
+      } else if (body === null) {
         throw new APIError({
           title: "Update not allowed",
           detail: `preUpdate hook on ${req.params.id} returned null`,
