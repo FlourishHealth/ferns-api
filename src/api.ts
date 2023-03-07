@@ -249,7 +249,7 @@ export function fernsRouter<T>(
           let populateQuery = model.findById(data._id);
           populateQuery = populate(populateQuery, options.populatePaths);
           data = await populateQuery.exec();
-        } catch (e) {
+        } catch (e: any) {
           throw new APIError({
             status: 400,
             title: `Populate error: ${e.message}`,
