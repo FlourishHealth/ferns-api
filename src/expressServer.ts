@@ -75,17 +75,21 @@ const logRequestsFinished = function (req: any, res: any, startTime: [number, nu
 
   logger.debug(`${req.method} -> ${req.originalUrl} ${res.statusCode} ${`${diffInMs}ms`}`);
   if (diffInMs > SLOW_READ_MAX && req.method === "GET") {
-    logger.warn("Slow GET request", {
-      requestTime: diffInMs,
-      pathName,
-      url: req.originalUrl,
-    });
+    logger.warn(
+      `Slow GET request, ${JSON.stringify({
+        requestTime: diffInMs,
+        pathName,
+        url: req.originalUrl,
+      })}`
+    );
   } else if (diffInMs > SLOW_WRITE_MAX) {
-    logger.warn("Slow write request", {
-      requestTime: diffInMs,
-      pathName,
-      url: req.originalUrl,
-    });
+    logger.warn(
+      `Slow write request ${JSON.stringify({
+        requestTime: diffInMs,
+        pathName,
+        url: req.originalUrl,
+      })}`
+    );
   }
 };
 
@@ -204,7 +208,7 @@ function initializeRoutes(
   app.use(apiErrorMiddleware);
 
   app.use(function onError(err: any, _req: any, res: any, _next: any) {
-    logger.error("Fallthrough error", err);
+    logger.error(`Fallthrough error: ${err}`);
     Sentry.captureException(err);
     res.statusCode = 500;
     res.end(`${res.sentry}\n`);
@@ -243,7 +247,7 @@ export function setupServer(options: SetupServerOptions) {
       addMiddleware: options.addMiddleware,
     });
   } catch (e) {
-    logger.error("Error initializing routes", e);
+    logger.error(`Error initializing routes: ${e}`);
     throw e;
   }
 
@@ -296,8 +300,8 @@ export async function sendToSlack(text: string, channel = "bots") {
       text,
       channel,
     });
-  } catch (e) {
-    logger.error("Error posting to slack", (e as any).text);
+  } catch (e: any) {
+    logger.error(`Error posting to slack: ${e.text}`);
   }
 }
 

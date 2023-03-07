@@ -53,7 +53,7 @@ export async function signupUser(
       try {
         await user.postCreate(body);
       } catch (error: any) {
-        logger.error("Error in user.postCreate", error);
+        logger.error(`Error in user.postCreate: ${error}`);
         throw new APIError({title: error.message});
       }
     }
@@ -168,7 +168,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         try {
           user = await userModel.findById(jwtPayload.id);
         } catch (e) {
-          logger.warn("[jwt] Error finding user from id", e);
+          logger.warn(`[jwt] Error finding user from id: ${e}`);
           return done(e, false);
         }
         if (user) {
@@ -191,11 +191,11 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   router.post("/login", async function (req, res, next) {
     passport.authenticate("local", {session: true}, async (err: any, user: any, info: any) => {
       if (err) {
-        logger.error("Error logging in:", err);
+        logger.error(`Error logging in: ${err}`);
         return next(err);
       }
       if (!user) {
-        logger.warn("Invalid login:", info);
+        logger.warn(`Invalid login: ${info}`);
         return res.status(401).json({message: info?.message});
       }
       const tokens = await generateTokens(user);
@@ -219,7 +219,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     try {
       decoded = jwt.verify(req.body.refreshToken, refreshTokenSecretOrKey) as JwtPayload;
     } catch (e: any) {
-      logger.error("Error refreshing token:", e);
+      logger.error(`Error refreshing token: ${e}`);
       return res.status(401).json({message: e?.message});
     }
     if (decoded && decoded.id) {
