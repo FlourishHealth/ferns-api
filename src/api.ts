@@ -221,8 +221,7 @@ export function fernsRouter<T>(
             title: "Create not allowed",
             detail: "A body must be returned from preCreate",
           });
-        }
-        if (body === null) {
+        } else if (body === null) {
           throw new APIError({
             status: 403,
             title: "Create not allowed",
@@ -241,9 +240,16 @@ export function fernsRouter<T>(
       }
 
       if (options.populatePaths) {
-        let populateQuery = model.findById(data._id);
-        populateQuery = populate(populateQuery, options.populatePaths);
-        data = await populateQuery.exec();
+        try {
+          let populateQuery = model.findById(data._id);
+          populateQuery = populate(populateQuery, options.populatePaths);
+          data = await populateQuery.exec();
+        } catch (e: any) {
+          throw new APIError({
+            status: 400,
+            title: `Populate error: ${e.message}`,
+          });
+        }
       }
 
       if (options.postCreate) {
@@ -525,8 +531,7 @@ export function fernsRouter<T>(
             title: "Update not allowed",
             detail: "A body must be returned from preUpdate",
           });
-        }
-        if (body === null) {
+        } else if (body === null) {
           throw new APIError({
             status: 403,
             title: "Update not allowed",
@@ -616,8 +621,7 @@ export function fernsRouter<T>(
             title: "Delete not allowed",
             detail: "A body must be returned from preDelete",
           });
-        }
-        if (body === null) {
+        } else if (body === null) {
           throw new APIError({
             status: 403,
             title: "Delete not allowed",
@@ -752,7 +756,13 @@ export function fernsRouter<T>(
           status: 400,
         });
       }
-      if (body === null) {
+      if (body === undefined) {
+        throw new APIError({
+          status: 403,
+          title: "Update not allowed",
+          detail: "A body must be returned from preUpdate",
+        });
+      } else if (body === null) {
         throw new APIError({
           title: "Update not allowed",
           detail: `preUpdate hook on ${req.params.id} returned null`,

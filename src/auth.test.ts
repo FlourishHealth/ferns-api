@@ -301,7 +301,7 @@ describe("auth tests", function () {
   });
 
   it("signup user with email that is already registered", async function () {
-    const _res = await server
+    await server
       .post("/auth/signup")
       .send({email: "new@example.com", password: "123", age: 25})
       .expect(200);
