@@ -215,11 +215,16 @@ export function fernsRouter<T>(
             });
           }
         }
-        if (body === null) {
+        if (!body === null) {
           throw new APIError({
             status: 403,
             title: "Create not allowed",
             detail: "preCreate hook returned null",
+          });
+        } else if (!body) {
+          throw new APIError({
+            status: 500,
+            title: "preCreate hook returned undefined",
           });
         }
       }
@@ -234,9 +239,16 @@ export function fernsRouter<T>(
       }
 
       if (options.populatePaths) {
-        let populateQuery = model.findById(data._id);
-        populateQuery = populate(populateQuery, options.populatePaths);
-        data = await populateQuery.exec();
+        try {
+          let populateQuery = model.findById(data._id);
+          populateQuery = populate(populateQuery, options.populatePaths);
+          data = await populateQuery.exec();
+        } catch (e) {
+          throw new APIError({
+            status: 400,
+            title: `Populate error: ${e.message}`,
+          });
+        }
       }
 
       if (options.postCreate) {
