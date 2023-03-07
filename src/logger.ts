@@ -29,7 +29,7 @@ function printf(timestamp = false) {
 }
 
 // Setup a default console logger.
-export const logger = winston.createLogger({
+export const winstonLogger = winston.createLogger({
   level: "debug",
   transports: [
     new winston.transports.Console({
@@ -53,6 +53,13 @@ export const logger = winston.createLogger({
   ],
 });
 
+export const logger = {
+  debug: (msg: string) => winstonLogger.debug(msg),
+  info: (msg: string) => winstonLogger.info(msg),
+  warn: (msg: string) => winstonLogger.warn(msg),
+  error: (msg: string) => winstonLogger.error(msg),
+};
+
 export interface LoggingOptions {
   level?: "debug" | "info" | "warn" | "error";
   transports?: winston.transport[];
@@ -64,14 +71,14 @@ export interface LoggingOptions {
 }
 
 export function setupLogging(options?: LoggingOptions) {
-  logger.clear();
+  winstonLogger.clear();
   if (!options?.disableConsoleLogging) {
     const formats: any[] = [winston.format.simple()];
     if (!options?.disableConsoleColors) {
       formats.push(winston.format.colorize());
     }
     formats.push(winston.format.printf(printf(options?.showConsoleTimestamps)));
-    logger.add(
+    winstonLogger.add(
       new winston.transports.Console({
         debugStdout: !options?.level || options?.level === "debug",
         level: options?.level ?? "debug",
@@ -98,7 +105,7 @@ export function setupLogging(options?: LoggingOptions) {
       options: {mode: 0o600},
     };
 
-    logger.add(
+    winstonLogger.add(
       new winston.transports.Stream({
         ...FILE_LOG_DEFAULTS,
         level: "error",
@@ -108,7 +115,7 @@ export function setupLogging(options?: LoggingOptions) {
       })
     );
 
-    logger.add(
+    winstonLogger.add(
       new winston.transports.Stream({
         ...FILE_LOG_DEFAULTS,
         level: "info",
@@ -117,7 +124,7 @@ export function setupLogging(options?: LoggingOptions) {
       })
     );
     if (!options?.level || options?.level === "debug") {
-      logger.add(
+      winstonLogger.add(
         new winston.transports.Stream({
           ...FILE_LOG_DEFAULTS,
           level: "debug",
@@ -130,7 +137,7 @@ export function setupLogging(options?: LoggingOptions) {
 
   if (options?.transports) {
     for (const transport of options.transports) {
-      logger.add(transport);
+      winstonLogger.add(transport);
     }
   }
 
