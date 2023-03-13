@@ -39,6 +39,8 @@ export interface Food {
     name: string;
   };
   tags: string[];
+  // We want to test that map type works.
+  lastEatenWith: {[name: string]: Date};
   categories: FoodCategory[];
 }
 
@@ -96,6 +98,10 @@ const foodSchema = new Schema<Food>(
     hidden: {type: Boolean, default: false},
     tags: [String],
     categories: [foodCategorySchema],
+    lastEatenWith: {
+      type: Map,
+      of: Date,
+    },
   },
   {strict: "throw"}
 );

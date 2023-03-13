@@ -443,6 +443,9 @@ describe("ferns-api", () => {
           source: {
             name: "Brand",
           },
+          lastEatenWith: {
+            dressing: "2021-12-03T19:00:30.000Z",
+          },
         }),
         FoodModel.create({
           name: "Apple",
@@ -492,6 +495,20 @@ describe("ferns-api", () => {
       );
       server = supertest(app);
       agent = await authAsUser(app, "notAdmin");
+    });
+
+    it("list default", async function () {
+      const res = await agent.get("/food").expect(200);
+      assert.lengthOf(res.body.data, 2);
+      assert.equal(res.body.data[0].id, (spinach as any).id);
+      assert.equal(res.body.data[0].ownerId._id, notAdmin.id);
+      assert.equal(res.body.data[1].id, (pizza as any).id);
+      assert.equal(res.body.data[1].ownerId._id, admin.id);
+      // Check that mongoose Map is handled correctly.
+      assert.deepEqual(res.body.data[0].lastEatenWith, {dressing: "2021-12-03T19:00:30.000Z"});
+      assert.deepEqual(res.body.data[1].lastEatenWith, undefined);
+
+      assert.isTrue(res.body.more);
     });
 
     it("list limit", async function () {
