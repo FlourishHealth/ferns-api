@@ -420,7 +420,7 @@ describe("ferns-api", () => {
     });
   });
 
-  describe("list options", function () {
+  describe("standard methods", function () {
     let notAdmin: any;
     let admin: any;
     let agent: supertest.SuperAgentTest;
@@ -648,6 +648,38 @@ describe("ferns-api", () => {
         ["2021-12-03T00:00:10.000Z"],
         res.body.data.map((d: any) => d.created)
       );
+    });
+
+    it("update", async function () {
+      let res = await agent.patch(`/food/${spinach._id}`).send({name: "Kale"}).expect(200);
+      assert.equal(res.body.data.name, "Kale");
+      assert.equal(res.body.data.calories, 1);
+      assert.equal(res.body.data.hidden, false);
+
+      // Update a Map field.
+      res = await agent
+        .patch(`/food/${spinach._id}`)
+        .send({lastEatenWith: {dressing: "2023-12-03T00:00:20.000Z"}})
+        .expect(200);
+      assert.equal(res.body.data.name, "Kale");
+      assert.equal(res.body.data.calories, 1);
+      assert.equal(res.body.data.hidden, false);
+      assert.deepEqual(res.body.data.lastEatenWith, {dressing: "2023-12-03T00:00:20.000Z"});
+
+      // Update a Map field.
+      res = await agent
+        .patch(`/food/${spinach._id}`)
+        .send({
+          lastEatenWith: {
+            dressing: "2023-12-03T00:00:20.000Z",
+            cucumber: "2023-12-04T12:00:20.000Z",
+          },
+        })
+        .expect(200);
+      assert.deepEqual(res.body.data.lastEatenWith, {
+        dressing: "2023-12-03T00:00:20.000Z",
+        cucumber: "2023-12-04T12:00:20.000Z",
+      });
     });
   });
 
