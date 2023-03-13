@@ -497,6 +497,15 @@ describe("ferns-api", () => {
       agent = await authAsUser(app, "notAdmin");
     });
 
+    it("read default", async function () {
+      const res = await agent.get(`/food/${spinach._id}`).expect(200);
+      assert.equal(res.body.data._id, spinach._id.toString());
+      // Ensure populate works
+      assert.equal(res.body.data.ownerId._id, notAdmin.id);
+      // Ensure maps are properly transformed
+      assert.deepEqual(res.body.data.lastEatenWith, {dressing: "2021-12-03T19:00:30.000Z"});
+    });
+
     it("list default", async function () {
       const res = await agent.get("/food").expect(200);
       assert.lengthOf(res.body.data, 2);
