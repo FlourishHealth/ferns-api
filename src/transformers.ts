@@ -113,12 +113,20 @@ export function serialize<T>(
   data: Document<T, {}, {}> | Document<T, {}, {}>[],
   user?: User
 ) {
-  const serializeFn = (serializeData: Document<T, {}, {}>, seralizeUser?: User) => {
+  const serializeFn = (serializeData: Document<T, {}, {}>, serializeUser?: User) => {
     const dataObject = serializeData.toObject() as T;
     (dataObject as any).id = serializeData._id;
 
+    // Search for any value that is a Map and transform it to a plain object. Otherwise Express drops the contents.
+    for (const key in dataObject) {
+      const value = dataObject[key];
+      if (value instanceof Map) {
+        dataObject[key] = Object.fromEntries(value);
+      }
+    }
+
     if (options.transformer?.serialize) {
-      return options.transformer?.serialize(dataObject, seralizeUser);
+      return options.transformer?.serialize(dataObject, serializeUser);
     } else {
       return dataObject;
     }
