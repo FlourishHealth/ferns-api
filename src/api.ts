@@ -17,7 +17,11 @@ import {isValidObjectId} from "./utils";
 // Support more complex query fields
 // Rate limiting
 
-const SPECIAL_QUERY_PARAMS = ["limit", "page"];
+// These are the query params that are reserved for pagination.
+const PAGINATION_QUERY_PARAMS = ["limit", "page"];
+
+// Add support for more complex queries.
+const COMPLEX_QUERY_PARAMS = ["$and", "$or"];
 
 /**
  * @param a - the first number
@@ -164,6 +168,31 @@ function populate(builtQuery: mongoose.Query<any[], any, {}, any>, populatePaths
   return builtQuery;
 }
 
+// Ensures query params are allowed. Also checks nested query params when using $and/$or.
+function checkQueryParamAllowed(
+  queryParam: string,
+  queryParamValue: any,
+  queryFields: string[] = []
+) {
+  // Check the values of each of the complex query params. We don't support recursive queries here, just one level of
+  // and/or
+  if (COMPLEX_QUERY_PARAMS.includes(queryParam)) {
+    // Complex query of the form `$and: [{key1: value1}, {key2: value2}]`
+    for (const subQuery of queryParamValue) {
+      for (const subKey of Object.keys(subQuery)) {
+        checkQueryParamAllowed(subKey, subQuery[subKey], queryFields);
+      }
+    }
+    return;
+  }
+  if (!queryFields.includes(queryParam)) {
+    throw new APIError({
+      status: 400,
+      title: `${queryParam} is not allowed as a query param.`,
+    });
+  }
+}
+
 /**
  * Create a set of CRUD routes given a Mongoose model $baseModel and configuration options.
  *
@@ -171,7 +200,7 @@ function populate(builtQuery: mongoose.Query<any[], any, {}, any>, populatePaths
  * @param options Options for configuring the REST API, such as permissions, transformers, and hooks.
  */
 export function fernsRouter<T>(
-  baseModel: Model<any>,
+  baseModel: Model<T>,
   options: FernsRouterOptions<T>
 ): express.Router {
   const router = express.Router();
@@ -290,23 +319,18 @@ export function fernsRouter<T>(
       // TODO we can make this much more complicated with ands and ors, but for now, simple queries
       // will do.
       for (const queryParam of Object.keys(req.query)) {
-        if (SPECIAL_QUERY_PARAMS.includes(queryParam)) {
+        if (PAGINATION_QUERY_PARAMS.includes(queryParam)) {
           continue;
         }
-        if ((options.queryFields ?? []).includes(queryParam)) {
-          // Not sure if this is necessary or if mongoose does the right thing.
-          if (req.query[queryParam] === "true") {
-            query[queryParam] = true;
-          } else if (req.query[queryParam] === "false") {
-            query[queryParam] = false;
-          } else {
-            query[queryParam] = req.query[queryParam];
-          }
+        checkQueryParamAllowed(queryParam, req.query[queryParam], options.queryFields);
+
+        // Not sure if this is necessary or if mongoose does the right thing.
+        if (req.query[queryParam] === "true") {
+          query[queryParam] = true;
+        } else if (req.query[queryParam] === "false") {
+          query[queryParam] = false;
         } else {
-          throw new APIError({
-            status: 400,
-            title: `${queryParam} is not allowed as a query param.`,
-          });
+          query[queryParam] = req.query[queryParam];
         }
       }
 
@@ -365,11 +389,11 @@ export function fernsRouter<T>(
         builtQuery = builtQuery.sort(options.sort);
       }
 
-      builtQuery = populate(builtQuery, options.populatePaths);
+      const populatedQuery = populate(builtQuery, options.populatePaths);
 
       let data: Document<T, {}, {}>[];
       try {
-        data = await builtQuery.exec();
+        data = await populatedQuery.exec();
       } catch (e: any) {
         throw new APIError({
           title: `List error: ${e.stack}`,
@@ -422,12 +446,12 @@ export function fernsRouter<T>(
         });
       }
 
-      let builtQuery = model.findById(req.params.id);
-      builtQuery = populate(builtQuery, options.populatePaths);
+      const builtQuery = model.findById(req.params.id);
+      const populatedQuery = populate(builtQuery as any, options.populatePaths);
 
       let data;
       try {
-        data = await builtQuery.exec();
+        data = await populatedQuery.exec();
       } catch (e: any) {
         throw new APIError({
           title: `GET failed on ${req.params.id}: ${e.stack}`,
