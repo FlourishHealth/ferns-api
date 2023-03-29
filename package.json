@@ -102,6 +102,9 @@
     "trailingComma": "es5",
     "useTabs": false
   },
+  "resolutions": {
+    "json5": "^2.2.2"
+  },
   "eslintConfig": {
     "extends": [
       "ferns"
