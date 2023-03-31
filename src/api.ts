@@ -316,7 +316,6 @@ export function fernsRouter<T>(
         query[queryParam] = (options.defaultQueryParams ?? {})[queryParam];
       }
 
-      console.log(req.query);
       for (const queryParam of Object.keys(req.query)) {
         if (PAGINATION_QUERY_PARAMS.includes(queryParam)) {
           continue;
@@ -332,7 +331,6 @@ export function fernsRouter<T>(
           query[queryParam] = req.query[queryParam];
         }
       }
-      console.log("QUERY", query, req.query);
 
       // Special operators. NOTE: these request Mongo Atlas.
       if (req.query.$search) {
@@ -374,7 +372,6 @@ export function fernsRouter<T>(
       }
 
       let builtQuery = model.find(query).limit(limit + 1);
-      console.log("BUILT QUERY", builtQuery);
 
       if (req.query.page) {
         if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
@@ -395,7 +392,6 @@ export function fernsRouter<T>(
       let data: Document<T, {}, {}>[];
       try {
         data = await populatedQuery.exec();
-        console.log("DATA", data);
       } catch (e: any) {
         throw new APIError({
           title: `List error: ${e.stack}`,
