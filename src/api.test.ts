@@ -446,6 +446,7 @@ describe("ferns-api", () => {
           lastEatenWith: {
             dressing: "2021-12-03T19:00:30.000Z",
           },
+          eatenBy: [{userId: admin._id}],
         }),
         FoodModel.create({
           name: "Apple",
@@ -465,6 +466,7 @@ describe("ferns-api", () => {
             name: "USDA",
           },
           tags: ["healthy", "cheap"],
+          eatenBy: [{userId: admin._id}, {userId: notAdmin._id}],
         }),
         FoodModel.create({
           name: "Pizza",
@@ -473,6 +475,7 @@ describe("ferns-api", () => {
           ownerId: admin._id,
           hidden: false,
           tags: ["cheap"],
+          eatenBy: [{userId: notAdmin._id}],
         }),
       ]);
       app = getBaseServer();
@@ -492,7 +495,15 @@ describe("ferns-api", () => {
           maxLimit: 3,
           sort: {created: "descending"},
           defaultQueryParams: {hidden: false},
-          queryFields: ["hidden", "name", "calories", "created", "source.name", "tags"],
+          queryFields: [
+            "hidden",
+            "name",
+            "calories",
+            "created",
+            "source.name",
+            "tags",
+            "eatenBy.userId",
+          ],
           populatePaths: ["ownerId"],
         })
       );
@@ -674,6 +685,18 @@ describe("ferns-api", () => {
       assert.equal(res.body.data[0].id, carrots!._id);
     });
 
+    it("query $and operator on same field, nested objects", async function () {
+      const res = await agent
+        .get(
+          `/food?${qs.stringify({
+            $and: [{"eatenBy.userId": admin.id}, {"eatenBy.userId": notAdmin.id}],
+          })}`
+        )
+        .expect(200);
+      assert.lengthOf(res.body.data, 1);
+      assert.equal(res.body.data[0].id, carrots!._id);
+    });
+
     it("query $or operator on same field", async function () {
       const res = await agent
         .get(`/food?${qs.stringify({$or: [{name: "Carrots"}, {name: "Pizza"}]})}`)
@@ -683,6 +706,22 @@ describe("ferns-api", () => {
       assert.sameDeepMembers(
         res.body.data.map((d) => d.id),
         [carrots!._id.toString(), pizza!._id.toString()]
+      );
+    });
+
+    it("query $and operator on same field, nested objects", async function () {
+      const res = await agent
+        .get(
+          `/food?${qs.stringify({
+            limit: 3,
+            $or: [{"eatenBy.userId": admin.id}, {"eatenBy.userId": notAdmin.id}],
+          })}`
+        )
+        .expect(200);
+      assert.lengthOf(res.body.data, 3);
+      assert.sameDeepMembers(
+        res.body.data.map((d) => d.id),
+        [carrots!._id.toString(), spinach!._id.toString(), pizza!._id.toString()]
       );
     });
 

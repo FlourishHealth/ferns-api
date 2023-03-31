@@ -39,6 +39,9 @@ export interface Food {
     name: string;
   };
   tags: string[];
+  eatenBy: {
+    userId: mongoose.Types.ObjectId;
+  }[];
   // We want to test that map type works.
   lastEatenWith: {[name: string]: Date};
   categories: FoodCategory[];
@@ -102,6 +105,15 @@ const foodSchema = new Schema<Food>(
       type: Map,
       of: Date,
     },
+    eatenBy: [
+      {
+        userId: {
+          type: Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+      },
+    ],
   },
   {strict: "throw"}
 );
