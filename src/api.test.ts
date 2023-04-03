@@ -446,6 +446,7 @@ describe("ferns-api", () => {
           lastEatenWith: {
             dressing: "2021-12-03T19:00:30.000Z",
           },
+          eatenBy: [{userId: admin._id}],
         }),
         FoodModel.create({
           name: "Apple",
@@ -453,6 +454,7 @@ describe("ferns-api", () => {
           created: new Date("2021-12-03T00:00:30.000Z"),
           ownerId: admin._id,
           hidden: true,
+          tags: ["healthy"],
         }),
         FoodModel.create({
           name: "Carrots",
@@ -463,6 +465,8 @@ describe("ferns-api", () => {
           source: {
             name: "USDA",
           },
+          tags: ["healthy", "cheap"],
+          eatenBy: [{userId: admin._id}, {userId: notAdmin._id}],
         }),
         FoodModel.create({
           name: "Pizza",
@@ -470,6 +474,8 @@ describe("ferns-api", () => {
           created: new Date("2021-12-03T00:00:10.000Z"),
           ownerId: admin._id,
           hidden: false,
+          tags: ["cheap"],
+          eatenBy: [{userId: notAdmin._id}],
         }),
       ]);
       app = getBaseServer();
@@ -489,7 +495,15 @@ describe("ferns-api", () => {
           maxLimit: 3,
           sort: {created: "descending"},
           defaultQueryParams: {hidden: false},
-          queryFields: ["hidden", "calories", "created", "source.name"],
+          queryFields: [
+            "hidden",
+            "name",
+            "calories",
+            "created",
+            "source.name",
+            "tags",
+            "eatenBy.userId",
+          ],
           populatePaths: ["ownerId"],
         })
       );
@@ -580,8 +594,8 @@ describe("ferns-api", () => {
 
     it("list query params not in list", async function () {
       // Should skip to carrots since apples are hidden
-      const res = await agent.get("/food?name=Apple").expect(400);
-      assert.equal(res.body.title, "name is not allowed as a query param.");
+      const res = await agent.get(`/food?ownerId=${admin._id}`).expect(400);
+      assert.equal(res.body.title, "ownerId is not allowed as a query param.");
     });
 
     it("list query by nested param", async function () {
@@ -648,6 +662,84 @@ describe("ferns-api", () => {
         ["2021-12-03T00:00:10.000Z"],
         res.body.data.map((d: any) => d.created)
       );
+    });
+
+    it("query with a space", async function () {
+      const greenBeans = await FoodModel.create({
+        name: "Green Beans",
+        calories: 102,
+        created: new Date().getTime() - 10,
+        ownerId: admin?._id,
+      });
+      const res = await agent.get(`/food?${qs.stringify({name: "Green Beans"})}`).expect(200);
+      assert.lengthOf(res.body.data, 1);
+      assert.equal(res.body.data[0].id, greenBeans!.id);
+      assert.equal(res.body.data[0].name, "Green Beans");
+    });
+
+    it("query $and operator on same field", async function () {
+      const res = await agent
+        .get(`/food?${qs.stringify({$and: [{tags: "healthy"}, {tags: "cheap"}]})}`)
+        .expect(200);
+      assert.lengthOf(res.body.data, 1);
+      assert.equal(res.body.data[0].id, carrots!._id);
+    });
+
+    it("query $and operator on same field, nested objects", async function () {
+      const res = await agent
+        .get(
+          `/food?${qs.stringify({
+            $and: [{"eatenBy.userId": admin.id}, {"eatenBy.userId": notAdmin.id}],
+          })}`
+        )
+        .expect(200);
+      assert.lengthOf(res.body.data, 1);
+      assert.equal(res.body.data[0].id, carrots!._id);
+    });
+
+    it("query $or operator on same field", async function () {
+      const res = await agent
+        .get(`/food?${qs.stringify({$or: [{name: "Carrots"}, {name: "Pizza"}]})}`)
+        .expect(200);
+      assert.lengthOf(res.body.data, 2);
+      // Only carrots matches both
+      assert.sameDeepMembers(
+        res.body.data.map((d) => d.id),
+        [carrots!._id.toString(), pizza!._id.toString()]
+      );
+    });
+
+    it("query $and operator on same field, nested objects", async function () {
+      const res = await agent
+        .get(
+          `/food?${qs.stringify({
+            limit: 3,
+            $or: [{"eatenBy.userId": admin.id}, {"eatenBy.userId": notAdmin.id}],
+          })}`
+        )
+        .expect(200);
+      assert.lengthOf(res.body.data, 3);
+      assert.sameDeepMembers(
+        res.body.data.map((d) => d.id),
+        [carrots!._id.toString(), spinach!._id.toString(), pizza!._id.toString()]
+      );
+    });
+
+    it("query $and and $or are rejected if field is not in queryFields", async function () {
+      let res = await agent
+        .get(`/food?${qs.stringify({$and: [{ownerId: "healthy"}, {tags: "cheap"}]})}`)
+        .expect(400);
+      assert.equal(res.body.title, "ownerId is not allowed as a query param.");
+      // Check in the other order
+      res = await agent
+        .get(`/food?${qs.stringify({$and: [{tags: "cheap"}, {ownerId: "healthy"}]})}`)
+        .expect(400);
+      assert.equal(res.body.title, "ownerId is not allowed as a query param.");
+
+      res = await agent
+        .get(`/food?${qs.stringify({$or: [{tags: "cheap"}, {ownerId: "healthy"}]})}`)
+        .expect(400);
+      assert.equal(res.body.title, "ownerId is not allowed as a query param.");
     });
 
     it("update", async function () {
