@@ -10,7 +10,7 @@ import onFinished from "on-finished";
 import passport from "passport";
 
 import {setupAuth, UserModel as UserMongooseModel} from "./auth";
-import {apiErrorMiddleware} from "./errors";
+import {apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
@@ -205,6 +205,7 @@ function initializeRoutes(
   app.use(Sentry.Handlers.errorHandler());
 
   // Catch any thrown APIErrors and return them in an OpenAPI compatible format
+  app.use(apiUnauthorizedMiddleware);
   app.use(apiErrorMiddleware);
 
   app.use(function onError(err: any, _req: any, res: any, _next: any) {

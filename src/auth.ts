@@ -36,7 +36,11 @@ export function authenticateMiddleware(anonymous = false) {
   if (anonymous) {
     strategies.push("anonymous");
   }
-  return passport.authenticate(strategies, {session: false, failureMessage: true});
+  return passport.authenticate(strategies, {
+    session: false,
+    failureMessage: true,
+    failWithError: true,
+  });
 }
 
 export async function signupUser(

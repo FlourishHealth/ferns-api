@@ -158,6 +158,18 @@ export function getAPIErrorBody(error: APIError): {[id: string]: any} {
   return errorData;
 }
 
+export function apiUnauthorizedMiddleware(
+  err: Error,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  if (err.message.includes("Unauthorized")) {
+    return next(new APIError({title: err.message, status: 401}));
+  }
+  return next();
+}
+
 export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
   if (isAPIError(err)) {
     Sentry.captureException(err);
