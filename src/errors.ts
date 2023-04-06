@@ -164,16 +164,16 @@ export function apiUnauthorizedMiddleware(
   res: Response,
   next: NextFunction
 ) {
-  if (err.message.includes("Unauthorized")) {
-    return next(new APIError({title: err.message, status: 401}));
+  if (err.message === "Unauthorized") {
+    next(new APIError({title: err.message, status: 401}));
   }
-  return next();
+  next(err);
 }
 
 export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
   if (isAPIError(err)) {
     Sentry.captureException(err);
-    return res.status(err.status).json(getAPIErrorBody(err));
+    res.status(err.status).json(getAPIErrorBody(err));
   }
-  return next(err);
+  next(err);
 }
