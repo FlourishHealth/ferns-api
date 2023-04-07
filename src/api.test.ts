@@ -237,7 +237,7 @@ describe("ferns-api", () => {
 
       app.use(
         "/food",
-        fernsRouter(FoodModel, {
+        fernsRouter(FoodModel as any, {
           allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
@@ -885,10 +885,12 @@ describe("ferns-api", () => {
 
     beforeEach(async function () {
       [notAdmin] = await setupDb();
-      [staffUser, superUser] = await Promise.all([
+      const [staffUserId, superUserId] = await Promise.all([
         StaffUserModel.create({email: "staff@example.com", department: "Accounting"}),
         SuperUserModel.create({email: "superuser@example.com", superTitle: "Super Man"}),
       ]);
+      staffUser = (await UserModel.findById(staffUserId)) as any;
+      superUser = (await UserModel.findById(superUserId)) as any;
 
       app = getBaseServer();
       setupAuth(app, UserModel as any);

@@ -662,7 +662,7 @@ export function fernsRouter<T>(
       } else {
         // For models without the isDeleted plugin
         try {
-          await doc.remove();
+          await doc.deleteOne();
         } catch (e: any) {
           throw new APIError({
             status: 400,
