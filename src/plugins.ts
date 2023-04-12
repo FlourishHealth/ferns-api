@@ -52,7 +52,7 @@ export function createdUpdatedPlugin(schema: Schema) {
   });
 
   schema.pre("update", function (next) {
-    this.update({}, {$set: {updated: new Date()}});
+    this.updateOne({}, {$set: {updated: new Date()}});
     next();
   });
 }
