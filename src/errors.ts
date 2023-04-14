@@ -165,15 +165,18 @@ export function apiUnauthorizedMiddleware(
   next: NextFunction
 ) {
   if (err.message === "Unauthorized") {
-    next(new APIError({title: err.message, status: 401}));
+    // not using the actual APIError class here because we don't want to log it as an error.
+    res.status(401).json({status: 401, title: "Unauthorized"}).send();
+  } else {
+    next(err);
   }
-  next(err);
 }
 
 export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
   if (isAPIError(err)) {
     Sentry.captureException(err);
-    res.status(err.status).json(getAPIErrorBody(err));
+    res.status(err.status).json(getAPIErrorBody(err)).send();
+  } else {
+    next(err);
   }
-  next(err);
 }
