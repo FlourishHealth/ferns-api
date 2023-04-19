@@ -31,8 +31,12 @@ export function setupErrorLogging(app: Application) {
         new Tracing.Integrations.Express({app}),
         new ProfilingIntegration(),
       ],
-      tracesSampleRate: 0.5,
-      profilesSampleRate: 0.5,
+      tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
+        ? parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE)
+        : 0.1,
+      profilesSampleRate: process.env.SENTRY_PROFILES_SAMPLE_RATE
+        ? parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE)
+        : 0.1,
     });
     logger.debug(`Initialized Sentry with DSN ${dsn}`);
   }
