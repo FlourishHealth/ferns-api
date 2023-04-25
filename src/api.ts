@@ -123,12 +123,12 @@ export interface FernsRouterOptions<T> {
    * Throw an APIError to return a 400 with an error message. */
   postDelete?: (request: express.Request) => void | Promise<void>;
   /** Hook that runs after the object is fetched but before it is serialized.
-   * Returns a promise so that asynchonous actions can be included in the function.
+   * Returns a promise so that asynchronous actions can be included in the function.
    * Throw an APIError to return a 400 with an error message.
    */
   postGet?: (value: T, request: express.Request) => void | Promise<T>;
   /** Hook that runs after the list of objects is fetched but before they are serialized.
-   * Returns a promise so that asynchonous actions can be included in the function.
+   * Returns a promise so that asynchronous actions can be included in the function.
    * Throw an APIError to return a 400 with an error message.
    */
   postList?: (value: Document<T, {}, {}>[], request: express.Request) => Promise<Document[]>;

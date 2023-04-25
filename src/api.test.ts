@@ -677,6 +677,38 @@ describe("ferns-api", () => {
       assert.equal(res.body.data[0].name, "Green Beans");
     });
 
+    it("query with an $in operator", async function () {
+      // Query including a hidden food
+      let res = await server
+        .get(
+          `/food?${qs.stringify({
+            name: {
+              $in: ["Apple", "Spinach"],
+            },
+          })}`
+        )
+        .expect(200);
+      assert.sameDeepMembers(
+        res.body.data.map((d: any) => d.name),
+        ["Spinach"]
+      );
+
+      // Query without hidden food.
+      res = await server
+        .get(
+          `/food?${qs.stringify({
+            name: {
+              $in: ["Carrots", "Spinach"],
+            },
+          })}`
+        )
+        .expect(200);
+      assert.sameDeepMembers(
+        res.body.data.map((d: any) => d.name),
+        ["Spinach", "Carrots"]
+      );
+    });
+
     it("query $and operator on same field", async function () {
       const res = await agent
         .get(`/food?${qs.stringify({$and: [{tags: "healthy"}, {tags: "cheap"}]})}`)
