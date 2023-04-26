@@ -77,7 +77,8 @@ export class APIError extends Error {
   meta: {[id: string]: any} | undefined;
 
   constructor(data: APIErrorConstructor) {
-    super(data.title);
+    // Include details in when the error is printed to the console or sent to Sentry.
+    super(`${data.title}${data.detail ? `: ${data.detail}` : ""}`);
     this.name = "APIError";
 
     // eslint-disable-next-line prefer-const
