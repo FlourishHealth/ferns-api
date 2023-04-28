@@ -3,7 +3,7 @@ import express from "express";
 import supertest from "supertest";
 
 import {fernsRouter} from "./api";
-import {setupAuth} from "./auth";
+import {addAuthRoutes, setupAuth} from "./auth";
 import {Permissions} from "./permissions";
 import {Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
 import {AdminOwnerTransformer} from "./transformers";
@@ -41,6 +41,7 @@ describe("auth tests", function () {
     ]);
     app = getBaseServer();
     setupAuth(app, UserModel as any);
+    addAuthRoutes(app, UserModel as any);
     app.use(
       "/food",
       fernsRouter(FoodModel, {

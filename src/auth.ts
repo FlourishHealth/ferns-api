@@ -194,6 +194,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
   // Adds req.user to the request. This may wind up duplicating requests with passport, but passport doesn't give us
   // req.user early enough.
+  // TODO: move info required for good logging (admin/testUser/type) into the JWT token.
   async function decodeJWTMiddleware(req, res, next) {
     if (!process.env.TOKEN_SECRET) {
       return next();
@@ -215,15 +216,12 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     }
     return next();
   }
-
-  app.use(apiErrorMiddleware);
   app.use(decodeJWTMiddleware);
-
   app.use(express.urlencoded({extended: false}) as any);
   app.use(passport.initialize());
 }
 
-export function addAuthRoutes(app: express.Application, userModel: UserModel) {
+export function addAuthRoutes(app: express.Application, userModel: UserModel): void {
   const router = express.Router();
   router.post("/login", async function (req, res, next) {
     passport.authenticate("local", {session: true}, async (err: any, user: any, info: any) => {
@@ -325,4 +323,5 @@ export function addAuthRoutes(app: express.Application, userModel: UserModel) {
 
   app.set("etag", false);
   app.use("/auth", router);
+  app.use(apiErrorMiddleware);
 }
