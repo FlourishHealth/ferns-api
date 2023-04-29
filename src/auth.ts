@@ -140,25 +140,26 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   passport.serializeUser(userModel.serializeUser());
   passport.deserializeUser(userModel.deserializeUser());
 
+  const customTokenExtractor = function (req: express.Request) {
+    let token: string | null = null;
+    if (req?.cookies?.jwt) {
+      token = req.cookies.jwt;
+    } else if (req?.headers?.authorization) {
+      token = req?.headers?.authorization.split(" ")[1];
+    }
+    return token;
+  };
+
   if (process.env.TOKEN_SECRET) {
     logger.debug("Setting up JWT Authentication");
 
-    const customExtractor = function (req: express.Request) {
-      let token: string | null = null;
-      if (req?.cookies?.jwt) {
-        token = req.cookies.jwt;
-      } else if (req?.headers?.authorization) {
-        token = req?.headers?.authorization.split(" ")[1];
-      }
-      return token;
-    };
     const secretOrKey = process.env.TOKEN_SECRET;
     if (!secretOrKey) {
       throw new Error(`TOKEN_SECRET must be set in env.`);
     }
     const jwtOpts = {
       // jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme("Bearer"),
-      jwtFromRequest: customExtractor,
+      jwtFromRequest: customTokenExtractor,
       secretOrKey,
       issuer: process.env.TOKEN_ISSUER,
     };
@@ -191,6 +192,36 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     );
   }
 
+  // Adds req.user to the request. This may wind up duplicating requests with passport, but passport doesn't give us
+  // req.user early enough.
+  // TODO: move info required for good logging (admin/testUser/type) into the JWT token.
+  async function decodeJWTMiddleware(req, res, next) {
+    if (!process.env.TOKEN_SECRET) {
+      return next();
+    }
+
+    const token = customTokenExtractor(req);
+
+    if (!token) {
+      return next();
+    }
+
+    const decoded = jwt.verify(token, process.env.TOKEN_SECRET) as jwt.JwtPayload;
+    if (decoded.id) {
+      try {
+        req.user = await userModel.findById(decoded.id);
+      } catch (e) {
+        logger.warn(`[jwt] Error finding user from id: ${e}`);
+      }
+    }
+    return next();
+  }
+  app.use(decodeJWTMiddleware);
+  app.use(express.urlencoded({extended: false}) as any);
+  app.use(passport.initialize());
+}
+
+export function addAuthRoutes(app: express.Application, userModel: UserModel): void {
   const router = express.Router();
   router.post("/login", async function (req, res, next) {
     passport.authenticate("local", {session: true}, async (err: any, user: any, info: any) => {
@@ -290,11 +321,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     }
   });
 
-  router.use(apiErrorMiddleware);
-
-  app.use(express.urlencoded({extended: false}) as any);
-  app.use(passport.initialize());
-
   app.set("etag", false);
   app.use("/auth", router);
+  app.use(apiErrorMiddleware);
 }

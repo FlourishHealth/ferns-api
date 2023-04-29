@@ -6,7 +6,7 @@ import qs from "qs";
 import supertest from "supertest";
 
 import {fernsRouter} from "./api";
-import {setupAuth} from "./auth";
+import {addAuthRoutes, setupAuth} from "./auth";
 import {Permissions} from "./permissions";
 import {
   authAsUser,
@@ -34,6 +34,7 @@ describe("ferns-api", () => {
       await setupDb();
       app = getBaseServer();
       setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
       agent = await authAsUser(app, "notAdmin");
     });
 
@@ -322,6 +323,7 @@ describe("ferns-api", () => {
 
       app = getBaseServer();
       setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
       app.use(
         "/food",
         fernsRouter(FoodModel, {
@@ -480,6 +482,7 @@ describe("ferns-api", () => {
       ]);
       app = getBaseServer();
       setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
       app.use(
         "/food",
         fernsRouter(FoodModel, {
@@ -830,6 +833,7 @@ describe("ferns-api", () => {
       ]);
       app = getBaseServer();
       setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
       app.use(
         "/food",
         fernsRouter(FoodModel, {
@@ -883,6 +887,7 @@ describe("ferns-api", () => {
       await setupDb();
       app = getBaseServer();
       setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
       app.use(
         "/users",
         fernsRouter(UserModel, {
@@ -926,6 +931,7 @@ describe("ferns-api", () => {
 
       app = getBaseServer();
       setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
       app.use(
         "/users",
         fernsRouter(UserModel, {

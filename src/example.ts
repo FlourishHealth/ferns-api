@@ -3,7 +3,7 @@ import mongoose, {model, Schema} from "mongoose";
 import passportLocalMongoose from "passport-local-mongoose";
 
 import {fernsRouter} from "./api";
-import {setupAuth} from "./auth";
+import {addAuthRoutes, setupAuth} from "./auth";
 import {logger} from "./logger";
 import {Permissions} from "./permissions";
 import {baseUserPlugin, createdUpdatedPlugin} from "./plugins";
@@ -58,6 +58,7 @@ function getBaseServer() {
   });
   app.use(express.json());
   setupAuth(app, UserModel as any);
+  addAuthRoutes(app, UserModel as any);
   app.use(
     "/food",
     fernsRouter(FoodModel, {

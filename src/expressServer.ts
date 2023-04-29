@@ -9,7 +9,7 @@ import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
 
-import {setupAuth, UserModel as UserMongooseModel} from "./auth";
+import {addAuthRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
 import {apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
@@ -102,9 +102,15 @@ function logRequests(req: any, res: any, next: any) {
 
   let userString = "";
   if (req.user) {
-    userString = ` <${req.user?.admin ? "Admin" : req.user?.testUser ? "Test User" : "User"}:${
-      req.user.id
-    }>`;
+    let type = "User";
+    if (req.user?.admin) {
+      type = "Admin";
+    } else if (req.user?.testUser) {
+      type = "Test User";
+    } else if (req.user?.type) {
+      type = req.user?.type;
+    }
+    userString = ` <${type}:${req.user.id}>`;
   }
 
   let body = "";
@@ -176,10 +182,9 @@ function initializeRoutes(
 
   app.use(express.json());
 
-  app.use(logRequests);
-
   setupAuth(app as any, UserModel as any);
 
+  app.use(logRequests);
   // Add Sentry scopes for session, transaction, and userId if any are set
   app.all("*", function (req: any, _res: any, next: any) {
     const transactionId = req.header("X-Transaction-ID");
@@ -202,7 +207,8 @@ function initializeRoutes(
     next();
   });
 
-  // Adds all the user
+  addAuthRoutes(app as any, UserModel as any);
+
   addRoutes(app);
 
   // The error handler must be before any other error middleware and after all controllers
