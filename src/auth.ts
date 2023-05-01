@@ -146,10 +146,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   const customTokenExtractor = function (req: express.Request) {
     let token: string | null = null;
     if (req?.cookies?.jwt) {
-      console.log("COOKIES", req.cookies);
       token = req.cookies.jwt;
     } else if (req?.headers?.authorization) {
-      console.log("HEADERS", req?.headers);
       token = req?.headers?.authorization.split(" ")[1];
     }
     return token;
