@@ -210,11 +210,14 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       return next();
     }
 
-    const decoded = jwt.verify(
-      token,
-      process.env.TOKEN_SECRET,
-      getTokenOptions()
-    ) as jwt.JwtPayload;
+    let decoded;
+
+    try {
+      decoded = jwt.verify(token, process.env.TOKEN_SECRET, getTokenOptions()) as jwt.JwtPayload;
+    } catch (e) {
+      // Ignore the error here, the rest of the auth handler will handle it gracefully.
+      return;
+    }
     if (decoded.id) {
       try {
         req.user = await userModel.findById(decoded.id);
