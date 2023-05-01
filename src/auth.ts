@@ -68,7 +68,7 @@ export async function signupUser(
   }
 }
 
-const generateTokens = async (user: any) => {
+const getTokenOptions = () => {
   const tokenOptions: jwt.SignOptions = {
     expiresIn: "15m",
   };
@@ -78,12 +78,15 @@ const generateTokens = async (user: any) => {
   if (process.env.TOKEN_ISSUER) {
     tokenOptions.issuer = process.env.TOKEN_ISSUER;
   }
+  return tokenOptions;
+};
 
+const generateTokens = async (user: any) => {
   const tokenSecretOrKey = process.env.TOKEN_SECRET;
   if (!tokenSecretOrKey) {
     throw new Error(`TOKEN_SECRET must be set in env.`);
   }
-  const token = jwt.sign({id: user._id.toString()}, tokenSecretOrKey, tokenOptions);
+  const token = jwt.sign({id: user._id.toString()}, tokenSecretOrKey, getTokenOptions());
   const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
   let refreshToken;
   if (refreshTokenSecretOrKey) {
@@ -202,11 +205,16 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
     const token = customTokenExtractor(req);
 
-    if (!token) {
+    // For some reason, our app will happily put null into the authorization header when logging out then back in.
+    if (!token || token === "null" || token === "undefined") {
       return next();
     }
 
-    const decoded = jwt.verify(token, process.env.TOKEN_SECRET) as jwt.JwtPayload;
+    const decoded = jwt.verify(
+      token,
+      process.env.TOKEN_SECRET,
+      getTokenOptions()
+    ) as jwt.JwtPayload;
     if (decoded.id) {
       try {
         req.user = await userModel.findById(decoded.id);
