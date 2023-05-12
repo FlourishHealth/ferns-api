@@ -31,6 +31,7 @@ export function setupErrorLogging(app: Application) {
         new Tracing.Integrations.Express({app}),
         new ProfilingIntegration(),
       ],
+      ignoreErrors: [/^.*ECONNRESET*$/, /^.*socket hang up*$/],
       tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
         ? parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE)
         : 0.1,
