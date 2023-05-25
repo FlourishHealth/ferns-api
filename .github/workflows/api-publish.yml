@@ -17,16 +17,16 @@ jobs:
           # "github.event.release.target_commitish" is a global variable and specifies the branch the release targeted
           ref: ${{ github.event.release.target_commitish }}
       # install Node.js
-      - name: Use Node.js 14
-        uses: actions/setup-node@v1
+      - name: Use Node.js 18
+        uses: actions/setup-node@v3
         with:
-          node-version: 14
+          node-version: 18
           # Specifies the registry, this field is required!
           registry-url: https://registry.npmjs.org/
       - name: Start MongoDB
         uses: supercharge/mongodb-github-action@1.6.0
         with:
-          mongodb-version: 4.4
+          mongodb-version: 6.0
       - name: Install whole project dependencies
         # if: steps.yarn-cache.outputs.cache-hit != 'true' # I think we want to install every time,
         # but use the cache?
