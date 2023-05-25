@@ -28,6 +28,21 @@ function printf(timestamp = false) {
   };
 }
 
+// Setup a global, default rejection handler.
+winston.add(
+  new winston.transports.Console({
+    debugStdout: true,
+    level: "error",
+    format: winston.format.combine(
+      winston.format.colorize(),
+      winston.format.simple(),
+      winston.format.printf(printf(false))
+    ),
+    handleRejections: true,
+    handleExceptions: true,
+  })
+);
+
 // Setup a default console logger.
 export const winstonLogger = winston.createLogger({
   level: "debug",
@@ -40,15 +55,8 @@ export const winstonLogger = winston.createLogger({
         winston.format.simple(),
         winston.format.printf(printf(false))
       ),
-    }),
-  ],
-  // TODO is this the right place?
-  // https://github.com/winstonjs/winston#rejections
-  rejectionHandlers: [
-    new winston.transports.Console({
-      debugStdout: true,
-      level: "debug",
-      format: winston.format.combine(winston.format.colorize(), winston.format.simple()),
+      handleRejections: true,
+      handleExceptions: true,
     }),
   ],
 });
