@@ -98,7 +98,7 @@ const logRequestsFinished = function (req: any, res: any, startTime: [number, nu
   }
 };
 
-function logRequests(req: any, res: any, next: any) {
+export function logRequests(req: any, res: any, next: any) {
   const startTime = process.hrtime();
 
   let userString = "";

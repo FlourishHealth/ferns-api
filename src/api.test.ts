@@ -7,6 +7,7 @@ import supertest from "supertest";
 
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
+import {logRequests} from "./expressServer";
 import {Permissions} from "./permissions";
 import {
   authAsUser,
@@ -425,6 +426,7 @@ describe("ferns-api", () => {
   describe("standard methods", function () {
     let notAdmin: any;
     let admin: any;
+    let adminOther: any;
     let agent: supertest.SuperAgentTest;
 
     let spinach: Food;
@@ -433,7 +435,7 @@ describe("ferns-api", () => {
     let pizza: Food;
 
     beforeEach(async function () {
-      [admin, notAdmin] = await setupDb();
+      [admin, notAdmin, adminOther] = await setupDb();
 
       [spinach, apple, carrots, pizza] = await Promise.all([
         FoodModel.create({
@@ -477,12 +479,13 @@ describe("ferns-api", () => {
           ownerId: admin._id,
           hidden: false,
           tags: ["cheap"],
-          eatenBy: [{userId: notAdmin._id}],
+          eatenBy: [{userId: adminOther._id}],
         }),
       ]);
       app = getBaseServer();
       setupAuth(app, UserModel as any);
       addAuthRoutes(app, UserModel as any);
+      app.use(logRequests);
       app.use(
         "/food",
         fernsRouter(FoodModel, {
@@ -712,6 +715,25 @@ describe("ferns-api", () => {
       );
     });
 
+    it("query with an $in for _ids in nested object", async function () {
+      // Query including a hidden food
+      const res = await server
+        .get(
+          `/food?${qs.stringify({
+            "eatenBy.userId": {
+              $in: [notAdmin._id.toString(), adminOther._id.toString()],
+            },
+          })}`
+        )
+        .expect(200);
+      assert.isFalse(res.body.more);
+      assert.lengthOf(res.body.data, 2);
+      assert.sameDeepMembers(
+        res.body.data.map((d: any) => d.name),
+        ["Carrots", "Pizza"]
+      );
+    });
+
     it("query $and operator on same field", async function () {
       const res = await agent
         .get(`/food?${qs.stringify({$and: [{tags: "healthy"}, {tags: "cheap"}]})}`)
@@ -753,10 +775,10 @@ describe("ferns-api", () => {
           })}`
         )
         .expect(200);
-      assert.lengthOf(res.body.data, 3);
+      assert.lengthOf(res.body.data, 2);
       assert.sameDeepMembers(
         res.body.data.map((d) => d.id),
-        [carrots!._id.toString(), spinach!._id.toString(), pizza!._id.toString()]
+        [carrots!._id.toString(), spinach!._id.toString()]
       );
     });
 

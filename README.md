@@ -13,7 +13,7 @@ A frontend library to consume these APIs with Redux Toolkit Query.
 
 To install:
 
-    yarn install ferns-api
+    yarn add ferns-api
 
 ## Usage
 
