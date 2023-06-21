@@ -29,8 +29,8 @@ export function isDeletedPlugin(schema: Schema, defaultValue = false) {
 }
 
 export interface CreatedDeleted {
-  updated: Date;
-  created: Date;
+  updated: {type: Date; required: true};
+  created: {type: Date; required: true};
 }
 
 export function createdUpdatedPlugin(schema: Schema) {

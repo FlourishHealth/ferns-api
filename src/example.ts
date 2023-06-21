@@ -2,9 +2,9 @@ import express from "express";
 import mongoose, {model, Schema} from "mongoose";
 import passportLocalMongoose from "passport-local-mongoose";
 
-import {fernsRouter} from "./api";
+import {fernsRouter, FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
-import {logger} from "./logger";
+import {setupServer} from "./expressServer";
 import {Permissions} from "./permissions";
 import {baseUserPlugin, createdUpdatedPlugin} from "./plugins";
 
@@ -59,19 +59,33 @@ function getBaseServer() {
   app.use(express.json());
   setupAuth(app, UserModel as any);
   addAuthRoutes(app, UserModel as any);
-  app.use(
-    "/food",
-    fernsRouter(FoodModel, {
-      permissions: {
-        list: [Permissions.IsAny],
-        create: [Permissions.IsAuthenticated],
-        read: [Permissions.IsAny],
-        update: [Permissions.IsOwner],
-        delete: [Permissions.IsAdmin],
-      },
-    })
-  );
-  app.listen(5004);
-  logger.info("Running on 5004");
+
+  function addRoutes(router: express.Router, options?: Partial<FernsRouterOptions<any>>): void {
+    router.use(
+      "/food",
+      fernsRouter(FoodModel, {
+        ...options,
+        permissions: {
+          list: [Permissions.IsAny],
+          create: [Permissions.IsAuthenticated],
+          read: [Permissions.IsAny],
+          update: [Permissions.IsOwner],
+          delete: [Permissions.IsAdmin],
+        },
+        queryFields: ["name", "calories", "created", "ownerId", "hidden"],
+        openApiOverwrite: {
+          get: {responses: {200: {description: "Get all the food"}}},
+        },
+      })
+    );
+  }
+
+  return setupServer({
+    userModel: UserModel as any,
+    addRoutes,
+    loggingOptions: {
+      level: "debug",
+    },
+  });
 }
 getBaseServer();
