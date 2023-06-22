@@ -152,6 +152,7 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
   // TODO: handle populate
   // TODO: handle whitelist/transform
 
+  // Convert fernsRouter queryFields into OpenAPI parameters
   const modelQueryParams = options.queryFields?.map((field) => {
     return {
       name: field,
@@ -163,34 +164,32 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
   return options.openApi.path(
     merge(
       {
-        requests: {
-          parameters: [
-            ...(modelQueryParams ?? []),
-            // pagination
-            {
-              name: "page",
-              in: "query",
-              schema: {
-                type: "number",
-              },
+        parameters: [
+          ...(modelQueryParams ?? []),
+          // pagination
+          {
+            name: "page",
+            in: "query",
+            schema: {
+              type: "number",
             },
-            {
-              name: "limit",
-              in: "query",
-              schema: {
-                type: "number",
-              },
+          },
+          {
+            name: "limit",
+            in: "query",
+            schema: {
+              type: "number",
             },
-            // special param for period, like "1d"
-            {
-              name: "period",
-              in: "query",
-              schema: {
-                type: "string",
-              },
+          },
+          // special param for period, like "1d"
+          {
+            name: "period",
+            in: "query",
+            schema: {
+              type: "string",
             },
-          ],
-        },
+          },
+        ],
         responses: {
           200: {
             description: "Successful list",
