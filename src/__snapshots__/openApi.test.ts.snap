@@ -1,0 +1,1973 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`openApi gets the openapi.json 1`] = `
+Object {
+  "info": Object {
+    "description": "Generated docs from an Express api",
+    "title": "Express Application",
+    "version": "1.0.0",
+  },
+  "openapi": "3.0.0",
+  "paths": Object {
+    "/food/": Object {
+      "get": Object {
+        "parameters": Array [
+          Object {
+            "in": "query",
+            "name": "page",
+            "schema": Object {
+              "type": "number",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "limit",
+            "schema": Object {
+              "type": "number",
+            },
+          },
+          Object {
+            "in": "query",
+            "name": "period",
+            "schema": Object {
+              "type": "string",
+            },
+          },
+        ],
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "data": Object {
+                      "items": Object {
+                        "properties": Object {
+                          "_id": Object {
+                            "type": "string",
+                          },
+                          "calories": Object {
+                            "type": "number",
+                          },
+                          "categories": Object {
+                            "items": Object {
+                              "properties": Object {
+                                "_id": Object {
+                                  "type": "string",
+                                },
+                                "name": Object {
+                                  "type": "string",
+                                },
+                                "show": Object {
+                                  "type": "boolean",
+                                },
+                              },
+                              "required": Array [],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
+                          "created": Object {
+                            "format": "date-time",
+                            "type": "string",
+                          },
+                          "eatenBy": Object {
+                            "items": Object {
+                              "properties": Object {
+                                "userId": Object {
+                                  "type": "string",
+                                },
+                              },
+                              "required": Array [
+                                "userId",
+                              ],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
+                          "hidden": Object {
+                            "type": "boolean",
+                          },
+                          "lastEatenWith": Object {
+                            "additionalProperties": Object {
+                              "format": "date-time",
+                              "type": "string",
+                            },
+                            "type": "object",
+                          },
+                          "name": Object {
+                            "type": "string",
+                          },
+                          "ownerId": Object {
+                            "type": "string",
+                          },
+                          "source": Object {
+                            "properties": Object {
+                              "name": Object {
+                                "type": "string",
+                              },
+                            },
+                            "type": "object",
+                          },
+                          "tags": Object {
+                            "items": Object {
+                              "type": "string",
+                            },
+                            "type": "array",
+                          },
+                        },
+                        "required": Array [
+                          "_id",
+                          "created",
+                          "updated",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "limit": Object {
+                      "type": "number",
+                    },
+                    "more": Object {
+                      "type": "boolean",
+                    },
+                    "page": Object {
+                      "type": "number",
+                    },
+                    "total": Object {
+                      "type": "number",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful list",
+          },
+          "400": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": Object {
+            "description": "The user must be authenticated",
+          },
+          "403": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+      },
+      "post": Object {
+        "requestBody": Object {
+          "content": Object {
+            "application/json": Object {
+              "schema": Object {
+                "properties": Object {
+                  "_id": Object {
+                    "type": "string",
+                  },
+                  "calories": Object {
+                    "type": "number",
+                  },
+                  "categories": Object {
+                    "items": Object {
+                      "properties": Object {
+                        "_id": Object {
+                          "type": "string",
+                        },
+                        "name": Object {
+                          "type": "string",
+                        },
+                        "show": Object {
+                          "type": "boolean",
+                        },
+                      },
+                      "required": Array [],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "created": Object {
+                    "format": "date-time",
+                    "type": "string",
+                  },
+                  "eatenBy": Object {
+                    "items": Object {
+                      "properties": Object {
+                        "userId": Object {
+                          "type": "string",
+                        },
+                      },
+                      "required": Array [
+                        "userId",
+                      ],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "hidden": Object {
+                    "type": "boolean",
+                  },
+                  "lastEatenWith": Object {
+                    "additionalProperties": Object {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "type": "object",
+                  },
+                  "name": Object {
+                    "type": "string",
+                  },
+                  "ownerId": Object {
+                    "type": "string",
+                  },
+                  "source": Object {
+                    "properties": Object {
+                      "name": Object {
+                        "type": "string",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  "tags": Object {
+                    "items": Object {
+                      "type": "string",
+                    },
+                    "type": "array",
+                  },
+                },
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": Object {
+          "201": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "_id": Object {
+                      "type": "string",
+                    },
+                    "calories": Object {
+                      "type": "number",
+                    },
+                    "categories": Object {
+                      "items": Object {
+                        "properties": Object {
+                          "_id": Object {
+                            "type": "string",
+                          },
+                          "name": Object {
+                            "type": "string",
+                          },
+                          "show": Object {
+                            "type": "boolean",
+                          },
+                        },
+                        "required": Array [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "created": Object {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "eatenBy": Object {
+                      "items": Object {
+                        "properties": Object {
+                          "userId": Object {
+                            "type": "string",
+                          },
+                        },
+                        "required": Array [
+                          "userId",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "hidden": Object {
+                      "type": "boolean",
+                    },
+                    "lastEatenWith": Object {
+                      "additionalProperties": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "type": "object",
+                    },
+                    "name": Object {
+                      "type": "string",
+                    },
+                    "ownerId": Object {
+                      "type": "string",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "name": Object {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "tags": Object {
+                      "items": Object {
+                        "type": "string",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": Array [
+                    "_id",
+                    "created",
+                    "updated",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful create",
+          },
+          "400": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": Object {
+            "description": "The user must be authenticated",
+          },
+          "403": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+      },
+    },
+    "/food/{id}": Object {
+      "delete": Object {
+        "parameters": Array [
+          Object {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+        ],
+        "responses": Object {
+          "204": Object {
+            "description": "Successful delete",
+          },
+          "400": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": Object {
+            "description": "The user must be authenticated",
+          },
+          "403": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+      },
+      "get": Object {
+        "parameters": Array [
+          Object {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+        ],
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "_id": Object {
+                      "type": "string",
+                    },
+                    "calories": Object {
+                      "type": "number",
+                    },
+                    "categories": Object {
+                      "items": Object {
+                        "properties": Object {
+                          "_id": Object {
+                            "type": "string",
+                          },
+                          "name": Object {
+                            "type": "string",
+                          },
+                          "show": Object {
+                            "type": "boolean",
+                          },
+                        },
+                        "required": Array [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "created": Object {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "eatenBy": Object {
+                      "items": Object {
+                        "properties": Object {
+                          "userId": Object {
+                            "type": "string",
+                          },
+                        },
+                        "required": Array [
+                          "userId",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "hidden": Object {
+                      "type": "boolean",
+                    },
+                    "lastEatenWith": Object {
+                      "additionalProperties": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "type": "object",
+                    },
+                    "name": Object {
+                      "type": "string",
+                    },
+                    "ownerId": Object {
+                      "type": "string",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "name": Object {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "tags": Object {
+                      "items": Object {
+                        "type": "string",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": Array [
+                    "_id",
+                    "created",
+                    "updated",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful read",
+          },
+          "400": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": Object {
+            "description": "The user must be authenticated",
+          },
+          "403": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+      },
+      "patch": Object {
+        "parameters": Array [
+          Object {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": Object {
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": Object {
+          "content": Object {
+            "application/json": Object {
+              "schema": Object {
+                "properties": Object {
+                  "_id": Object {
+                    "type": "string",
+                  },
+                  "calories": Object {
+                    "type": "number",
+                  },
+                  "categories": Object {
+                    "items": Object {
+                      "properties": Object {
+                        "_id": Object {
+                          "type": "string",
+                        },
+                        "name": Object {
+                          "type": "string",
+                        },
+                        "show": Object {
+                          "type": "boolean",
+                        },
+                      },
+                      "required": Array [],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "created": Object {
+                    "format": "date-time",
+                    "type": "string",
+                  },
+                  "eatenBy": Object {
+                    "items": Object {
+                      "properties": Object {
+                        "userId": Object {
+                          "type": "string",
+                        },
+                      },
+                      "required": Array [
+                        "userId",
+                      ],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "hidden": Object {
+                    "type": "boolean",
+                  },
+                  "lastEatenWith": Object {
+                    "additionalProperties": Object {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "type": "object",
+                  },
+                  "name": Object {
+                    "type": "string",
+                  },
+                  "ownerId": Object {
+                    "type": "string",
+                  },
+                  "source": Object {
+                    "properties": Object {
+                      "name": Object {
+                        "type": "string",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  "tags": Object {
+                    "items": Object {
+                      "type": "string",
+                    },
+                    "type": "array",
+                  },
+                },
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": Object {
+          "200": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "_id": Object {
+                      "type": "string",
+                    },
+                    "calories": Object {
+                      "type": "number",
+                    },
+                    "categories": Object {
+                      "items": Object {
+                        "properties": Object {
+                          "_id": Object {
+                            "type": "string",
+                          },
+                          "name": Object {
+                            "type": "string",
+                          },
+                          "show": Object {
+                            "type": "boolean",
+                          },
+                        },
+                        "required": Array [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "created": Object {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "eatenBy": Object {
+                      "items": Object {
+                        "properties": Object {
+                          "userId": Object {
+                            "type": "string",
+                          },
+                        },
+                        "required": Array [
+                          "userId",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "hidden": Object {
+                      "type": "boolean",
+                    },
+                    "lastEatenWith": Object {
+                      "additionalProperties": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "type": "object",
+                    },
+                    "name": Object {
+                      "type": "string",
+                    },
+                    "ownerId": Object {
+                      "type": "string",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "name": Object {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "tags": Object {
+                      "items": Object {
+                        "type": "string",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": Array [
+                    "_id",
+                    "created",
+                    "updated",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful update",
+          },
+          "400": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": Object {
+            "description": "The user must be authenticated",
+          },
+          "403": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": Object {
+            "content": Object {
+              "application/json": Object {
+                "schema": Object {
+                  "properties": Object {
+                    "code": Object {
+                      "description": "An application-specific error code, expressed as a string value.",
+                      "type": "string",
+                    },
+                    "detail": Object {
+                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+                      "type": "string",
+                    },
+                    "id": Object {
+                      "description": "A unique identifier for this particular occurrence of the problem.",
+                      "type": "string",
+                    },
+                    "links": Object {
+                      "properties": Object {
+                        "about": Object {
+                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                          "type": "string",
+                        },
+                        "type": Object {
+                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "meta": Object {
+                      "description": "A meta object containing non-standard meta-information about the error.",
+                      "type": "object",
+                    },
+                    "source": Object {
+                      "properties": Object {
+                        "header": Object {
+                          "description": "A string indicating the name of a single request header which caused the error.",
+                          "type": "string",
+                        },
+                        "parameter": Object {
+                          "description": "A string indicating which URI query parameter caused the error.",
+                          "type": "string",
+                        },
+                        "pointer": Object {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "status": Object {
+                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+                      "type": "number",
+                    },
+                    "title": Object {
+                      "description": "The error message",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+      },
+    },
+  },
+}
+`;
