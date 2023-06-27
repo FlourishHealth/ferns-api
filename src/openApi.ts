@@ -1,3 +1,4 @@
+import flatten from "lodash/flatten";
 import merge from "lodash/merge";
 import {Model} from "mongoose";
 import m2s from "mongoose-to-swagger";
@@ -6,6 +7,10 @@ import {FernsRouterOptions} from "./api";
 import {logger} from "./logger";
 
 const noop = (_a, _b, next) => next();
+
+const m2sOptions = {
+  props: ["readOnly", "required", "enum", "default"],
+};
 
 const apiErrorContent = {
   "application/json": {
@@ -116,6 +121,7 @@ export function getOpenApiMiddleware<T>(model: Model<T>, options: Partial<FernsR
   return options.openApi.path(
     merge(
       {
+        tags: [model.collection.collectionName],
         responses: {
           200: {
             description: "Successful read",
@@ -146,25 +152,73 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
     return noop;
   }
 
-  const modelSwagger = m2s(model);
+  const modelSwagger = m2s(model, m2sOptions);
 
   // TODO: handle permissions
   // TODO: handle populate
   // TODO: handle whitelist/transform
 
   // Convert fernsRouter queryFields into OpenAPI parameters
-  const modelQueryParams = options.queryFields?.map((field) => {
-    return {
-      name: field,
+  const defaultQueryParams = [
+    {
+      name: "_id",
       in: "query",
-      schema: modelSwagger.properties[field],
-    };
-  });
+      schema: {
+        type: "object",
+        properties: {
+          $in: {
+            type: "array",
+            items: {
+              type: "string",
+            },
+          },
+        },
+      },
+    },
+  ];
+  const modelQueryParams = flatten(
+    options.queryFields
+      // Remove _id from queryFields, we handle that above.
+      ?.filter((field) => field !== "_id")
+      .map((field) => {
+        const params: {name: string; in: "query"; schema: any}[] = [];
+
+        // Check for datetime/number to support gt/gte/lt/lte
+        params.push({
+          name: field,
+          in: "query",
+          schema: modelSwagger.properties[field],
+        });
+
+        if (
+          modelSwagger.properties[field]?.type === "number" ||
+          modelSwagger.properties[field]?.format === "date-time"
+        ) {
+          params.push({
+            name: field,
+            in: "query",
+            schema: {
+              type: "object",
+              properties: {
+                $gte: modelSwagger.properties[field],
+                $gt: modelSwagger.properties[field],
+                $lte: modelSwagger.properties[field],
+                $lt: modelSwagger.properties[field],
+              },
+            },
+          });
+        }
+
+        return params;
+      })
+  );
 
   return options.openApi.path(
     merge(
       {
+        tags: [model.collection.collectionName],
         parameters: [
+          ...defaultQueryParams,
           ...(modelQueryParams ?? []),
           // pagination
           {
@@ -244,18 +298,18 @@ export function createOpenApiMiddleware<T>(
     return noop;
   }
 
-  const modelSwagger = m2s(model);
+  const modelSwagger = m2s(model, m2sOptions);
 
   return options.openApi.path(
     merge(
       {
+        tags: [model.collection.collectionName],
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                required: modelSwagger.required,
                 properties: modelSwagger.properties,
               },
             },
@@ -294,18 +348,18 @@ export function patchOpenApiMiddleware<T>(
     return noop;
   }
 
-  const modelSwagger = m2s(model);
+  const modelSwagger = m2s(model, m2sOptions);
 
   return options.openApi.path(
     merge(
       {
+        tags: [model.collection.collectionName],
         requestBody: {
           required: true,
           content: {
             "application/json": {
               schema: {
                 type: "object",
-                required: modelSwagger.required,
                 properties: modelSwagger.properties,
               },
             },
@@ -347,6 +401,7 @@ export function deleteOpenApiMiddleware<T>(
   return options.openApi.path(
     merge(
       {
+        tags: [model.collection.collectionName],
         responses: {
           204: {
             description: "Successful delete",
