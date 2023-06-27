@@ -3,7 +3,7 @@ import {ProfilingIntegration} from "@sentry/profiling-node";
 import axios from "axios";
 import cors from "cors";
 import cron from "cron";
-import express, {Application, Router} from "express";
+import express, {Router} from "express";
 import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
@@ -15,7 +15,7 @@ import {logger, LoggingOptions, setupLogging} from "./logger";
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
 
-export function setupErrorLogging(app: Application) {
+export function setupErrorLogging() {
   const dsn = process.env.SENTRY_DSN;
   if (process.env.NODE_ENV === "production") {
     if (!dsn) {
@@ -164,7 +164,7 @@ function initializeRoutes(
 ) {
   const app = express();
 
-  setupErrorLogging(app);
+  setupErrorLogging();
 
   app.use(Sentry.Handlers.requestHandler());
   app.use(Sentry.Handlers.tracingHandler());
