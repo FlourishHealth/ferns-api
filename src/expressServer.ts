@@ -1,11 +1,10 @@
 import * as Sentry from "@sentry/node";
 import {ProfilingIntegration} from "@sentry/profiling-node";
-import * as Tracing from "@sentry/tracing";
 import openapi from "@wesleytodd/openapi";
 import axios from "axios";
 import cors from "cors";
 import cron from "cron";
-import express, {Application, Router} from "express";
+import express, {Router} from "express";
 import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
@@ -18,7 +17,7 @@ import {logger, LoggingOptions, setupLogging} from "./logger";
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
 
-export function setupErrorLogging(app: Application) {
+export function setupErrorLogging() {
   const dsn = process.env.SENTRY_DSN;
   if (process.env.NODE_ENV === "production") {
     if (!dsn) {
@@ -29,8 +28,7 @@ export function setupErrorLogging(app: Application) {
       integrations: [
         // enable HTTP calls tracing
         new Sentry.Integrations.Http({tracing: true}),
-        // enable Express.js middleware tracing
-        new Tracing.Integrations.Express({app}),
+        ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
         new ProfilingIntegration(),
       ],
       ignoreErrors: [/^.*ECONNRESET*$/, /^.*socket hang up*$/],
@@ -168,7 +166,7 @@ function initializeRoutes(
 ) {
   const app = express();
 
-  setupErrorLogging(app);
+  setupErrorLogging();
 
   const oapi = openapi({
     openapi: "3.0.0",
