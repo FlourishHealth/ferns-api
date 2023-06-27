@@ -14,6 +14,21 @@ Object {
         "parameters": Array [
           Object {
             "in": "query",
+            "name": "_id",
+            "schema": Object {
+              "properties": Object {
+                "$in": Object {
+                  "items": Object {
+                    "type": "string",
+                  },
+                  "type": "array",
+                },
+              },
+              "type": "object",
+            },
+          },
+          Object {
+            "in": "query",
             "name": "page",
             "schema": Object {
               "type": "number",
@@ -86,6 +101,7 @@ Object {
                             "type": "array",
                           },
                           "hidden": Object {
+                            "default": false,
                             "type": "boolean",
                           },
                           "lastEatenWith": Object {
@@ -412,6 +428,9 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
+        "tags": Array [
+          "foods",
+        ],
       },
       "post": Object {
         "requestBody": Object {
@@ -462,6 +481,7 @@ Object {
                     "type": "array",
                   },
                   "hidden": Object {
+                    "default": false,
                     "type": "boolean",
                   },
                   "lastEatenWith": Object {
@@ -547,6 +567,7 @@ Object {
                       "type": "array",
                     },
                     "hidden": Object {
+                      "default": false,
                       "type": "boolean",
                     },
                     "lastEatenWith": Object {
@@ -856,6 +877,9 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
+        "tags": Array [
+          "foods",
+        ],
       },
     },
     "/food/{id}": Object {
@@ -1142,6 +1166,9 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
+        "tags": Array [
+          "foods",
+        ],
       },
       "get": Object {
         "parameters": Array [
@@ -1512,6 +1539,9 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
+        "tags": Array [
+          "foods",
+        ],
       },
       "patch": Object {
         "parameters": Array [
@@ -1572,6 +1602,7 @@ Object {
                     "type": "array",
                   },
                   "hidden": Object {
+                    "default": false,
                     "type": "boolean",
                   },
                   "lastEatenWith": Object {
@@ -1657,6 +1688,7 @@ Object {
                       "type": "array",
                     },
                     "hidden": Object {
+                      "default": false,
                       "type": "boolean",
                     },
                     "lastEatenWith": Object {
@@ -1966,6 +1998,9 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
+        "tags": Array [
+          "foods",
+        ],
       },
     },
   },
