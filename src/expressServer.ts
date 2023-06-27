@@ -1,6 +1,6 @@
 import * as Sentry from "@sentry/node";
 import {ProfilingIntegration} from "@sentry/profiling-node";
-import * as Tracing from "@sentry/tracing";
+import {Integrations} from "@sentry/tracing";
 import axios from "axios";
 import cors from "cors";
 import cron from "cron";
@@ -28,7 +28,7 @@ export function setupErrorLogging(app: Application) {
         // enable HTTP calls tracing
         new Sentry.Integrations.Http({tracing: true}),
         // enable Express.js middleware tracing
-        new Tracing.Integrations.Express({app}),
+        new Integrations.Express({app}),
         new ProfilingIntegration(),
       ],
       ignoreErrors: [/^.*ECONNRESET*$/, /^.*socket hang up*$/],
