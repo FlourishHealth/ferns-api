@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/node";
 import {ProfilingIntegration} from "@sentry/profiling-node";
+import openapi from "@wesleytodd/openapi";
 import axios from "axios";
 import cors from "cors";
 import cron from "cron";
@@ -8,6 +9,7 @@ import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
 
+import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
 import {apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
@@ -62,7 +64,7 @@ export function setupEnvironment(): void {
   }
 }
 
-export type AddRoutes = (router: Router) => void;
+export type AddRoutes = (router: Router, options?: Partial<FernsRouterOptions<any>>) => void;
 
 const logRequestsFinished = function (req: any, res: any, startTime: [number, number]) {
   const diff = process.hrtime(startTime);
@@ -166,6 +168,15 @@ function initializeRoutes(
 
   setupErrorLogging();
 
+  const oapi = openapi({
+    openapi: "3.0.0",
+    info: {
+      title: "Express Application",
+      description: "Generated docs from an Express api",
+      version: "1.0.0",
+    },
+  });
+
   app.use(Sentry.Handlers.requestHandler());
   app.use(Sentry.Handlers.tracingHandler());
 
@@ -206,9 +217,12 @@ function initializeRoutes(
     next();
   });
 
+  app.use(oapi);
+  app.use("/swagger", oapi.swaggerui);
+
   addAuthRoutes(app as any, UserModel as any);
 
-  addRoutes(app);
+  addRoutes(app, {openApi: oapi});
 
   // The error handler must be before any other error middleware and after all controllers
   app.use(Sentry.Handlers.errorHandler());

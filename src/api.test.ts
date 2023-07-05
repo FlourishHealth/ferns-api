@@ -269,14 +269,17 @@ describe("ferns-api", () => {
         })
       );
 
-      const resList = await agent.get("/food").expect(200);
+      let resList = await agent.get("/food").expect(200);
 
-      const resApple = resList.body.data.find((f: Food) => f._id === apple._id.toString());
+      let resApple = resList.body.data.find((f: Food) => f._id === apple._id.toString());
       const resOne = await agent.get(`/food/${spinach?._id}`).expect(200);
-
       assert.equal(resApple.name, "Bravery");
-
       assert.equal(resOne.body.data.name, "Popeye's meal");
+
+      // Ensure we support both trailing slash and not.
+      resList = await agent.get("/food/").expect(200);
+      resApple = resList.body.data.find((f: Food) => f._id === apple._id.toString());
+      assert.equal(resApple.name, "Bravery");
     });
   });
 

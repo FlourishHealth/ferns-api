@@ -18,9 +18,7 @@ export interface APIErrorConstructor {
   // A unique identifier for this particular occurrence of the problem.
   id?: string;
   // A links object containing the following members:
-  links?: string;
-  // A link that leads to further details about this particular occurrence of the problem.
-  about?: string;
+  links?: {about?: string; type?: string} | undefined;
   // The HTTP status code applicable to this problem. defaults to 500. must be between 400 and 599.
   status?: number;
   // An application-specific error code, expressed as a string value.
@@ -30,12 +28,16 @@ export interface APIErrorConstructor {
   // localized.
   detail?: string;
   // An object containing references to the source of the error, optionally including any of the following members:
-  source?: string;
-  // A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object,
-  // or "/data/attributes/title" for a specific attribute].
-  pointer?: string;
-  // A string indicating which URI query parameter caused the error.
-  parameter?: string;
+  source?: {
+    // pointer: a JSON Pointer [RFC6901] to the value in the request document that caused the error [e.g. "/data"
+    // for a primary data object, or "/data/attributes/title" for a specific attribute]. This MUST point to a value
+    // in the request document that exists; if it doesn’t, the client SHOULD simply ignore the pointer.
+    pointer?: string;
+    // a string indicating which URI query parameter caused the error.
+    parameter?: string;
+    // a string indicating the name of a single request header which caused the error.
+    header?: string;
+  };
   // A meta object containing non-standard meta-information about the error.
   meta?: {[id: string]: string};
 }
@@ -58,9 +60,7 @@ export class APIError extends Error {
 
   id: string | undefined;
 
-  links: string | undefined;
-
-  about: string | undefined;
+  links: {about?: string; type?: string} | undefined;
 
   status: number;
 
@@ -68,11 +68,13 @@ export class APIError extends Error {
 
   detail: string | undefined;
 
-  source: string | undefined;
-
-  pointer: string | undefined;
-
-  parameter: string | undefined;
+  source:
+    | {
+        pointer?: string;
+        parameter?: string;
+        header?: string;
+      }
+    | undefined;
 
   meta: {[id: string]: any} | undefined;
 
@@ -82,8 +84,7 @@ export class APIError extends Error {
     this.name = "APIError";
 
     // eslint-disable-next-line prefer-const
-    let {title, id, links, about, status, code, detail, source, pointer, parameter, meta, fields} =
-      data;
+    let {title, id, links, status, code, detail, source, meta, fields} = data;
 
     if (!status) {
       status = 500;
@@ -96,13 +97,10 @@ export class APIError extends Error {
     this.title = title;
     this.id = id;
     this.links = links;
-    this.about = about;
 
     this.code = code;
     this.detail = detail;
     this.source = source;
-    this.pointer = pointer;
-    this.parameter = parameter;
     this.meta = meta ?? {};
     if (fields) {
       this.meta.fields = fields;
@@ -115,14 +113,18 @@ export class APIError extends Error {
 export const ErrorSchema = new Schema({
   title: {type: String, required: true},
   id: String,
-  links: String,
-  about: String,
+  links: {
+    about: String,
+    type: String,
+  },
   status: Number,
   code: String,
   detail: String,
-  source: String,
-  pointer: String,
-  parameter: String,
+  source: {
+    pointer: String,
+    parameter: String,
+    header: String,
+  },
   meta: Schema.Types.Mixed,
 });
 
@@ -140,18 +142,7 @@ export function isAPIError(error: Error): error is APIError {
 // There is almost certainly a more elegant solution to this.
 export function getAPIErrorBody(error: APIError): {[id: string]: any} {
   const errorData = {status: error.status, title: error.title};
-  for (const key of [
-    "id",
-    "links",
-    "about",
-    "status",
-    "code",
-    "detail",
-    "source",
-    "pointer",
-    "parameter",
-    "meta",
-  ]) {
+  for (const key of ["id", "links", "status", "code", "detail", "source", "meta"]) {
     if (error[key]) {
       errorData[key] = error[key];
     }

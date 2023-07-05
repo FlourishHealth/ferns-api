@@ -8,6 +8,13 @@ import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
 import {APIError, apiErrorMiddleware, isAPIError} from "./errors";
+import {
+  createOpenApiMiddleware,
+  deleteOpenApiMiddleware,
+  getOpenApiMiddleware,
+  listOpenApiMiddleware,
+  patchOpenApiMiddleware,
+} from "./openApi";
 import {checkPermissions, RESTPermissions} from "./permissions";
 import {FernsTransformer, serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
@@ -141,6 +148,21 @@ export interface FernsRouterOptions<T> {
    *     PATCH \{__t: "SuperUser", name: "Foo"\} // __t is required or there will be a 404 error.
    */
   discriminatorKey?: string;
+  /**
+   * The OpenAPI generator for this server. This is used to generate the OpenAPI documentation.
+   */
+  openApi?: any;
+  /**
+   * Overwrite parts of the configuration for the OpenAPI generator. This will be merged with the generated
+   * configuration.
+   */
+  openApiOverwrite?: {
+    get?: any;
+    list?: any;
+    create?: any;
+    update?: any;
+    delete?: any;
+  };
 }
 
 // A function to decide which model to use. If no discriminators are provided, just returns the base model. If
@@ -213,7 +235,7 @@ export function fernsRouter<T>(
   // TODO Toggle anonymous auth middleware based on settings for route.
   router.post(
     "/",
-    authenticateMiddleware(options.allowAnonymous),
+    [authenticateMiddleware(options.allowAnonymous), createOpenApiMiddleware(baseModel, options)],
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body?.__t, options);
       if (!(await checkPermissions("create", options.permissions.create, req.user))) {
@@ -299,7 +321,7 @@ export function fernsRouter<T>(
   // TODO add rate limit
   router.get(
     "/",
-    authenticateMiddleware(options.allowAnonymous),
+    [authenticateMiddleware(options.allowAnonymous), listOpenApiMiddleware(baseModel, options)],
     asyncHandler(async (req: Request, res: Response) => {
       // For pure read queries, Mongoose will return the correct data with just the base model.
       const model = baseModel;
@@ -409,6 +431,9 @@ export function fernsRouter<T>(
         }
       }
 
+      // Uses metadata rather than counting the number of documents in the array for performance.
+      const total = await model.estimatedDocumentCount();
+
       let more;
       try {
         let serialized = serialize<T>(options, data, req.user);
@@ -418,7 +443,7 @@ export function fernsRouter<T>(
             // Slice off the extra document we fetched to determine if more is true or not.
             serialized = serialized.slice(0, limit);
           }
-          return res.json({data: serialized, more, page: req.query.page, limit});
+          return res.json({data: serialized, more, page: req.query.page, limit, total});
         } else {
           return res.json({data: serialized});
         }
@@ -432,7 +457,7 @@ export function fernsRouter<T>(
 
   router.get(
     "/:id",
-    authenticateMiddleware(options.allowAnonymous),
+    [authenticateMiddleware(options.allowAnonymous), getOpenApiMiddleware(baseModel, options)],
     asyncHandler(async (req: Request, res: Response) => {
       // For pure read queries, Mongoose will return the correct data with just the base model.
       const model = baseModel;
@@ -498,7 +523,7 @@ export function fernsRouter<T>(
 
   router.patch(
     "/:id",
-    authenticateMiddleware(options.allowAnonymous),
+    [authenticateMiddleware(options.allowAnonymous), patchOpenApiMiddleware(baseModel, options)],
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body, options);
 
@@ -596,7 +621,7 @@ export function fernsRouter<T>(
 
   router.delete(
     "/:id",
-    authenticateMiddleware(options.allowAnonymous),
+    [authenticateMiddleware(options.allowAnonymous), deleteOpenApiMiddleware(baseModel, options)],
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body, options);
       if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
