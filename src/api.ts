@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 import express, {NextFunction, Request, Response} from "express";
+import isFunction from "lodash/isFunction";
 import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
@@ -37,6 +38,7 @@ const COMPLEX_QUERY_PARAMS = ["$and", "$or"];
  */
 export type RESTMethod = "list" | "create" | "read" | "update" | "delete";
 
+export type PopulatePaths = string[] | ((req: Request) => string[]);
 /**
  * This is the main configuration.
  * @param T - the base document type. This should not include Mongoose models, just the types of the object.
@@ -92,10 +94,12 @@ export interface FernsRouterOptions<T> {
    * These can be overridden by the user if not disallowed by queryFilter. */
   defaultQueryParams?: {[key: string]: any};
   /** Paths to populate before returning data from list queries. Accepts Mongoose-style populate strings.
+   *  May also be a function that takes the request and returns a list of paths to populate. This is handy if you need
+   *  to populate based on the user or request, such as app version.
    *    ["ownerId"] // populates the User that matches `ownerId`
    *    ["ownerId.organizationId"] // Nested. Populates the User that matches `ownerId`, as well as their organization.
    * */
-  populatePaths?: string[];
+  populatePaths?: string[] | ((req: express.Request) => string[]);
   /** Default limit applied to list queries if not specified by the user. Defaults to 100. */
   defaultLimit?: number;
   /** Maximum query limit the user can request. Defaults to 500, and is the lowest of the limit query, max limit,
@@ -182,9 +186,25 @@ function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOption
   }
 }
 
-function populate(builtQuery: mongoose.Query<any[], any, {}, any>, populatePaths?: string[]) {
+function populate(
+  req: express.Request,
+  builtQuery: mongoose.Query<any[], any, {}, any>,
+  populatePaths?: PopulatePaths
+) {
   // TODO: we should handle nested serializers here.
-  for (const populatePath of populatePaths ?? []) {
+  let paths: string[];
+
+  if (isFunction(populatePaths)) {
+    try {
+      paths = populatePaths(req);
+    } catch (e) {
+      throw new APIError({status: 500, title: `Error in populatePaths function: ${e}`});
+    }
+  } else {
+    paths = populatePaths ?? [];
+  }
+
+  for (const populatePath of paths) {
     builtQuery = builtQuery.populate(populatePath);
   }
   return builtQuery;
@@ -293,7 +313,7 @@ export function fernsRouter<T>(
       if (options.populatePaths) {
         try {
           let populateQuery = model.findById(data._id);
-          populateQuery = populate(populateQuery, options.populatePaths);
+          populateQuery = populate(req, populateQuery, options.populatePaths);
           data = await populateQuery.exec();
         } catch (e: any) {
           throw new APIError({
@@ -409,7 +429,7 @@ export function fernsRouter<T>(
         builtQuery = builtQuery.sort(options.sort);
       }
 
-      const populatedQuery = populate(builtQuery, options.populatePaths);
+      const populatedQuery = populate(req, builtQuery, options.populatePaths);
 
       let data: Document<T, {}, {}>[];
       try {
@@ -470,7 +490,7 @@ export function fernsRouter<T>(
       }
 
       const builtQuery = model.findById(req.params.id);
-      const populatedQuery = populate(builtQuery as any, options.populatePaths);
+      const populatedQuery = populate(req, builtQuery as any, options.populatePaths);
 
       let data;
       try {
@@ -601,7 +621,7 @@ export function fernsRouter<T>(
 
       if (options.populatePaths) {
         let populateQuery = model.findById(doc._id);
-        populateQuery = populate(populateQuery, options.populatePaths);
+        populateQuery = populate(req, populateQuery, options.populatePaths);
         doc = await populateQuery.exec();
       }
 

@@ -905,6 +905,73 @@ describe("ferns-api", () => {
     });
   });
 
+  describe("populate function", function () {
+    let admin: any;
+    let agent: supertest.SuperAgentTest;
+
+    let spinach: Food;
+
+    beforeEach(async function () {
+      [admin] = await setupDb();
+
+      [spinach] = await Promise.all([
+        FoodModel.create({
+          name: "Spinach",
+          calories: 1,
+          created: new Date("2021-12-03T00:00:20.000Z"),
+          ownerId: admin._id,
+          hidden: false,
+          source: {
+            name: "Brand",
+          },
+        }),
+      ]);
+      app = getBaseServer();
+      setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          populatePaths: (req: express.Request) => {
+            if (req.headers.populate) {
+              return ["ownerId"];
+            } else {
+              return [];
+            }
+          },
+        })
+      );
+      server = supertest(app);
+      agent = await authAsUser(app, "notAdmin");
+    });
+
+    it("reads with populate function", async function () {
+      // We populate the ownerId field because we set the header.
+      let res = await agent.get(`/food/${spinach._id}`).set({populate: true}).expect(200);
+      assert.equal(res.body.data.ownerId._id, admin._id);
+      // No header means we don't set the header.
+      res = await agent.get(`/food/${spinach._id}`).expect(200);
+      assert.equal(res.body.data.ownerId, admin._id);
+    });
+
+    it("list with populate function", async function () {
+      // We populate the ownerId field because we set the header.
+      let res = await agent.get(`/food`).set({populate: true}).expect(200);
+      assert.equal(res.body.data[0].ownerId._id, admin._id);
+      // No header means we don't set the header.
+      res = await agent.get(`/food`).expect(200);
+      assert.equal(res.body.data[0].ownerId, admin._id);
+    });
+  });
+
   describe("plugins", function () {
     let agent: supertest.SuperAgentTest;
 
