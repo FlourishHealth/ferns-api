@@ -14,3 +14,19 @@ debug: [Route] *
 debug: Setting up JWT Authentication
 debug: GET <- /swagger/
 debug: GET -> /swagger/ 200 3ms
+debug: Logger set up complete
+debug: Setting up JWT Authentication
+debug: Listening on routes:
+debug: [Route] *
+debug: Setting up JWT Authentication
+debug: GET <- /openapi.json
+debug: GET -> /openapi.json 200 6ms
+warn: TOKEN_EXPIRES_IN is not set so using default.
+warn: REFRESH_TOKEN_EXPIRES_IN not set so using default.
+debug: Logger set up complete
+debug: Setting up JWT Authentication
+debug: Listening on routes:
+debug: [Route] *
+debug: Setting up JWT Authentication
+debug: GET <- /swagger/
+debug: GET -> /swagger/ 200 3ms
