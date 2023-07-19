@@ -49,16 +49,17 @@ export async function signupUser(
   password: string,
   body?: any
 ) {
+  // Strip email and password from the body. They can cause mongoose to throw an error if strict is set.
+  const {email: _email, password: _password, ...bodyRest} = body;
+
   try {
-    const user = await (userModel as any).register({email}, password);
+    const user = await (userModel as any).register({email, ...bodyRest}, password);
     if (user.postCreate) {
-      delete body.email;
-      delete body.password;
       try {
-        await user.postCreate(body);
+        await user.postCreate(bodyRest);
       } catch (error: any) {
         logger.error(`Error in user.postCreate: ${error}`);
-        throw new APIError({title: error.message});
+        throw error;
       }
     }
     await user.save();
