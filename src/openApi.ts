@@ -1,9 +1,10 @@
 import flatten from "lodash/flatten";
+import isArray from "lodash/isArray";
 import merge from "lodash/merge";
 import {Model} from "mongoose";
 import m2s from "mongoose-to-swagger";
 
-import {FernsRouterOptions} from "./api";
+import {FernsRouterOptions, PopulatePaths} from "./api";
 import {logger} from "./logger";
 
 const noop = (_a, _b, next) => next();
@@ -105,6 +106,33 @@ const defaultErrorResponses = {
   },
 };
 
+// Replaces populated properties with the populated schema.
+export function convertModel(
+  model: any,
+  populatePaths?: PopulatePaths
+): {properties: any; required: string[]} {
+  const modelSwagger = m2s(model, {props: ["required", "enum"]});
+
+  // TODO: this should use OpenAPIs Components to fill in the referenced model instead.
+  if (populatePaths && isArray(populatePaths)) {
+    // Get the referenced populate model from the model schema.
+
+    populatePaths.forEach((populatePath) => {
+      const populateModel = model.schema.path(populatePath).options.ref;
+      if (!populateModel) {
+        return;
+      }
+      // Replace the populated property with the populated model schema.
+      modelSwagger.properties[populatePath] = {
+        type: "object",
+        properties: m2s(model.db.model(populateModel), m2sOptions).properties,
+      };
+    });
+  }
+
+  return {properties: modelSwagger.properties, required: modelSwagger.required ?? []};
+}
+
 export function getOpenApiMiddleware<T>(model: Model<T>, options: Partial<FernsRouterOptions<T>>) {
   if (!options.openApi?.path) {
     // Just log this once rather than for each middleware.
@@ -116,7 +144,7 @@ export function getOpenApiMiddleware<T>(model: Model<T>, options: Partial<FernsR
     return noop;
   }
 
-  const modelSwagger = m2s(model, {props: ["required", "enum"]});
+  const {properties, required} = convertModel(model, options.populatePaths);
 
   return options.openApi.path(
     merge(
@@ -129,8 +157,8 @@ export function getOpenApiMiddleware<T>(model: Model<T>, options: Partial<FernsR
               "application/json": {
                 schema: {
                   type: "object",
-                  required: [...(modelSwagger.required ?? []), "_id", "created", "updated"],
-                  properties: modelSwagger.properties,
+                  required: [...required, "_id", "created", "updated"],
+                  properties,
                 },
               },
             },
@@ -155,7 +183,6 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
   const modelSwagger = m2s(model, m2sOptions);
 
   // TODO: handle permissions
-  // TODO: handle populate
   // TODO: handle whitelist/transform
 
   // Convert fernsRouter queryFields into OpenAPI parameters
@@ -213,6 +240,8 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
       })
   );
 
+  const {properties, required} = convertModel(model, options.populatePaths);
+
   return options.openApi.path(
     merge(
       {
@@ -257,8 +286,8 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
                       type: "array",
                       items: {
                         type: "object",
-                        required: [...(modelSwagger.required ?? []), "_id", "created", "updated"],
-                        properties: modelSwagger.properties,
+                        required: [...required, "_id", "created", "updated"],
+                        properties,
                       },
                     },
                     more: {
@@ -298,8 +327,7 @@ export function createOpenApiMiddleware<T>(
     return noop;
   }
 
-  const modelSwagger = m2s(model, m2sOptions);
-
+  const {properties, required} = convertModel(model, options.populatePaths);
   return options.openApi.path(
     merge(
       {
@@ -310,7 +338,7 @@ export function createOpenApiMiddleware<T>(
             "application/json": {
               schema: {
                 type: "object",
-                properties: modelSwagger.properties,
+                properties,
               },
             },
           },
@@ -322,8 +350,8 @@ export function createOpenApiMiddleware<T>(
               "application/json": {
                 schema: {
                   type: "object",
-                  required: [...(modelSwagger.required ?? []), "_id", "created", "updated"],
-                  properties: modelSwagger.properties,
+                  required: [...required, "_id", "created", "updated"],
+                  properties,
                 },
               },
             },
@@ -348,8 +376,7 @@ export function patchOpenApiMiddleware<T>(
     return noop;
   }
 
-  const modelSwagger = m2s(model, m2sOptions);
-
+  const {properties, required} = convertModel(model, options.populatePaths);
   return options.openApi.path(
     merge(
       {
@@ -360,7 +387,7 @@ export function patchOpenApiMiddleware<T>(
             "application/json": {
               schema: {
                 type: "object",
-                properties: modelSwagger.properties,
+                properties,
               },
             },
           },
@@ -372,8 +399,8 @@ export function patchOpenApiMiddleware<T>(
               "application/json": {
                 schema: {
                   type: "object",
-                  required: [...(modelSwagger.required ?? []), "_id", "created", "updated"],
-                  properties: modelSwagger.properties,
+                  required: [...required, "_id", "created", "updated"],
+                  properties,
                 },
               },
             },

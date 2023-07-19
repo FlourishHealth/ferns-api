@@ -101,7 +101,6 @@ Object {
                             "type": "array",
                           },
                           "hidden": Object {
-                            "default": false,
                             "type": "boolean",
                           },
                           "lastEatenWith": Object {
@@ -115,7 +114,50 @@ Object {
                             "type": "string",
                           },
                           "ownerId": Object {
-                            "type": "string",
+                            "properties": Object {
+                              "__t": Object {
+                                "type": "string",
+                              },
+                              "_id": Object {
+                                "type": "string",
+                              },
+                              "admin": Object {
+                                "default": false,
+                                "type": "boolean",
+                              },
+                              "age": Object {
+                                "type": "number",
+                              },
+                              "attempts": Object {
+                                "default": 0,
+                                "type": "number",
+                              },
+                              "created": Object {
+                                "format": "date-time",
+                                "type": "string",
+                              },
+                              "email": Object {
+                                "type": "string",
+                              },
+                              "hash": Object {
+                                "type": "string",
+                              },
+                              "last": Object {
+                                "format": "date-time",
+                                "type": "string",
+                              },
+                              "salt": Object {
+                                "type": "string",
+                              },
+                              "updated": Object {
+                                "format": "date-time",
+                                "type": "string",
+                              },
+                              "username": Object {
+                                "type": "string",
+                              },
+                            },
+                            "type": "object",
                           },
                           "source": Object {
                             "properties": Object {
@@ -481,7 +523,6 @@ Object {
                     "type": "array",
                   },
                   "hidden": Object {
-                    "default": false,
                     "type": "boolean",
                   },
                   "lastEatenWith": Object {
@@ -495,7 +536,50 @@ Object {
                     "type": "string",
                   },
                   "ownerId": Object {
-                    "type": "string",
+                    "properties": Object {
+                      "__t": Object {
+                        "type": "string",
+                      },
+                      "_id": Object {
+                        "type": "string",
+                      },
+                      "admin": Object {
+                        "default": false,
+                        "type": "boolean",
+                      },
+                      "age": Object {
+                        "type": "number",
+                      },
+                      "attempts": Object {
+                        "default": 0,
+                        "type": "number",
+                      },
+                      "created": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "email": Object {
+                        "type": "string",
+                      },
+                      "hash": Object {
+                        "type": "string",
+                      },
+                      "last": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "salt": Object {
+                        "type": "string",
+                      },
+                      "updated": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "username": Object {
+                        "type": "string",
+                      },
+                    },
+                    "type": "object",
                   },
                   "source": Object {
                     "properties": Object {
@@ -567,7 +651,6 @@ Object {
                       "type": "array",
                     },
                     "hidden": Object {
-                      "default": false,
                       "type": "boolean",
                     },
                     "lastEatenWith": Object {
@@ -581,7 +664,50 @@ Object {
                       "type": "string",
                     },
                     "ownerId": Object {
-                      "type": "string",
+                      "properties": Object {
+                        "__t": Object {
+                          "type": "string",
+                        },
+                        "_id": Object {
+                          "type": "string",
+                        },
+                        "admin": Object {
+                          "default": false,
+                          "type": "boolean",
+                        },
+                        "age": Object {
+                          "type": "number",
+                        },
+                        "attempts": Object {
+                          "default": 0,
+                          "type": "number",
+                        },
+                        "created": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "email": Object {
+                          "type": "string",
+                        },
+                        "hash": Object {
+                          "type": "string",
+                        },
+                        "last": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "salt": Object {
+                          "type": "string",
+                        },
+                        "updated": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "username": Object {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
                     },
                     "source": Object {
                       "properties": Object {
@@ -1243,7 +1369,50 @@ Object {
                       "type": "string",
                     },
                     "ownerId": Object {
-                      "type": "string",
+                      "properties": Object {
+                        "__t": Object {
+                          "type": "string",
+                        },
+                        "_id": Object {
+                          "type": "string",
+                        },
+                        "admin": Object {
+                          "default": false,
+                          "type": "boolean",
+                        },
+                        "age": Object {
+                          "type": "number",
+                        },
+                        "attempts": Object {
+                          "default": 0,
+                          "type": "number",
+                        },
+                        "created": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "email": Object {
+                          "type": "string",
+                        },
+                        "hash": Object {
+                          "type": "string",
+                        },
+                        "last": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "salt": Object {
+                          "type": "string",
+                        },
+                        "updated": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "username": Object {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
                     },
                     "source": Object {
                       "properties": Object {
@@ -1602,7 +1771,6 @@ Object {
                     "type": "array",
                   },
                   "hidden": Object {
-                    "default": false,
                     "type": "boolean",
                   },
                   "lastEatenWith": Object {
@@ -1616,7 +1784,50 @@ Object {
                     "type": "string",
                   },
                   "ownerId": Object {
-                    "type": "string",
+                    "properties": Object {
+                      "__t": Object {
+                        "type": "string",
+                      },
+                      "_id": Object {
+                        "type": "string",
+                      },
+                      "admin": Object {
+                        "default": false,
+                        "type": "boolean",
+                      },
+                      "age": Object {
+                        "type": "number",
+                      },
+                      "attempts": Object {
+                        "default": 0,
+                        "type": "number",
+                      },
+                      "created": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "email": Object {
+                        "type": "string",
+                      },
+                      "hash": Object {
+                        "type": "string",
+                      },
+                      "last": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "salt": Object {
+                        "type": "string",
+                      },
+                      "updated": Object {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "username": Object {
+                        "type": "string",
+                      },
+                    },
+                    "type": "object",
                   },
                   "source": Object {
                     "properties": Object {
@@ -1688,7 +1899,6 @@ Object {
                       "type": "array",
                     },
                     "hidden": Object {
-                      "default": false,
                       "type": "boolean",
                     },
                     "lastEatenWith": Object {
@@ -1702,7 +1912,50 @@ Object {
                       "type": "string",
                     },
                     "ownerId": Object {
-                      "type": "string",
+                      "properties": Object {
+                        "__t": Object {
+                          "type": "string",
+                        },
+                        "_id": Object {
+                          "type": "string",
+                        },
+                        "admin": Object {
+                          "default": false,
+                          "type": "boolean",
+                        },
+                        "age": Object {
+                          "type": "number",
+                        },
+                        "attempts": Object {
+                          "default": 0,
+                          "type": "number",
+                        },
+                        "created": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "email": Object {
+                          "type": "string",
+                        },
+                        "hash": Object {
+                          "type": "string",
+                        },
+                        "last": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "salt": Object {
+                          "type": "string",
+                        },
+                        "updated": Object {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "username": Object {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
                     },
                     "source": Object {
                       "properties": Object {
