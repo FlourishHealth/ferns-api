@@ -69,7 +69,10 @@ export interface FernsRouterOptions<T> {
    * allowed, return `null` from the function and an empty query result will be returned to the client without an error.
    * You can also throw an APIError to be explicit about the issues. You can transform the given query params by
    * returning different values. If the query is acceptable as-is, return `query` as-is. */
-  queryFilter?: (user?: User, query?: Record<string, any>) => Record<string, any> | null;
+  queryFilter?: (
+    user?: User,
+    query?: Record<string, any>
+  ) => Record<string, any> | null | Promise<Record<string, any> | null>;
   /** Transformers allow data to be transformed before actions are executed, and serialized before being returned to
    * the user.
    *
