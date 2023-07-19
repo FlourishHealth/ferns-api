@@ -98,8 +98,10 @@ export interface FernsRouterOptions<T> {
    *  to populate based on the user or request, such as app version.
    *    ["ownerId"] // populates the User that matches `ownerId`
    *    ["ownerId.organizationId"] // Nested. Populates the User that matches `ownerId`, as well as their organization.
+   *
+   *  Note: The array of strings style will be correctly handled by OpenAPI, but the function style will not currently.
    * */
-  populatePaths?: string[] | ((req: express.Request) => string[]);
+  populatePaths?: PopulatePaths;
   /** Default limit applied to list queries if not specified by the user. Defaults to 100. */
   defaultLimit?: number;
   /** Maximum query limit the user can request. Defaults to 500, and is the lowest of the limit query, max limit,
