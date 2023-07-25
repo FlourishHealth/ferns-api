@@ -179,10 +179,14 @@ function initializeRoutes(
       version: "1.0.0",
     },
   });
-
-  // TODO: Log a warning when we hit the array limit.
+ 
   app.set("query parser", (str: string) => qs.parse(str, {arrayLimit: options.arrayLimit ?? 200}));
 
+    // Log a warning if the query string exceeds the array limit
+    if (Array.isArray(parsedQuery) && parsedQuery.length === (options.arrayLimit ?? 200)) {
+      logger.warn("Query string reached the array limit:", parsedQuery);
+    }
+  
   app.use(Sentry.Handlers.requestHandler());
   app.use(Sentry.Handlers.tracingHandler());
 
