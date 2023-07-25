@@ -8,6 +8,7 @@ import express, {Router} from "express";
 import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
+import qs from "qs";
 
 import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
@@ -157,6 +158,8 @@ export function createRouterWithAuth(
 interface InitializeRoutesOptions {
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
+  // The maximum number of array elements to parse in a query string. Defaults to 200.
+  arrayLimit?: number;
 }
 
 function initializeRoutes(
@@ -176,6 +179,9 @@ function initializeRoutes(
       version: "1.0.0",
     },
   });
+
+  // TODO: Log a warning when we hit the array limit.
+  app.set("query parser", (str: string) => qs.parse(str, {arrayLimit: options.arrayLimit ?? 200}));
 
   app.use(Sentry.Handlers.requestHandler());
   app.use(Sentry.Handlers.tracingHandler());
