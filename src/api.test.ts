@@ -972,6 +972,86 @@ describe("ferns-api", () => {
     });
   });
 
+  describe("responseHandler", function () {
+    let admin: any;
+    let agent: supertest.SuperAgentTest;
+
+    let spinach: Food;
+
+    beforeEach(async function () {
+      [admin] = await setupDb();
+
+      [spinach] = await Promise.all([
+        FoodModel.create({
+          name: "Spinach",
+          calories: 1,
+          created: new Date("2021-12-03T00:00:20.000Z"),
+          ownerId: admin._id,
+          hidden: false,
+          source: {
+            name: "Brand",
+          },
+        }),
+        FoodModel.create({
+          name: "Apple",
+          calories: 100,
+          created: new Date().getTime() - 10,
+          ownerId: admin?._id,
+          hidden: true,
+        }),
+      ]);
+      app = getBaseServer();
+      setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          responseHandler: (data, method) => {
+            if (method === "list") {
+              return (data as any).map((d: any) => ({
+                id: (d as any)._id,
+                foo: "bar",
+              }));
+            } else {
+              return {
+                id: (data as any)._id,
+                foo: "bar",
+              };
+            }
+          },
+        })
+      );
+      server = supertest(app);
+      agent = await authAsUser(app, "notAdmin");
+    });
+
+    it("reads with serialize", async function () {
+      const res = await agent.get(`/food/${spinach._id}`).expect(200);
+      assert.isUndefined(res.body.data.ownerId);
+      assert.equal(res.body.data.id, spinach._id.toString());
+      assert.equal(res.body.data.foo, "bar");
+    });
+
+    it("list with serialize", async function () {
+      const res = await agent.get(`/food`).expect(200);
+      assert.isUndefined(res.body.data[0].ownerId);
+      assert.isUndefined(res.body.data[1].ownerId);
+
+      assert.isDefined(res.body.data[0].id);
+      assert.equal(res.body.data[0].foo, "bar");
+      assert.isDefined(res.body.data[1].id);
+      assert.equal(res.body.data[1].foo, "bar");
+    });
+  });
+
   describe("plugins", function () {
     let agent: supertest.SuperAgentTest;
 

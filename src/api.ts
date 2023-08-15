@@ -17,8 +17,13 @@ import {
   patchOpenApiMiddleware,
 } from "./openApi";
 import {checkPermissions, RESTPermissions} from "./permissions";
-import {FernsTransformer, serialize, transform} from "./transformers";
+import {defaultResponseHandler, FernsTransformer, serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
+
+export type JSONPrimitive = string | number | boolean | null;
+export interface JSONArray extends Array<JSONValue> {}
+export type JSONObject = {[member: string]: JSONValue};
+export type JSONValue = JSONPrimitive | JSONObject | JSONArray;
 
 // TODOS:
 // Support bulk actions
@@ -79,6 +84,8 @@ export interface FernsRouterOptions<T> {
    * Transformers can be used to throw out fields that the user should not be able to write to, such as the `admin` flag.
    * Serializers can be used to hide data from the client or change how it is presented. Serializers run after the data
    * has been changed or queried but before returning to the client.
+   * @deprecated Use preCreate/preUpdate/preDelete hooks instead of transformer.transform. Use serialize instead of
+   * transformer.serialize.
    * */
   transformer?: FernsTransformer<T>;
   /** Default sort for list operations. Can be a single field, a space-seperated list of fields, or an object.
@@ -88,7 +95,6 @@ export interface FernsRouterOptions<T> {
    * ?sort=\{foo: 'ascending', bar: 'descending'\} // object: foo ascending, bar descending
    *
    * Note: you should have an index field on these fields or Mongo may slow down considerably.
-   * @deprecated Use preCreate/preUpdate/preDelete hooks instead of transformer.transform.
    * */
   sort?: string | {[key: string]: "ascending" | "descending"};
   /** Default queries to provide to Mongo before any user queries or transforms happen when making list queries.
@@ -141,13 +147,28 @@ export interface FernsRouterOptions<T> {
   /** Hook that runs after the object is fetched but before it is serialized.
    * Returns a promise so that asynchronous actions can be included in the function.
    * Throw an APIError to return a 400 with an error message.
+   * @deprecated: Use responseHandler instead.
    */
   postGet?: (value: T, request: express.Request) => void | Promise<T>;
   /** Hook that runs after the list of objects is fetched but before they are serialized.
    * Returns a promise so that asynchronous actions can be included in the function.
    * Throw an APIError to return a 400 with an error message.
+   * @deprecated: Use responseHandler instead.
    */
-  postList?: (value: Document<T, {}, {}>[], request: express.Request) => Promise<Document[]>;
+  postList?: (
+    value: (Document<any, any, any> & T)[],
+    request: express.Request
+  ) => Promise<(Document<any, any, any> & T)[]>;
+  /** Serialize an object or list of objects before returning to the client. This is a good spot to remove sensitive
+   * information from the object, such as passwords or API keys.
+   * Throw an APIError to return a 400 with an error message.
+   */
+  responseHandler?: (
+    value: (Document<any, any, any> & T) | (Document<any, any, any> & T)[],
+    method: "list" | "create" | "read" | "update" | "delete",
+    request: express.Request,
+    options: FernsRouterOptions<T>
+  ) => Promise<JSONValue | null>;
   /** The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
    * https://mongoosejs.com/docs/discriminators.html
    * If this key is provided, you must provide the same key as part of the top level of the body when making performing
@@ -172,6 +193,12 @@ export interface FernsRouterOptions<T> {
     update?: any;
     delete?: any;
   };
+  /**
+   * Overwrite parts of the model properties for the OpenAPI generator. This will be merged with the generated
+   * configuration. This is useful if you add custom properties to the model during serialize, for example, that you
+   * want to be documented and typed in the SDK.
+   */
+  openApiExtraModelProperties?: any;
 }
 
 // A function to decide which model to use. If no discriminators are provided, just returns the base model. If
@@ -202,8 +229,8 @@ function populate(
   if (isFunction(populatePaths)) {
     try {
       paths = populatePaths(req);
-    } catch (e) {
-      throw new APIError({status: 500, title: `Error in populatePaths function: ${e}`});
+    } catch (e: any) {
+      throw new APIError({status: 500, title: `Error in populatePaths function: ${e}`, error: e});
     }
   } else {
     paths = populatePaths ?? [];
@@ -257,7 +284,8 @@ export function fernsRouter<T>(
     options.endpoints(router);
   }
 
-  // TODO Toggle anonymous auth middleware based on settings for route.
+  const responseHandler = options.responseHandler ?? defaultResponseHandler;
+
   router.post(
     "/",
     [authenticateMiddleware(options.allowAnonymous), createOpenApiMiddleware(baseModel, options)],
@@ -270,13 +298,14 @@ export function fernsRouter<T>(
         });
       }
 
-      let body;
+      let body: Partial<T> | (Partial<T> | undefined)[] | null | undefined;
       try {
         body = transform<T>(options, req.body, "create", req.user);
       } catch (e: any) {
         throw new APIError({
           status: 400,
           title: e.message,
+          error: e,
         });
       }
       if (options.preCreate) {
@@ -288,6 +317,7 @@ export function fernsRouter<T>(
           } else {
             throw new APIError({
               title: `preCreate hook error: ${e.message}`,
+              error: e,
             });
           }
         }
@@ -312,6 +342,7 @@ export function fernsRouter<T>(
         throw new APIError({
           status: 400,
           title: e.message,
+          error: e,
         });
       }
 
@@ -324,6 +355,7 @@ export function fernsRouter<T>(
           throw new APIError({
             status: 400,
             title: `Populate error: ${e.message}`,
+            error: e,
           });
         }
       }
@@ -335,11 +367,12 @@ export function fernsRouter<T>(
           throw new APIError({
             status: 400,
             title: `postCreate hook error: ${e.message}`,
+            error: e,
           });
         }
       }
-      // @ts-ignore TS being overprotective of data since we are using generics
-      return res.status(201).json({data: serialize<T>(options, data, req.user)});
+      const serialized = await responseHandler(data, "create", req, options);
+      return res.status(201).json({data: serialized});
     })
   );
 
@@ -397,6 +430,7 @@ export function fernsRouter<T>(
           throw new APIError({
             status: 400,
             title: `Query filter error: ${e}`,
+            error: e,
           });
         }
 
@@ -436,12 +470,13 @@ export function fernsRouter<T>(
 
       const populatedQuery = populate(req, builtQuery, options.populatePaths);
 
-      let data: Document<T, {}, {}>[];
+      let data: (Document<any, any, any> & T)[];
       try {
         data = await populatedQuery.exec();
       } catch (e: any) {
         throw new APIError({
           title: `List error: ${e.stack}`,
+          error: e,
         });
       }
 
@@ -452,6 +487,7 @@ export function fernsRouter<T>(
           throw new APIError({
             status: 400,
             title: `postList hook error on ${req.params.id}: ${e.message}`,
+            error: e,
           });
         }
       }
@@ -459,9 +495,10 @@ export function fernsRouter<T>(
       // Uses metadata rather than counting the number of documents in the array for performance.
       const total = await model.estimatedDocumentCount();
 
+      let serialized = await responseHandler(data, "list", req, options);
+
       let more;
       try {
-        let serialized = serialize<T>(options, data, req.user);
         if (serialized && Array.isArray(serialized)) {
           more = serialized.length === limit + 1 && serialized.length > 0;
           if (more) {
@@ -475,6 +512,7 @@ export function fernsRouter<T>(
       } catch (e: any) {
         throw new APIError({
           title: `Serialization error: ${e.message}`,
+          error: e,
         });
       }
     })
@@ -502,7 +540,8 @@ export function fernsRouter<T>(
         data = await populatedQuery.exec();
       } catch (e: any) {
         throw new APIError({
-          title: `GET failed on ${req.params.id}: ${e.stack}`,
+          title: `GET failed on ${req.params.id}`,
+          error: e,
         });
       }
 
@@ -527,11 +566,13 @@ export function fernsRouter<T>(
           throw new APIError({
             status: 400,
             title: `postGet hook error on ${req.params.id}: ${e.message}`,
+            error: e,
           });
         }
       }
 
-      return res.json({data: await serialize<T>(options, data, req.user)});
+      const serialized = await responseHandler(data, "read", req, options);
+      return res.json({data: serialized});
     })
   );
 
@@ -582,6 +623,7 @@ export function fernsRouter<T>(
         throw new APIError({
           status: 403,
           title: `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${e.message}`,
+          error: e,
         });
       }
 
@@ -594,6 +636,7 @@ export function fernsRouter<T>(
           } else {
             throw new APIError({
               title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
+              error: e,
             });
           }
         }
@@ -621,6 +664,7 @@ export function fernsRouter<T>(
         throw new APIError({
           status: 400,
           title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
+          error: e,
         });
       }
 
@@ -637,10 +681,12 @@ export function fernsRouter<T>(
           throw new APIError({
             status: 400,
             title: `postUpdate hook error on ${req.params.id}: ${e.message}`,
+            error: e,
           });
         }
       }
-      return res.json({data: serialize<T>(options, doc, req.user)});
+      const serialized = await responseHandler(doc, "update", req, options);
+      return res.json({data: serialized});
     })
   );
 
@@ -684,6 +730,7 @@ export function fernsRouter<T>(
             throw new APIError({
               status: 403,
               title: `preDelete hook error on ${req.params.id}: ${e.message}`,
+              error: e,
             });
           }
         }
@@ -717,6 +764,7 @@ export function fernsRouter<T>(
           throw new APIError({
             status: 400,
             title: e.message,
+            error: e,
           });
         }
       }
@@ -728,6 +776,7 @@ export function fernsRouter<T>(
           throw new APIError({
             status: 400,
             title: `postDelete hook error: ${e.message}`,
+            error: e,
           });
         }
       }
@@ -816,6 +865,7 @@ export function fernsRouter<T>(
       throw new APIError({
         title: e.message,
         status: 403,
+        error: e,
       });
     }
 
@@ -826,6 +876,7 @@ export function fernsRouter<T>(
         throw new APIError({
           title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
           status: 400,
+          error: e,
         });
       }
       if (body === undefined) {
@@ -852,6 +903,7 @@ export function fernsRouter<T>(
       throw new APIError({
         title: `PATCH Pre Update error on ${req.params.id}: ${e.message}`,
         status: 400,
+        error: e,
       });
     }
 
@@ -862,10 +914,11 @@ export function fernsRouter<T>(
         throw new APIError({
           title: `PATCH Post Update error on ${req.params.id}: ${e.message}`,
           status: 400,
+          error: e,
         });
       }
     }
-    return res.json({data: serialize<T>(options, doc, req.user)});
+    return res.json({data: serialize<T>(req, options, doc)});
   }
 
   async function arrayPost(req: Request, res: Response) {

@@ -1,7 +1,9 @@
+import express from "express";
 import {Document} from "mongoose";
 
 import {FernsRouterOptions} from "./api";
 import {User} from "./auth";
+import {APIError} from "./errors";
 import {logger} from "./logger";
 
 export interface FernsTransformer<T> {
@@ -109,11 +111,11 @@ export function transform<T>(
 }
 
 export function serialize<T>(
+  req: express.Request,
   options: FernsRouterOptions<T>,
-  data: Document<T, {}, {}> | Document<T, {}, {}>[],
-  user?: User
+  data: (Document<any, any, any> & T) | (Document<any, any, any> & T)[]
 ) {
-  const serializeFn = (serializeData: Document<T, {}, {}>, serializeUser?: User) => {
+  const serializeFn = (serializeData: Document<any, any, any> & T, serializeUser?: User) => {
     const dataObject = serializeData.toObject() as T;
     (dataObject as any).id = serializeData._id;
 
@@ -132,9 +134,38 @@ export function serialize<T>(
     }
   };
 
+  if (options.transformer?.serialize) {
+    logger.warn(
+      "transform.serialize functions are deprecated, use post* hooks and serialize instead"
+    );
+  }
   if (!Array.isArray(data)) {
-    return serializeFn(data, user);
+    return serializeFn(data, req.user);
   } else {
-    return data.map((d) => serializeFn(d, user));
+    return data.map((d) => serializeFn(d, req.user));
+  }
+}
+
+/**
+ * Default response handler for FernsRouter. Calls toObject on each doc and returns the result, using
+ * transformers.serializer if provided.
+ */
+export async function defaultResponseHandler<T>(
+  doc: (Document<any, any, any> & T) | (Document<any, any, any> & T)[] | null,
+  method: "list" | "create" | "read" | "update",
+  request: express.Request,
+  options: FernsRouterOptions<T>
+) {
+  if (!doc) {
+    return null;
+  }
+  try {
+    return serialize(request, options, doc);
+  } catch (error: any) {
+    throw new APIError({
+      status: 400,
+      title: `Error serializing ${method} response: ${error.message}`,
+      error,
+    });
   }
 }
