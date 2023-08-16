@@ -115,8 +115,12 @@ const foodSchema = new Schema<Food>(
       },
     ],
   },
-  {strict: "throw"}
+  {strict: "throw", toJSON: {virtuals: true}, toObject: {virtuals: true}}
 );
+
+foodSchema.virtual("description").get(function (this: Food) {
+  return `${this.name} has ${this.calories} calories`;
+});
 
 export const FoodModel = model<Food>("Food", foodSchema);
 

@@ -21,6 +21,11 @@ function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): 
         update: [Permissions.IsAny],
         delete: [Permissions.IsAny],
       },
+      openApiExtraModelProperties: {
+        foo: {
+          type: "string",
+        },
+      },
     })
   );
 }

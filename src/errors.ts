@@ -40,6 +40,7 @@ export interface APIErrorConstructor {
   };
   // A meta object containing non-standard meta-information about the error.
   meta?: {[id: string]: string};
+  error?: Error;
 }
 
 /**
@@ -78,13 +79,15 @@ export class APIError extends Error {
 
   meta: {[id: string]: any} | undefined;
 
+  error?: Error;
+
   constructor(data: APIErrorConstructor) {
     // Include details in when the error is printed to the console or sent to Sentry.
     super(`${data.title}${data.detail ? `: ${data.detail}` : ""}`);
     this.name = "APIError";
 
     // eslint-disable-next-line prefer-const
-    let {title, id, links, status, code, detail, source, meta, fields} = data;
+    let {title, id, links, status, code, detail, source, meta, fields, error} = data;
 
     if (!status) {
       status = 500;
@@ -105,7 +108,12 @@ export class APIError extends Error {
     if (fields) {
       this.meta.fields = fields;
     }
-    logger.error(`APIError(${status}): ${title} ${detail ? detail : ""}`);
+    this.error = error;
+    logger.error(
+      `APIError(${status}): ${title} ${detail ? detail : ""}${
+        data.error?.stack ? `\n${data.error?.stack}` : ""
+      }`
+    );
   }
 }
 

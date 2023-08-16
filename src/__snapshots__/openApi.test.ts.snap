@@ -86,6 +86,9 @@ Object {
                             "format": "date-time",
                             "type": "string",
                           },
+                          "description": Object {
+                            "type": "any",
+                          },
                           "eatenBy": Object {
                             "items": Object {
                               "properties": Object {
@@ -99,6 +102,9 @@ Object {
                               "type": "object",
                             },
                             "type": "array",
+                          },
+                          "foo": Object {
+                            "type": "string",
                           },
                           "hidden": Object {
                             "type": "boolean",
@@ -508,6 +514,9 @@ Object {
                     "format": "date-time",
                     "type": "string",
                   },
+                  "description": Object {
+                    "type": "any",
+                  },
                   "eatenBy": Object {
                     "items": Object {
                       "properties": Object {
@@ -521,6 +530,9 @@ Object {
                       "type": "object",
                     },
                     "type": "array",
+                  },
+                  "foo": Object {
+                    "type": "string",
                   },
                   "hidden": Object {
                     "type": "boolean",
@@ -636,6 +648,9 @@ Object {
                       "format": "date-time",
                       "type": "string",
                     },
+                    "description": Object {
+                      "type": "any",
+                    },
                     "eatenBy": Object {
                       "items": Object {
                         "properties": Object {
@@ -649,6 +664,9 @@ Object {
                         "type": "object",
                       },
                       "type": "array",
+                    },
+                    "foo": Object {
+                      "type": "string",
                     },
                     "hidden": Object {
                       "type": "boolean",
@@ -1341,6 +1359,9 @@ Object {
                       "format": "date-time",
                       "type": "string",
                     },
+                    "description": Object {
+                      "type": "any",
+                    },
                     "eatenBy": Object {
                       "items": Object {
                         "properties": Object {
@@ -1354,6 +1375,9 @@ Object {
                         "type": "object",
                       },
                       "type": "array",
+                    },
+                    "foo": Object {
+                      "type": "string",
                     },
                     "hidden": Object {
                       "type": "boolean",
@@ -1756,6 +1780,9 @@ Object {
                     "format": "date-time",
                     "type": "string",
                   },
+                  "description": Object {
+                    "type": "any",
+                  },
                   "eatenBy": Object {
                     "items": Object {
                       "properties": Object {
@@ -1769,6 +1796,9 @@ Object {
                       "type": "object",
                     },
                     "type": "array",
+                  },
+                  "foo": Object {
+                    "type": "string",
                   },
                   "hidden": Object {
                     "type": "boolean",
@@ -1884,6 +1914,9 @@ Object {
                       "format": "date-time",
                       "type": "string",
                     },
+                    "description": Object {
+                      "type": "any",
+                    },
                     "eatenBy": Object {
                       "items": Object {
                         "properties": Object {
@@ -1897,6 +1930,9 @@ Object {
                         "type": "object",
                       },
                       "type": "array",
+                    },
+                    "foo": Object {
+                      "type": "string",
                     },
                     "hidden": Object {
                       "type": "boolean",
