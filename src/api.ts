@@ -132,16 +132,19 @@ export interface FernsRouterOptions<T> {
    * Return null to return a generic 403
    * error. Throw an APIError to return a 400 with specific error information. */
   preDelete?: (value: any, request: express.Request) => T | Promise<T> | null;
-  /** Hook that runs after the object is created but before it is serialized and returned. This is a good spot to
-   * perform dependent changes to other models or performing async tasks, such as sending a push notification.
+  /** Hook that runs after the object is created but before the responseHandler serializes and returned. This is a good
+   * spot to perform dependent changes to other models or performing async tasks/side effects, such as sending a push
+   * notification.
    * Throw an APIError to return a 400 with an error message. */
   postCreate?: (value: T, request: express.Request) => void | Promise<void>;
-  /** Hook that runs after the object is updated but before it is serialized and returned. This is a good spot to
-   * perform dependent changes to other models or performing async tasks, such as sending a push notification.
+  /** Hook that runs after the object is updated but before the responseHandler serializes and returned. This is a good
+   * spot to perform dependent changes to other models or performing async tasks/side effects, such as sending a push
+   * notification.
    * Throw an APIError to return a 400 with an error message. */
   postUpdate?: (value: T, cleanedBody: any, request: express.Request) => void | Promise<void>;
-  /** Hook that runs after the object is created but before it is serialized and returned. This is a good spot to
-   * perform dependent changes to other models or performing async tasks, such as cascading object deletions.
+  /** Hook that runs after the object is deleted. This is a good spot to
+   * perform dependent changes to other models or performing async tasks/side effects, such as cascading object
+   * deletions.
    * Throw an APIError to return a 400 with an error message. */
   postDelete?: (request: express.Request) => void | Promise<void>;
   /** Hook that runs after the object is fetched but before it is serialized.
