@@ -5,7 +5,7 @@ import {fernsRouter, FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
 import {setupServer} from "./expressServer";
 import {Permissions} from "./permissions";
-import {FoodModel, UserModel} from "./tests";
+import {FoodModel, setupDb, UserModel} from "./tests";
 
 function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): void {
   router.use(
@@ -13,7 +13,7 @@ function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): 
     fernsRouter(FoodModel as any, {
       ...options,
       allowAnonymous: true,
-      populatePaths: ["ownerId"],
+      populatePaths: ["ownerId", "eatenBy.userId"],
       permissions: {
         list: [Permissions.IsAny],
         create: [Permissions.IsAny],
@@ -50,5 +50,14 @@ describe("openApi", function () {
   it("gets the swagger ui", async function () {
     server = supertest(app);
     await server.get("/swagger/").expect(200);
+  });
+
+  it("gets food with populated paths", async function () {
+    server = supertest(app);
+    // eslint-disable-next-line unused-imports/no-unused-vars
+    const [admin, notAdmin] = await setupDb();
+    const food = await FoodModel.create({name: "test", ownerId: notAdmin._id});
+    const res = await server.get(`/food/${food._id}`).expect(200);
+    expect(res.body.data.ownerId._id).toEqual(notAdmin._id.toString());
   });
 });
