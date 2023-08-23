@@ -123,15 +123,29 @@ export function convertModel(
     // Get the referenced populate model from the model schema.
 
     populatePaths.forEach((populatePath) => {
-      const populateModel = model.schema.path(populatePath).options.ref;
+      let populateModel = model.schema.path(populatePath).options.ref;
+      const populatePathIsArray = Array.isArray(model.schema.path(populatePath).options.type);
+      if (populatePathIsArray) {
+        populateModel = model.schema.path(populatePath).options.type[0].ref;
+      }
       if (!populateModel) {
         return;
       }
       // Replace the populated property with the populated model schema.
-      modelSwagger.properties[populatePath] = {
-        type: "object",
-        properties: m2s(model.db.model(populateModel), m2sOptions).properties,
-      };
+      if (populatePathIsArray) {
+        modelSwagger.properties[populatePath] = {
+          type: "array",
+          items: {
+            type: "object",
+            properties: m2s(model.db.model(populateModel), m2sOptions).properties,
+          },
+        };
+      } else {
+        modelSwagger.properties[populatePath] = {
+          type: "object",
+          properties: m2s(model.db.model(populateModel), m2sOptions).properties,
+        };
+      }
     });
   }
 
