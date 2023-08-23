@@ -13,7 +13,7 @@ function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): 
     fernsRouter(FoodModel as any, {
       ...options,
       allowAnonymous: true,
-      populatePaths: ["ownerId", "eatenBy.userId"],
+      populatePaths: ["ownerId", "eatenBy"],
       permissions: {
         list: [Permissions.IsAny],
         create: [Permissions.IsAny],

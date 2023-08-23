@@ -107,11 +107,9 @@ const foodSchema = new Schema<Food>(
     },
     eatenBy: [
       {
-        userId: {
-          type: Schema.Types.ObjectId,
-          ref: "User",
-          required: true,
-        },
+        type: Schema.Types.ObjectId,
+        ref: "User",
+        required: true,
       },
     ],
   },
