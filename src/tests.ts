@@ -39,9 +39,7 @@ export interface Food {
     name: string;
   };
   tags: string[];
-  eatenBy: {
-    userId: mongoose.Types.ObjectId;
-  }[];
+  eatenBy: [Schema.Types.ObjectId | User];
   // We want to test that map type works.
   lastEatenWith: {[name: string]: Date};
   categories: FoodCategory[];

@@ -453,7 +453,7 @@ describe("ferns-api", () => {
           lastEatenWith: {
             dressing: "2021-12-03T19:00:30.000Z",
           },
-          eatenBy: [{userId: admin._id}],
+          eatenBy: [admin._id],
         }),
         FoodModel.create({
           name: "Apple",
@@ -473,7 +473,7 @@ describe("ferns-api", () => {
             name: "USDA",
           },
           tags: ["healthy", "cheap"],
-          eatenBy: [{userId: admin._id}, {userId: notAdmin._id}],
+          eatenBy: [admin._id, notAdmin._id],
         }),
         FoodModel.create({
           name: "Pizza",
@@ -482,7 +482,7 @@ describe("ferns-api", () => {
           ownerId: admin._id,
           hidden: false,
           tags: ["cheap"],
-          eatenBy: [{userId: adminOther._id}],
+          eatenBy: [adminOther._id],
         }),
       ]);
       app = getBaseServer();
@@ -504,15 +504,7 @@ describe("ferns-api", () => {
           maxLimit: 3,
           sort: {created: "descending"},
           defaultQueryParams: {hidden: false},
-          queryFields: [
-            "hidden",
-            "name",
-            "calories",
-            "created",
-            "source.name",
-            "tags",
-            "eatenBy.userId",
-          ],
+          queryFields: ["hidden", "name", "calories", "created", "source.name", "tags", "eatenBy"],
           populatePaths: ["ownerId"],
         })
       );
@@ -723,7 +715,7 @@ describe("ferns-api", () => {
       const res = await server
         .get(
           `/food?${qs.stringify({
-            "eatenBy.userId": {
+            eatenBy: {
               $in: [notAdmin._id.toString(), adminOther._id.toString()],
             },
           })}`
@@ -749,7 +741,7 @@ describe("ferns-api", () => {
       const res = await agent
         .get(
           `/food?${qs.stringify({
-            $and: [{"eatenBy.userId": admin.id}, {"eatenBy.userId": notAdmin.id}],
+            $and: [{eatenBy: admin.id}, {eatenBy: notAdmin.id}],
           })}`
         )
         .expect(200);
@@ -774,7 +766,7 @@ describe("ferns-api", () => {
         .get(
           `/food?${qs.stringify({
             limit: 3,
-            $or: [{"eatenBy.userId": admin.id}, {"eatenBy.userId": notAdmin.id}],
+            $or: [{eatenBy: admin.id}, {eatenBy: notAdmin.id}],
           })}`
         )
         .expect(200);
