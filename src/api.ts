@@ -784,7 +784,7 @@ export function fernsRouter<T>(
         }
       }
 
-      return res.sendStatus(204);
+      return res.status(204).json({});
     })
   );
 
