@@ -160,6 +160,9 @@ interface InitializeRoutesOptions {
   addMiddleware?: AddRoutes;
   // The maximum number of array elements to parse in a query string. Defaults to 200.
   arrayLimit?: number;
+  // Whether requests should be logged. In production, you may want to disable this if using another
+  // logger (e.g. Google Cloud).
+  logRequests?: boolean;
 }
 
 function initializeRoutes(
@@ -200,7 +203,9 @@ function initializeRoutes(
 
   setupAuth(app as any, UserModel as any);
 
-  app.use(logRequests);
+  if (options.logRequests !== false) {
+    app.use(logRequests);
+  }
   // Add Sentry scopes for session, transaction, and userId if any are set
   app.all("*", function (req: any, _res: any, next: any) {
     const transactionId = req.header("X-Transaction-ID");
