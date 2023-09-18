@@ -76,6 +76,7 @@ export interface LoggingOptions {
   disableConsoleColors?: boolean;
   showConsoleTimestamps?: boolean;
   logDirectory?: string;
+  logRequests?: boolean;
 }
 
 export function setupLogging(options?: LoggingOptions) {
