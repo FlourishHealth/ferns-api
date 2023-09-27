@@ -18,7 +18,7 @@ import {logger, LoggingOptions, setupLogging} from "./logger";
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
 
-export function setupErrorLogging() {
+export function setupErrorLogging(app: express.Application, ignoreTraces: string[] = []) {
   const dsn = process.env.SENTRY_DSN;
   if (process.env.NODE_ENV === "production") {
     if (!dsn) {
@@ -29,13 +29,23 @@ export function setupErrorLogging() {
       integrations: [
         // enable HTTP calls tracing
         new Sentry.Integrations.Http({tracing: true}),
+        // enable Express.js middleware tracing
+        new Sentry.Integrations.Express({app}),
         ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
         new ProfilingIntegration(),
       ],
       ignoreErrors: [/^.*ECONNRESET*$/, /^.*socket hang up*$/],
-      tracesSampleRate: process.env.SENTRY_TRACES_SAMPLE_RATE
-        ? parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE)
-        : 0.1,
+      tracesSampler: (samplingContext) => {
+        const transactionName = samplingContext.transactionContext.name;
+        // ignore any transactions that include a match from the ignoreTraces list
+        if (ignoreTraces.some((trace) => transactionName.includes(trace))) {
+          return 0.0;
+        }
+        // otherwise just use the standard sample rate
+        return process.env.SENTRY_TRACES_SAMPLE_RATE
+          ? parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE)
+          : 0.1;
+      },
       profilesSampleRate: process.env.SENTRY_PROFILES_SAMPLE_RATE
         ? parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE)
         : 0.1,
@@ -163,6 +173,7 @@ interface InitializeRoutesOptions {
   // Whether requests should be logged. In production, you may want to disable this if using another
   // logger (e.g. Google Cloud).
   logRequests?: boolean;
+  ignoreTraces?: string[];
 }
 
 function initializeRoutes(
@@ -172,7 +183,7 @@ function initializeRoutes(
 ) {
   const app = express();
 
-  setupErrorLogging();
+  setupErrorLogging(app, options.ignoreTraces);
 
   const oapi = openapi({
     openapi: "3.0.0",
@@ -266,6 +277,7 @@ export interface SetupServerOptions {
   skipListen?: boolean;
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
+  ignoreTraces?: string[];
 }
 
 // Sets up the routes and returns a function to launch the API.
@@ -280,6 +292,7 @@ export function setupServer(options: SetupServerOptions) {
     app = initializeRoutes(UserModel, addRoutes, {
       corsOrigin: options.corsOrigin,
       addMiddleware: options.addMiddleware,
+      ignoreTraces: options.ignoreTraces,
     });
   } catch (e) {
     logger.error(`Error initializing routes: ${e}`);
