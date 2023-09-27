@@ -20,7 +20,7 @@ const SLOW_WRITE_MAX = 500;
 
 export function setupErrorLogging(app: express.Application, ignoreTraces: string[] = []) {
   const dsn = process.env.SENTRY_DSN;
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.NODE_ENV === "production") {
     if (!dsn) {
       throw new Error("You must set SENTRY_DSN in the environment.");
     }
