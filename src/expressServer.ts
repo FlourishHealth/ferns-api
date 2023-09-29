@@ -29,8 +29,6 @@ export function setupErrorLogging(app: express.Application, ignoreTraces: string
       integrations: [
         // enable HTTP calls tracing
         new Sentry.Integrations.Http({tracing: true}),
-        // enable Express.js middleware tracing
-        new Sentry.Integrations.Express({app}),
         ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
         new ProfilingIntegration(),
       ],
