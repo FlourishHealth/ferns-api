@@ -13,7 +13,7 @@ const m2sOptions = {
   props: ["readOnly", "required", "enum", "default"],
 };
 
-const apiErrorContent = {
+export const apiErrorContent = {
   "application/json": {
     schema: {
       type: "object",
@@ -84,7 +84,7 @@ const apiErrorContent = {
 };
 
 // Default error responses
-const defaultErrorResponses = {
+export const defaultOpenApiErrorResponses = {
   400: {
     description: "Bad request",
     content: apiErrorContent,
@@ -199,7 +199,7 @@ export function getOpenApiMiddleware<T>(model: Model<T>, options: Partial<FernsR
               },
             },
           },
-          ...defaultErrorResponses,
+          ...defaultOpenApiErrorResponses,
         },
       },
       options.openApiOverwrite?.get ?? {}
@@ -345,7 +345,7 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
               },
             },
           },
-          ...defaultErrorResponses,
+          ...defaultOpenApiErrorResponses,
         },
       },
       options.openApiOverwrite?.list ?? {}
@@ -397,7 +397,7 @@ export function createOpenApiMiddleware<T>(
               },
             },
           },
-          ...defaultErrorResponses,
+          ...defaultOpenApiErrorResponses,
         },
       },
       options.openApiOverwrite?.create ?? {}
@@ -449,7 +449,7 @@ export function patchOpenApiMiddleware<T>(
               },
             },
           },
-          ...defaultErrorResponses,
+          ...defaultOpenApiErrorResponses,
         },
       },
       options.openApiOverwrite?.update ?? {}
@@ -477,7 +477,7 @@ export function deleteOpenApiMiddleware<T>(
           204: {
             description: "Successful delete",
           },
-          ...defaultErrorResponses,
+          ...defaultOpenApiErrorResponses,
         },
       },
       options.openApiOverwrite?.delete ?? {}
