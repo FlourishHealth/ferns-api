@@ -54,6 +54,7 @@ export async function signupUser(
 
   try {
     const user = await (userModel as any).register({email, ...bodyRest}, password);
+
     if (user.postCreate) {
       try {
         await user.postCreate(bodyRest);

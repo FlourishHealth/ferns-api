@@ -5,7 +5,9 @@ import supertest from "supertest";
 
 import {createdUpdatedPlugin} from "./plugins";
 
-mongoose.connect("mongodb://localhost:27017/ferns");
+mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch((e) => {
+  console.error("Error connecting to mongo", e);
+});
 
 export interface User {
   admin: boolean;
