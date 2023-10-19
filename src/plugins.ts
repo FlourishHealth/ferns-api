@@ -7,7 +7,7 @@ export interface BaseUser {
   email: string;
 }
 
-export function baseUserPlugin(schema: Schema) {
+export function baseUserPlugin(schema: Schema<any, any, any, any>) {
   schema.add({admin: {type: Boolean, default: false}});
   schema.add({email: {type: String, index: true}});
 }
@@ -18,7 +18,7 @@ export interface IsDeleted {
   deleted: boolean;
 }
 
-export function isDeletedPlugin(schema: Schema, defaultValue = false) {
+export function isDeletedPlugin(schema: Schema<any, any, any, any>, defaultValue = false) {
   schema.add({deleted: {type: Boolean, default: defaultValue, index: true}});
   schema.pre("find", function () {
     const query = this.getQuery();
@@ -33,7 +33,7 @@ export interface CreatedDeleted {
   created: {type: Date; required: true};
 }
 
-export function createdUpdatedPlugin(schema: Schema) {
+export function createdUpdatedPlugin(schema: Schema<any, any, any, any>) {
   schema.add({updated: {type: Date, index: true}});
   schema.add({created: {type: Date, index: true}});
 
@@ -68,7 +68,7 @@ export function firebaseJWTPlugin(schema: Schema) {
  * document, or throws an exception if multiple are found.
  * @param schema Mongoose Schema
  */
-export function findOneOrThrow<T>(schema: Schema) {
+export function findOneOrThrow<T>(schema: Schema<any, any, any, any>) {
   schema.statics.findOneOrThrow = async function (
     query: FilterQuery<T>,
     errorArgs?: Partial<APIErrorConstructor>
@@ -97,7 +97,7 @@ export function findOneOrThrow<T>(schema: Schema) {
  * multiple or none are found.
  * @param schema Mongoose Schema
  */
-export function findExactlyOne<T>(schema: Schema) {
+export function findExactlyOne<T>(schema: Schema<any, any, any, any>) {
   schema.statics.findExactlyOne = async function (
     query: FilterQuery<T>,
     errorArgs?: Partial<APIErrorConstructor>
