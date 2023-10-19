@@ -4473,9 +4473,9 @@ mongodb@5.9.0:
     "@mongodb-js/saslprep" "^1.1.0"
 
 mongoose-to-swagger@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/mongoose-to-swagger/-/mongoose-to-swagger-1.4.0.tgz#30e8b9a9766277f8ec82dbcb69e424ed288168ef"
-  integrity sha512-7O5f2bSVT7euXgMMhlxe4gz6sJW8E3GWHties2FR3B+W41yhW5dpG4RuC7rGL3tKi9nyDN/nkorkbs5v0AHLyg==
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/mongoose-to-swagger/-/mongoose-to-swagger-1.5.1.tgz#74f7e08b7872cd4ea9bb8d92e855808cc820cf54"
+  integrity sha512-gwEr0NhA+DyGswtgypIoV/iR0RGX4jY/SE9zmYYk6qpG2C83urcQfYJWzm7PsDPo3snMm8XjBYiAtLyYAqirXA==
 
 mongoose@^7.6.2:
   version "7.6.3"
