@@ -1,15 +1,18 @@
 import chai, {assert} from "chai";
 import chaiAsPromised from "chai-as-promised";
 import {model, Schema} from "mongoose";
+import sinon from "sinon";
 chai.use(chaiAsPromised);
 
-import {findExactlyOne, findOneOrThrow} from "./plugins";
+import {createdUpdatedPlugin, findExactlyOne, findOneOrThrow} from "./plugins";
 import {setupDb} from "./tests";
 
 interface Stuff {
   _id: string;
   name: string;
   ownerId: string;
+  created: Date;
+  updated?: Date;
 }
 
 const stuffSchema = new Schema<Stuff>({
@@ -19,8 +22,30 @@ const stuffSchema = new Schema<Stuff>({
 
 stuffSchema.plugin(findOneOrThrow);
 stuffSchema.plugin(findExactlyOne);
+stuffSchema.plugin(createdUpdatedPlugin);
 
 const stuffModel = model<Stuff>("Stuff", stuffSchema);
+
+describe("createdUpdate", function () {
+  it("sets created and updated on save", async function () {
+    const clock = sinon.useFakeTimers();
+    clock.setSystemTime(new Date("2022-12-17T03:24:00.000Z"));
+
+    const stuff = await stuffModel.create({name: "Things", ownerId: "123"});
+    assert.isNotNull(stuff.created);
+    assert.isNotNull(stuff.updated);
+    assert.equal(stuff.created.toISOString(), "2022-12-17T03:24:00.000Z");
+    assert.equal(stuff.updated?.toISOString(), "2022-12-17T03:24:00.000Z");
+
+    stuff.name = "Thangs";
+    await clock.tickAsync(10000);
+    await stuff.save();
+    assert.equal(stuff.created.toISOString(), "2022-12-17T03:24:00.000Z");
+    assert.equal(stuff.updated?.toISOString(), "2022-12-17T03:24:10.000Z");
+
+    clock.restore();
+  });
+});
 
 describe("findOneOrThrow", function () {
   let things: any;
