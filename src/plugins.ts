@@ -105,7 +105,7 @@ export function findExactlyOne<T>(schema: Schema) {
     const results = await this.find(query);
     if (results.length === 0) {
       throw new APIError({
-        status: 500,
+        status: 404,
         title: `${this.modelName}.findExactlyOne query returned no documents`,
         detail: `query: ${JSON.stringify(query)}`,
         ...errorArgs,

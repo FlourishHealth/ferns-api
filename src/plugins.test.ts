@@ -92,7 +92,7 @@ describe("findExactlyOne", function () {
     ]);
   });
 
-  it("returns null with no matches.", async function () {
+  it("throws error with no matches.", async function () {
     const fn = () => (stuffModel as any).findExactlyOne({name: "OtherStuff"});
     await assert.isRejected(fn(), /Stuff\.findExactlyOne query returned no documents/);
   });
