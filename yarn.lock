@@ -1283,9 +1283,9 @@
     "@types/node" "*"
 
 "@types/passport-anonymous@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@types/passport-anonymous/-/passport-anonymous-1.0.3.tgz#87cb68d6b905288364120a1b978a01f7872195db"
-  integrity sha512-unE2IivuYx6LUHlHokKMebx2TVi/YhqnnwM/Z3teGa/HTsRKgpD0PWrjpbw15ES8K8QNSCnRmXb/NpOyTem0tA==
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@types/passport-anonymous/-/passport-anonymous-1.0.4.tgz#f59e921423c9010b68d49522e8075a3ef02af126"
+  integrity sha512-LjR02lSnhPOH1L+j6HT0DTZKH/TIQ2gwmFdQGxRxg+5x/LFq79vQhMK+wYBr+Mtmo7VFtuf/uPLk7lPzz+hKwg==
   dependencies:
     "@types/passport" "*"
 
@@ -1315,14 +1315,7 @@
     "@types/express" "*"
     "@types/passport" "*"
 
-"@types/passport@*":
-  version "1.0.7"
-  resolved "https://registry.yarnpkg.com/@types/passport/-/passport-1.0.7.tgz#85892f14932168158c86aecafd06b12f5439467a"
-  integrity sha512-JtswU8N3kxBYgo+n9of7C97YQBT+AYPP2aBfNGTzABqPAZnK/WOAaKfh3XesUYMZRrXFuoPc2Hv0/G/nQFveHw==
-  dependencies:
-    "@types/express" "*"
-
-"@types/passport@^1.0.9":
+"@types/passport@*", "@types/passport@^1.0.9":
   version "1.0.9"
   resolved "https://registry.yarnpkg.com/@types/passport/-/passport-1.0.9.tgz#b32fa8f7485dace77a9b58e82d0c92908f6e8387"
   integrity sha512-9+ilzUhmZQR4JP49GdC2O4UdDE3POPLwpmaTC/iLkW7l0TZCXOo1zsTnnlXPq6rP1UsUZPfbAV4IUdiwiXyC7g==
