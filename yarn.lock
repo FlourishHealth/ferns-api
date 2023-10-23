@@ -1290,9 +1290,9 @@
     "@types/passport" "*"
 
 "@types/passport-jwt@^3.0.6":
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/@types/passport-jwt/-/passport-jwt-3.0.6.tgz#41cc8b5803d5f5f06eb33e19c453b42716def4f1"
-  integrity sha512-cmAAMIRTaEwpqxlrZyiEY9kdibk94gP5KTF8AT1Ra4rWNZYHNMreqhKUEeC5WJtuN5SJZjPQmV+XO2P5PlnvNQ==
+  version "3.0.11"
+  resolved "https://registry.yarnpkg.com/@types/passport-jwt/-/passport-jwt-3.0.11.tgz#96d69fad0a7af28ba44e2ed202c33745a53f1ca2"
+  integrity sha512-HwQNi4cajueebj41EjH5rtnLAdxQfusICFU18JEnvV3uYCJzKoT1D3MCwQ+nn8HeGjy6QuTxnm/I2WxuraqeDw==
   dependencies:
     "@types/express" "*"
     "@types/jsonwebtoken" "*"
