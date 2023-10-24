@@ -5,7 +5,7 @@
  */
 import express, {NextFunction, Request, Response} from "express";
 import isFunction from "lodash/isFunction";
-import mongoose, {Document, Model} from "mongoose";
+import mongoose, {Document, Model, PassportLocalModel} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
 import {APIError, apiErrorMiddleware, isAPIError} from "./errors";
@@ -277,7 +277,7 @@ function checkQueryParamAllowed(
  * @param options Options for configuring the REST API, such as permissions, transformers, and hooks.
  */
 export function fernsRouter<T>(
-  baseModel: Model<T>,
+  baseModel: PassportLocalModel<T>,
   options: FernsRouterOptions<T>
 ): express.Router {
   const router = express.Router();

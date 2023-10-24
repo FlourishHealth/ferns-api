@@ -324,12 +324,7 @@ export function cronjob(
   }
   logger.info(`Adding cronjob ${name}, running at: ${schedule}`);
   try {
-    new cron.CronJob({
-      cronTime: schedule,
-      onTick: callback,
-      start: true,
-      timeZone: "America/Chicago",
-    });
+    new cron.CronJob(schedule, callback, null, true, "America/Chicago");
   } catch (e) {
     throw new Error(`Failed to create cronjob: ${e}`);
   }

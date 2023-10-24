@@ -3,7 +3,7 @@ import jwt, {JwtPayload} from "jsonwebtoken";
 import {Model, ObjectId} from "mongoose";
 import passport from "passport";
 import {Strategy as AnonymousStrategy} from "passport-anonymous";
-import {Strategy as JwtStrategy} from "passport-jwt";
+import {JwtFromRequestFunction, Strategy as JwtStrategy, StrategyOptions} from "passport-jwt";
 import {Strategy as LocalStrategy} from "passport-local";
 
 import {APIError, apiErrorMiddleware} from "./errors";
@@ -145,7 +145,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   passport.serializeUser(userModel.serializeUser());
   passport.deserializeUser(userModel.deserializeUser());
 
-  const customTokenExtractor = function (req: express.Request) {
+  const customTokenExtractor: JwtFromRequestFunction = function (req) {
     let token: string | null = null;
     if (req?.cookies?.jwt) {
       token = req.cookies.jwt;
@@ -162,8 +162,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     if (!secretOrKey) {
       throw new Error(`TOKEN_SECRET must be set in env.`);
     }
-    const jwtOpts = {
-      // jwtFromRequest: ExtractJwt.fromAuthHeaderWithScheme("Bearer"),
+    const jwtOpts: StrategyOptions = {
       jwtFromRequest: customTokenExtractor,
       secretOrKey,
       issuer: process.env.TOKEN_ISSUER,
@@ -231,7 +230,6 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   }
   app.use(decodeJWTMiddleware);
   app.use(express.urlencoded({extended: false}) as any);
-  app.use(passport.initialize());
 }
 
 export function addAuthRoutes(app: express.Application, userModel: UserModel): void {
