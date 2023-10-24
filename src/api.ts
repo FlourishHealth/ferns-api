@@ -144,9 +144,9 @@ export interface FernsRouterOptions<T> {
    * Throw an APIError to return a 400 with an error message. */
   postUpdate?: (
     value: T,
-    prevValue: T,
     cleanedBody: any,
-    request: express.Request
+    request: express.Request,
+    prevValue: T
   ) => void | Promise<void>;
   /** Hook that runs after the object is deleted. This is a good spot to
    * perform dependent changes to other models or performing async tasks/side effects, such as cascading object
@@ -688,7 +688,7 @@ export function fernsRouter<T>(
 
       if (options.postUpdate) {
         try {
-          await options.postUpdate(doc, prevDoc, body, req);
+          await options.postUpdate(doc, body, req, prevDoc);
         } catch (e: any) {
           throw new APIError({
             status: 400,
@@ -924,7 +924,7 @@ export function fernsRouter<T>(
 
     if (options.postUpdate) {
       try {
-        await options.postUpdate(doc, prevDoc, body, req);
+        await options.postUpdate(doc, body, req, prevDoc);
       } catch (e: any) {
         throw new APIError({
           title: `PATCH Post Update error on ${req.params.id}: ${e.message}`,
