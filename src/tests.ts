@@ -1,5 +1,5 @@
 import express, {Express} from "express";
-import mongoose, {model, Schema} from "mongoose";
+import mongoose, {Model, model, Schema} from "mongoose";
 import passportLocalMongoose from "passport-local-mongoose";
 import supertest from "supertest";
 
@@ -120,7 +120,7 @@ foodSchema.virtual("description").get(function (this: Food) {
   return `${this.name} has ${this.calories} calories`;
 });
 
-export const FoodModel = model<Food>("Food", foodSchema);
+export const FoodModel: Model<Food> = model<Food>("Food", foodSchema);
 
 interface RequiredField {
   name: string;

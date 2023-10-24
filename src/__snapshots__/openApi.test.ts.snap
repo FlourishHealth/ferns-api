@@ -1,24 +1,24 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`openApi gets the openapi.json 1`] = `
-Object {
-  "info": Object {
+{
+  "info": {
     "description": "Generated docs from an Express api",
     "title": "Express Application",
     "version": "1.0.0",
   },
   "openapi": "3.0.0",
-  "paths": Object {
-    "/food/": Object {
-      "get": Object {
-        "parameters": Array [
-          Object {
+  "paths": {
+    "/food/": {
+      "get": {
+        "parameters": [
+          {
             "in": "query",
             "name": "_id",
-            "schema": Object {
-              "properties": Object {
-                "$in": Object {
-                  "items": Object {
+            "schema": {
+              "properties": {
+                "$in": {
+                  "items": {
                     "type": "string",
                   },
                   "type": "array",
@@ -27,110 +27,110 @@ Object {
               "type": "object",
             },
           },
-          Object {
+          {
             "in": "query",
             "name": "page",
-            "schema": Object {
+            "schema": {
               "type": "number",
             },
           },
-          Object {
+          {
             "in": "query",
             "name": "limit",
-            "schema": Object {
+            "schema": {
               "type": "number",
             },
           },
-          Object {
+          {
             "in": "query",
             "name": "period",
-            "schema": Object {
+            "schema": {
               "type": "string",
             },
           },
         ],
-        "responses": Object {
-          "200": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "data": Object {
-                      "items": Object {
-                        "properties": Object {
-                          "_id": Object {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "_id": {
                             "type": "string",
                           },
-                          "calories": Object {
+                          "calories": {
                             "type": "number",
                           },
-                          "categories": Object {
-                            "items": Object {
-                              "properties": Object {
-                                "_id": Object {
+                          "categories": {
+                            "items": {
+                              "properties": {
+                                "_id": {
                                   "type": "string",
                                 },
-                                "name": Object {
+                                "name": {
                                   "type": "string",
                                 },
-                                "show": Object {
+                                "show": {
                                   "type": "boolean",
                                 },
                               },
-                              "required": Array [],
+                              "required": [],
                               "type": "object",
                             },
                             "type": "array",
                           },
-                          "created": Object {
+                          "created": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "description": Object {
+                          "description": {
                             "type": "any",
                           },
-                          "eatenBy": Object {
-                            "items": Object {
-                              "properties": Object {
-                                "__t": Object {
+                          "eatenBy": {
+                            "items": {
+                              "properties": {
+                                "__t": {
                                   "type": "string",
                                 },
-                                "_id": Object {
+                                "_id": {
                                   "type": "string",
                                 },
-                                "admin": Object {
+                                "admin": {
                                   "default": false,
                                   "type": "boolean",
                                 },
-                                "age": Object {
+                                "age": {
                                   "type": "number",
                                 },
-                                "attempts": Object {
+                                "attempts": {
                                   "default": 0,
                                   "type": "number",
                                 },
-                                "created": Object {
+                                "created": {
                                   "format": "date-time",
                                   "type": "string",
                                 },
-                                "email": Object {
+                                "email": {
                                   "type": "string",
                                 },
-                                "hash": Object {
+                                "hash": {
                                   "type": "string",
                                 },
-                                "last": Object {
+                                "last": {
                                   "format": "date-time",
                                   "type": "string",
                                 },
-                                "salt": Object {
+                                "salt": {
                                   "type": "string",
                                 },
-                                "updated": Object {
+                                "updated": {
                                   "format": "date-time",
                                   "type": "string",
                                 },
-                                "username": Object {
+                                "username": {
                                   "type": "string",
                                 },
                               },
@@ -138,84 +138,84 @@ Object {
                             },
                             "type": "array",
                           },
-                          "foo": Object {
+                          "foo": {
                             "type": "string",
                           },
-                          "hidden": Object {
+                          "hidden": {
                             "type": "boolean",
                           },
-                          "lastEatenWith": Object {
-                            "additionalProperties": Object {
+                          "lastEatenWith": {
+                            "additionalProperties": {
                               "format": "date-time",
                               "type": "string",
                             },
                             "type": "object",
                           },
-                          "name": Object {
+                          "name": {
                             "type": "string",
                           },
-                          "ownerId": Object {
-                            "properties": Object {
-                              "__t": Object {
+                          "ownerId": {
+                            "properties": {
+                              "__t": {
                                 "type": "string",
                               },
-                              "_id": Object {
+                              "_id": {
                                 "type": "string",
                               },
-                              "admin": Object {
+                              "admin": {
                                 "default": false,
                                 "type": "boolean",
                               },
-                              "age": Object {
+                              "age": {
                                 "type": "number",
                               },
-                              "attempts": Object {
+                              "attempts": {
                                 "default": 0,
                                 "type": "number",
                               },
-                              "created": Object {
+                              "created": {
                                 "format": "date-time",
                                 "type": "string",
                               },
-                              "email": Object {
+                              "email": {
                                 "type": "string",
                               },
-                              "hash": Object {
+                              "hash": {
                                 "type": "string",
                               },
-                              "last": Object {
+                              "last": {
                                 "format": "date-time",
                                 "type": "string",
                               },
-                              "salt": Object {
+                              "salt": {
                                 "type": "string",
                               },
-                              "updated": Object {
+                              "updated": {
                                 "format": "date-time",
                                 "type": "string",
                               },
-                              "username": Object {
+                              "username": {
                                 "type": "string",
                               },
                             },
                             "type": "object",
                           },
-                          "source": Object {
-                            "properties": Object {
-                              "name": Object {
+                          "source": {
+                            "properties": {
+                              "name": {
                                 "type": "string",
                               },
                             },
                             "type": "object",
                           },
-                          "tags": Object {
-                            "items": Object {
+                          "tags": {
+                            "items": {
                               "type": "string",
                             },
                             "type": "array",
                           },
                         },
-                        "required": Array [
+                        "required": [
                           "_id",
                           "created",
                           "updated",
@@ -224,16 +224,16 @@ Object {
                       },
                       "type": "array",
                     },
-                    "limit": Object {
+                    "limit": {
                       "type": "number",
                     },
-                    "more": Object {
+                    "more": {
                       "type": "boolean",
                     },
-                    "page": Object {
+                    "page": {
                       "type": "number",
                     },
-                    "total": Object {
+                    "total": {
                       "type": "number",
                     },
                   },
@@ -243,62 +243,62 @@ Object {
             },
             "description": "Successful list",
           },
-          "400": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -309,65 +309,65 @@ Object {
             },
             "description": "Bad request",
           },
-          "401": Object {
+          "401": {
             "description": "The user must be authenticated",
           },
-          "403": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -378,62 +378,62 @@ Object {
             },
             "description": "The user is not allowed to perform this action on this document",
           },
-          "404": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -444,62 +444,62 @@ Object {
             },
             "description": "Document not found",
           },
-          "405": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -511,89 +511,89 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
-        "tags": Array [
+        "tags": [
           "foods",
         ],
       },
-      "post": Object {
-        "requestBody": Object {
-          "content": Object {
-            "application/json": Object {
-              "schema": Object {
-                "properties": Object {
-                  "_id": Object {
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "_id": {
                     "type": "string",
                   },
-                  "calories": Object {
+                  "calories": {
                     "type": "number",
                   },
-                  "categories": Object {
-                    "items": Object {
-                      "properties": Object {
-                        "_id": Object {
+                  "categories": {
+                    "items": {
+                      "properties": {
+                        "_id": {
                           "type": "string",
                         },
-                        "name": Object {
+                        "name": {
                           "type": "string",
                         },
-                        "show": Object {
+                        "show": {
                           "type": "boolean",
                         },
                       },
-                      "required": Array [],
+                      "required": [],
                       "type": "object",
                     },
                     "type": "array",
                   },
-                  "created": Object {
+                  "created": {
                     "format": "date-time",
                     "type": "string",
                   },
-                  "description": Object {
+                  "description": {
                     "type": "any",
                   },
-                  "eatenBy": Object {
-                    "items": Object {
-                      "properties": Object {
-                        "__t": Object {
+                  "eatenBy": {
+                    "items": {
+                      "properties": {
+                        "__t": {
                           "type": "string",
                         },
-                        "_id": Object {
+                        "_id": {
                           "type": "string",
                         },
-                        "admin": Object {
+                        "admin": {
                           "default": false,
                           "type": "boolean",
                         },
-                        "age": Object {
+                        "age": {
                           "type": "number",
                         },
-                        "attempts": Object {
+                        "attempts": {
                           "default": 0,
                           "type": "number",
                         },
-                        "created": Object {
+                        "created": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "email": Object {
+                        "email": {
                           "type": "string",
                         },
-                        "hash": Object {
+                        "hash": {
                           "type": "string",
                         },
-                        "last": Object {
+                        "last": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "salt": Object {
+                        "salt": {
                           "type": "string",
                         },
-                        "updated": Object {
+                        "updated": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "username": Object {
+                        "username": {
                           "type": "string",
                         },
                       },
@@ -601,78 +601,78 @@ Object {
                     },
                     "type": "array",
                   },
-                  "foo": Object {
+                  "foo": {
                     "type": "string",
                   },
-                  "hidden": Object {
+                  "hidden": {
                     "type": "boolean",
                   },
-                  "lastEatenWith": Object {
-                    "additionalProperties": Object {
+                  "lastEatenWith": {
+                    "additionalProperties": {
                       "format": "date-time",
                       "type": "string",
                     },
                     "type": "object",
                   },
-                  "name": Object {
+                  "name": {
                     "type": "string",
                   },
-                  "ownerId": Object {
-                    "properties": Object {
-                      "__t": Object {
+                  "ownerId": {
+                    "properties": {
+                      "__t": {
                         "type": "string",
                       },
-                      "_id": Object {
+                      "_id": {
                         "type": "string",
                       },
-                      "admin": Object {
+                      "admin": {
                         "default": false,
                         "type": "boolean",
                       },
-                      "age": Object {
+                      "age": {
                         "type": "number",
                       },
-                      "attempts": Object {
+                      "attempts": {
                         "default": 0,
                         "type": "number",
                       },
-                      "created": Object {
+                      "created": {
                         "format": "date-time",
                         "type": "string",
                       },
-                      "email": Object {
+                      "email": {
                         "type": "string",
                       },
-                      "hash": Object {
+                      "hash": {
                         "type": "string",
                       },
-                      "last": Object {
+                      "last": {
                         "format": "date-time",
                         "type": "string",
                       },
-                      "salt": Object {
+                      "salt": {
                         "type": "string",
                       },
-                      "updated": Object {
+                      "updated": {
                         "format": "date-time",
                         "type": "string",
                       },
-                      "username": Object {
+                      "username": {
                         "type": "string",
                       },
                     },
                     "type": "object",
                   },
-                  "source": Object {
-                    "properties": Object {
-                      "name": Object {
+                  "source": {
+                    "properties": {
+                      "name": {
                         "type": "string",
                       },
                     },
                     "type": "object",
                   },
-                  "tags": Object {
-                    "items": Object {
+                  "tags": {
+                    "items": {
                       "type": "string",
                     },
                     "type": "array",
@@ -684,85 +684,85 @@ Object {
           },
           "required": true,
         },
-        "responses": Object {
-          "201": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "_id": Object {
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "_id": {
                       "type": "string",
                     },
-                    "calories": Object {
+                    "calories": {
                       "type": "number",
                     },
-                    "categories": Object {
-                      "items": Object {
-                        "properties": Object {
-                          "_id": Object {
+                    "categories": {
+                      "items": {
+                        "properties": {
+                          "_id": {
                             "type": "string",
                           },
-                          "name": Object {
+                          "name": {
                             "type": "string",
                           },
-                          "show": Object {
+                          "show": {
                             "type": "boolean",
                           },
                         },
-                        "required": Array [],
+                        "required": [],
                         "type": "object",
                       },
                       "type": "array",
                     },
-                    "created": Object {
+                    "created": {
                       "format": "date-time",
                       "type": "string",
                     },
-                    "description": Object {
+                    "description": {
                       "type": "any",
                     },
-                    "eatenBy": Object {
-                      "items": Object {
-                        "properties": Object {
-                          "__t": Object {
+                    "eatenBy": {
+                      "items": {
+                        "properties": {
+                          "__t": {
                             "type": "string",
                           },
-                          "_id": Object {
+                          "_id": {
                             "type": "string",
                           },
-                          "admin": Object {
+                          "admin": {
                             "default": false,
                             "type": "boolean",
                           },
-                          "age": Object {
+                          "age": {
                             "type": "number",
                           },
-                          "attempts": Object {
+                          "attempts": {
                             "default": 0,
                             "type": "number",
                           },
-                          "created": Object {
+                          "created": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "email": Object {
+                          "email": {
                             "type": "string",
                           },
-                          "hash": Object {
+                          "hash": {
                             "type": "string",
                           },
-                          "last": Object {
+                          "last": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "salt": Object {
+                          "salt": {
                             "type": "string",
                           },
-                          "updated": Object {
+                          "updated": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "username": Object {
+                          "username": {
                             "type": "string",
                           },
                         },
@@ -770,84 +770,84 @@ Object {
                       },
                       "type": "array",
                     },
-                    "foo": Object {
+                    "foo": {
                       "type": "string",
                     },
-                    "hidden": Object {
+                    "hidden": {
                       "type": "boolean",
                     },
-                    "lastEatenWith": Object {
-                      "additionalProperties": Object {
+                    "lastEatenWith": {
+                      "additionalProperties": {
                         "format": "date-time",
                         "type": "string",
                       },
                       "type": "object",
                     },
-                    "name": Object {
+                    "name": {
                       "type": "string",
                     },
-                    "ownerId": Object {
-                      "properties": Object {
-                        "__t": Object {
+                    "ownerId": {
+                      "properties": {
+                        "__t": {
                           "type": "string",
                         },
-                        "_id": Object {
+                        "_id": {
                           "type": "string",
                         },
-                        "admin": Object {
+                        "admin": {
                           "default": false,
                           "type": "boolean",
                         },
-                        "age": Object {
+                        "age": {
                           "type": "number",
                         },
-                        "attempts": Object {
+                        "attempts": {
                           "default": 0,
                           "type": "number",
                         },
-                        "created": Object {
+                        "created": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "email": Object {
+                        "email": {
                           "type": "string",
                         },
-                        "hash": Object {
+                        "hash": {
                           "type": "string",
                         },
-                        "last": Object {
+                        "last": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "salt": Object {
+                        "salt": {
                           "type": "string",
                         },
-                        "updated": Object {
+                        "updated": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "username": Object {
+                        "username": {
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "name": Object {
+                    "source": {
+                      "properties": {
+                        "name": {
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "tags": Object {
-                      "items": Object {
+                    "tags": {
+                      "items": {
                         "type": "string",
                       },
                       "type": "array",
                     },
                   },
-                  "required": Array [
+                  "required": [
                     "_id",
                     "created",
                     "updated",
@@ -858,62 +858,62 @@ Object {
             },
             "description": "Successful create",
           },
-          "400": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -924,65 +924,65 @@ Object {
             },
             "description": "Bad request",
           },
-          "401": Object {
+          "401": {
             "description": "The user must be authenticated",
           },
-          "403": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -993,62 +993,62 @@ Object {
             },
             "description": "The user is not allowed to perform this action on this document",
           },
-          "404": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1059,62 +1059,62 @@ Object {
             },
             "description": "Document not found",
           },
-          "405": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1126,83 +1126,83 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
-        "tags": Array [
+        "tags": [
           "foods",
         ],
       },
     },
-    "/food/{id}": Object {
-      "delete": Object {
-        "parameters": Array [
-          Object {
+    "/food/{id}": {
+      "delete": {
+        "parameters": [
+          {
             "in": "path",
             "name": "id",
             "required": true,
-            "schema": Object {
+            "schema": {
               "type": "string",
             },
           },
         ],
-        "responses": Object {
-          "204": Object {
+        "responses": {
+          "204": {
             "description": "Successful delete",
           },
-          "400": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1213,65 +1213,65 @@ Object {
             },
             "description": "Bad request",
           },
-          "401": Object {
+          "401": {
             "description": "The user must be authenticated",
           },
-          "403": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1282,62 +1282,62 @@ Object {
             },
             "description": "The user is not allowed to perform this action on this document",
           },
-          "404": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1348,62 +1348,62 @@ Object {
             },
             "description": "Document not found",
           },
-          "405": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1415,100 +1415,100 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
-        "tags": Array [
+        "tags": [
           "foods",
         ],
       },
-      "get": Object {
-        "parameters": Array [
-          Object {
+      "get": {
+        "parameters": [
+          {
             "in": "path",
             "name": "id",
             "required": true,
-            "schema": Object {
+            "schema": {
               "type": "string",
             },
           },
         ],
-        "responses": Object {
-          "200": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "_id": Object {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "_id": {
                       "type": "string",
                     },
-                    "calories": Object {
+                    "calories": {
                       "type": "number",
                     },
-                    "categories": Object {
-                      "items": Object {
-                        "properties": Object {
-                          "_id": Object {
+                    "categories": {
+                      "items": {
+                        "properties": {
+                          "_id": {
                             "type": "string",
                           },
-                          "name": Object {
+                          "name": {
                             "type": "string",
                           },
-                          "show": Object {
+                          "show": {
                             "type": "boolean",
                           },
                         },
-                        "required": Array [],
+                        "required": [],
                         "type": "object",
                       },
                       "type": "array",
                     },
-                    "created": Object {
+                    "created": {
                       "format": "date-time",
                       "type": "string",
                     },
-                    "description": Object {
+                    "description": {
                       "type": "any",
                     },
-                    "eatenBy": Object {
-                      "items": Object {
-                        "properties": Object {
-                          "__t": Object {
+                    "eatenBy": {
+                      "items": {
+                        "properties": {
+                          "__t": {
                             "type": "string",
                           },
-                          "_id": Object {
+                          "_id": {
                             "type": "string",
                           },
-                          "admin": Object {
+                          "admin": {
                             "default": false,
                             "type": "boolean",
                           },
-                          "age": Object {
+                          "age": {
                             "type": "number",
                           },
-                          "attempts": Object {
+                          "attempts": {
                             "default": 0,
                             "type": "number",
                           },
-                          "created": Object {
+                          "created": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "email": Object {
+                          "email": {
                             "type": "string",
                           },
-                          "hash": Object {
+                          "hash": {
                             "type": "string",
                           },
-                          "last": Object {
+                          "last": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "salt": Object {
+                          "salt": {
                             "type": "string",
                           },
-                          "updated": Object {
+                          "updated": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "username": Object {
+                          "username": {
                             "type": "string",
                           },
                         },
@@ -1516,84 +1516,84 @@ Object {
                       },
                       "type": "array",
                     },
-                    "foo": Object {
+                    "foo": {
                       "type": "string",
                     },
-                    "hidden": Object {
+                    "hidden": {
                       "type": "boolean",
                     },
-                    "lastEatenWith": Object {
-                      "additionalProperties": Object {
+                    "lastEatenWith": {
+                      "additionalProperties": {
                         "format": "date-time",
                         "type": "string",
                       },
                       "type": "object",
                     },
-                    "name": Object {
+                    "name": {
                       "type": "string",
                     },
-                    "ownerId": Object {
-                      "properties": Object {
-                        "__t": Object {
+                    "ownerId": {
+                      "properties": {
+                        "__t": {
                           "type": "string",
                         },
-                        "_id": Object {
+                        "_id": {
                           "type": "string",
                         },
-                        "admin": Object {
+                        "admin": {
                           "default": false,
                           "type": "boolean",
                         },
-                        "age": Object {
+                        "age": {
                           "type": "number",
                         },
-                        "attempts": Object {
+                        "attempts": {
                           "default": 0,
                           "type": "number",
                         },
-                        "created": Object {
+                        "created": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "email": Object {
+                        "email": {
                           "type": "string",
                         },
-                        "hash": Object {
+                        "hash": {
                           "type": "string",
                         },
-                        "last": Object {
+                        "last": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "salt": Object {
+                        "salt": {
                           "type": "string",
                         },
-                        "updated": Object {
+                        "updated": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "username": Object {
+                        "username": {
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "name": Object {
+                    "source": {
+                      "properties": {
+                        "name": {
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "tags": Object {
-                      "items": Object {
+                    "tags": {
+                      "items": {
                         "type": "string",
                       },
                       "type": "array",
                     },
                   },
-                  "required": Array [
+                  "required": [
                     "_id",
                     "created",
                     "updated",
@@ -1604,62 +1604,62 @@ Object {
             },
             "description": "Successful read",
           },
-          "400": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1670,65 +1670,65 @@ Object {
             },
             "description": "Bad request",
           },
-          "401": Object {
+          "401": {
             "description": "The user must be authenticated",
           },
-          "403": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1739,62 +1739,62 @@ Object {
             },
             "description": "The user is not allowed to perform this action on this document",
           },
-          "404": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1805,62 +1805,62 @@ Object {
             },
             "description": "Document not found",
           },
-          "405": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -1872,99 +1872,99 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
-        "tags": Array [
+        "tags": [
           "foods",
         ],
       },
-      "patch": Object {
-        "parameters": Array [
-          Object {
+      "patch": {
+        "parameters": [
+          {
             "in": "path",
             "name": "id",
             "required": true,
-            "schema": Object {
+            "schema": {
               "type": "string",
             },
           },
         ],
-        "requestBody": Object {
-          "content": Object {
-            "application/json": Object {
-              "schema": Object {
-                "properties": Object {
-                  "_id": Object {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "_id": {
                     "type": "string",
                   },
-                  "calories": Object {
+                  "calories": {
                     "type": "number",
                   },
-                  "categories": Object {
-                    "items": Object {
-                      "properties": Object {
-                        "_id": Object {
+                  "categories": {
+                    "items": {
+                      "properties": {
+                        "_id": {
                           "type": "string",
                         },
-                        "name": Object {
+                        "name": {
                           "type": "string",
                         },
-                        "show": Object {
+                        "show": {
                           "type": "boolean",
                         },
                       },
-                      "required": Array [],
+                      "required": [],
                       "type": "object",
                     },
                     "type": "array",
                   },
-                  "created": Object {
+                  "created": {
                     "format": "date-time",
                     "type": "string",
                   },
-                  "description": Object {
+                  "description": {
                     "type": "any",
                   },
-                  "eatenBy": Object {
-                    "items": Object {
-                      "properties": Object {
-                        "__t": Object {
+                  "eatenBy": {
+                    "items": {
+                      "properties": {
+                        "__t": {
                           "type": "string",
                         },
-                        "_id": Object {
+                        "_id": {
                           "type": "string",
                         },
-                        "admin": Object {
+                        "admin": {
                           "default": false,
                           "type": "boolean",
                         },
-                        "age": Object {
+                        "age": {
                           "type": "number",
                         },
-                        "attempts": Object {
+                        "attempts": {
                           "default": 0,
                           "type": "number",
                         },
-                        "created": Object {
+                        "created": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "email": Object {
+                        "email": {
                           "type": "string",
                         },
-                        "hash": Object {
+                        "hash": {
                           "type": "string",
                         },
-                        "last": Object {
+                        "last": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "salt": Object {
+                        "salt": {
                           "type": "string",
                         },
-                        "updated": Object {
+                        "updated": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "username": Object {
+                        "username": {
                           "type": "string",
                         },
                       },
@@ -1972,78 +1972,78 @@ Object {
                     },
                     "type": "array",
                   },
-                  "foo": Object {
+                  "foo": {
                     "type": "string",
                   },
-                  "hidden": Object {
+                  "hidden": {
                     "type": "boolean",
                   },
-                  "lastEatenWith": Object {
-                    "additionalProperties": Object {
+                  "lastEatenWith": {
+                    "additionalProperties": {
                       "format": "date-time",
                       "type": "string",
                     },
                     "type": "object",
                   },
-                  "name": Object {
+                  "name": {
                     "type": "string",
                   },
-                  "ownerId": Object {
-                    "properties": Object {
-                      "__t": Object {
+                  "ownerId": {
+                    "properties": {
+                      "__t": {
                         "type": "string",
                       },
-                      "_id": Object {
+                      "_id": {
                         "type": "string",
                       },
-                      "admin": Object {
+                      "admin": {
                         "default": false,
                         "type": "boolean",
                       },
-                      "age": Object {
+                      "age": {
                         "type": "number",
                       },
-                      "attempts": Object {
+                      "attempts": {
                         "default": 0,
                         "type": "number",
                       },
-                      "created": Object {
+                      "created": {
                         "format": "date-time",
                         "type": "string",
                       },
-                      "email": Object {
+                      "email": {
                         "type": "string",
                       },
-                      "hash": Object {
+                      "hash": {
                         "type": "string",
                       },
-                      "last": Object {
+                      "last": {
                         "format": "date-time",
                         "type": "string",
                       },
-                      "salt": Object {
+                      "salt": {
                         "type": "string",
                       },
-                      "updated": Object {
+                      "updated": {
                         "format": "date-time",
                         "type": "string",
                       },
-                      "username": Object {
+                      "username": {
                         "type": "string",
                       },
                     },
                     "type": "object",
                   },
-                  "source": Object {
-                    "properties": Object {
-                      "name": Object {
+                  "source": {
+                    "properties": {
+                      "name": {
                         "type": "string",
                       },
                     },
                     "type": "object",
                   },
-                  "tags": Object {
-                    "items": Object {
+                  "tags": {
+                    "items": {
                       "type": "string",
                     },
                     "type": "array",
@@ -2055,85 +2055,85 @@ Object {
           },
           "required": true,
         },
-        "responses": Object {
-          "200": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "_id": Object {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "_id": {
                       "type": "string",
                     },
-                    "calories": Object {
+                    "calories": {
                       "type": "number",
                     },
-                    "categories": Object {
-                      "items": Object {
-                        "properties": Object {
-                          "_id": Object {
+                    "categories": {
+                      "items": {
+                        "properties": {
+                          "_id": {
                             "type": "string",
                           },
-                          "name": Object {
+                          "name": {
                             "type": "string",
                           },
-                          "show": Object {
+                          "show": {
                             "type": "boolean",
                           },
                         },
-                        "required": Array [],
+                        "required": [],
                         "type": "object",
                       },
                       "type": "array",
                     },
-                    "created": Object {
+                    "created": {
                       "format": "date-time",
                       "type": "string",
                     },
-                    "description": Object {
+                    "description": {
                       "type": "any",
                     },
-                    "eatenBy": Object {
-                      "items": Object {
-                        "properties": Object {
-                          "__t": Object {
+                    "eatenBy": {
+                      "items": {
+                        "properties": {
+                          "__t": {
                             "type": "string",
                           },
-                          "_id": Object {
+                          "_id": {
                             "type": "string",
                           },
-                          "admin": Object {
+                          "admin": {
                             "default": false,
                             "type": "boolean",
                           },
-                          "age": Object {
+                          "age": {
                             "type": "number",
                           },
-                          "attempts": Object {
+                          "attempts": {
                             "default": 0,
                             "type": "number",
                           },
-                          "created": Object {
+                          "created": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "email": Object {
+                          "email": {
                             "type": "string",
                           },
-                          "hash": Object {
+                          "hash": {
                             "type": "string",
                           },
-                          "last": Object {
+                          "last": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "salt": Object {
+                          "salt": {
                             "type": "string",
                           },
-                          "updated": Object {
+                          "updated": {
                             "format": "date-time",
                             "type": "string",
                           },
-                          "username": Object {
+                          "username": {
                             "type": "string",
                           },
                         },
@@ -2141,84 +2141,84 @@ Object {
                       },
                       "type": "array",
                     },
-                    "foo": Object {
+                    "foo": {
                       "type": "string",
                     },
-                    "hidden": Object {
+                    "hidden": {
                       "type": "boolean",
                     },
-                    "lastEatenWith": Object {
-                      "additionalProperties": Object {
+                    "lastEatenWith": {
+                      "additionalProperties": {
                         "format": "date-time",
                         "type": "string",
                       },
                       "type": "object",
                     },
-                    "name": Object {
+                    "name": {
                       "type": "string",
                     },
-                    "ownerId": Object {
-                      "properties": Object {
-                        "__t": Object {
+                    "ownerId": {
+                      "properties": {
+                        "__t": {
                           "type": "string",
                         },
-                        "_id": Object {
+                        "_id": {
                           "type": "string",
                         },
-                        "admin": Object {
+                        "admin": {
                           "default": false,
                           "type": "boolean",
                         },
-                        "age": Object {
+                        "age": {
                           "type": "number",
                         },
-                        "attempts": Object {
+                        "attempts": {
                           "default": 0,
                           "type": "number",
                         },
-                        "created": Object {
+                        "created": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "email": Object {
+                        "email": {
                           "type": "string",
                         },
-                        "hash": Object {
+                        "hash": {
                           "type": "string",
                         },
-                        "last": Object {
+                        "last": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "salt": Object {
+                        "salt": {
                           "type": "string",
                         },
-                        "updated": Object {
+                        "updated": {
                           "format": "date-time",
                           "type": "string",
                         },
-                        "username": Object {
+                        "username": {
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "name": Object {
+                    "source": {
+                      "properties": {
+                        "name": {
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "tags": Object {
-                      "items": Object {
+                    "tags": {
+                      "items": {
                         "type": "string",
                       },
                       "type": "array",
                     },
                   },
-                  "required": Array [
+                  "required": [
                     "_id",
                     "created",
                     "updated",
@@ -2229,62 +2229,62 @@ Object {
             },
             "description": "Successful update",
           },
-          "400": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -2295,65 +2295,65 @@ Object {
             },
             "description": "Bad request",
           },
-          "401": Object {
+          "401": {
             "description": "The user must be authenticated",
           },
-          "403": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -2364,62 +2364,62 @@ Object {
             },
             "description": "The user is not allowed to perform this action on this document",
           },
-          "404": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -2430,62 +2430,62 @@ Object {
             },
             "description": "Document not found",
           },
-          "405": Object {
-            "content": Object {
-              "application/json": Object {
-                "schema": Object {
-                  "properties": Object {
-                    "code": Object {
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "code": {
                       "description": "An application-specific error code, expressed as a string value.",
                       "type": "string",
                     },
-                    "detail": Object {
+                    "detail": {
                       "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
                       "type": "string",
                     },
-                    "id": Object {
+                    "id": {
                       "description": "A unique identifier for this particular occurrence of the problem.",
                       "type": "string",
                     },
-                    "links": Object {
-                      "properties": Object {
-                        "about": Object {
+                    "links": {
+                      "properties": {
+                        "about": {
                           "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
                           "type": "string",
                         },
-                        "type": Object {
+                        "type": {
                           "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "meta": Object {
+                    "meta": {
                       "description": "A meta object containing non-standard meta-information about the error.",
                       "type": "object",
                     },
-                    "source": Object {
-                      "properties": Object {
-                        "header": Object {
+                    "source": {
+                      "properties": {
+                        "header": {
                           "description": "A string indicating the name of a single request header which caused the error.",
                           "type": "string",
                         },
-                        "parameter": Object {
+                        "parameter": {
                           "description": "A string indicating which URI query parameter caused the error.",
                           "type": "string",
                         },
-                        "pointer": Object {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. \\"/data\\" for a primary data object, or \\"/data/attributes/title\\" for a specific attribute].",
+                        "pointer": {
+                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
                           "type": "string",
                         },
                       },
                       "type": "object",
                     },
-                    "status": Object {
+                    "status": {
                       "description": "The HTTP status code applicable to this problem, expressed as a string value.",
                       "type": "number",
                     },
-                    "title": Object {
+                    "title": {
                       "description": "The error message",
                       "type": "string",
                     },
@@ -2497,7 +2497,7 @@ Object {
             "description": "The user is not allowed to perform this action on any document",
           },
         },
-        "tags": Array [
+        "tags": [
           "foods",
         ],
       },
