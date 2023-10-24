@@ -4,6 +4,7 @@
  * @packageDocumentation
  */
 import express, {NextFunction, Request, Response} from "express";
+import cloneDeep from "lodash/cloneDeep";
 import isFunction from "lodash/isFunction";
 import mongoose, {Document, Model} from "mongoose";
 
@@ -141,7 +142,12 @@ export interface FernsRouterOptions<T> {
    * spot to perform dependent changes to other models or performing async tasks/side effects, such as sending a push
    * notification.
    * Throw an APIError to return a 400 with an error message. */
-  postUpdate?: (value: T, cleanedBody: any, request: express.Request) => void | Promise<void>;
+  postUpdate?: (
+    value: T,
+    cleanedBody: any,
+    request: express.Request,
+    prevValue: T
+  ) => void | Promise<void>;
   /** Hook that runs after the object is deleted. This is a good spot to
    * perform dependent changes to other models or performing async tasks/side effects, such as cascading object
    * deletions.
@@ -658,6 +664,9 @@ export function fernsRouter<T>(
         }
       }
 
+      // Make a copy for passing pre-saved values to hooks.
+      const prevDoc = cloneDeep(doc);
+
       // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
       // wind up with corrupted data, just an API error.
       try {
@@ -679,7 +688,7 @@ export function fernsRouter<T>(
 
       if (options.postUpdate) {
         try {
-          await options.postUpdate(doc, body, req);
+          await options.postUpdate(doc, body, req, prevDoc);
         } catch (e: any) {
           throw new APIError({
             status: 400,
@@ -897,6 +906,9 @@ export function fernsRouter<T>(
       }
     }
 
+    // Make a copy for passing pre-saved values to hooks.
+    const prevDoc = cloneDeep(doc);
+
     // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
     // wind up with corrupted data, just an API error.
     try {
@@ -912,7 +924,7 @@ export function fernsRouter<T>(
 
     if (options.postUpdate) {
       try {
-        await options.postUpdate(doc, body, req);
+        await options.postUpdate(doc, body, req, prevDoc);
       } catch (e: any) {
         throw new APIError({
           title: `PATCH Post Update error on ${req.params.id}: ${e.message}`,
