@@ -10,5 +10,6 @@ declare namespace NodeJS {
     TOKEN_ISSUER: string;
     TOKEN_EXPIRES_IN: string;
     REFRESH_TOKEN_SECRET: string;
+    DISABLE_LOG_ALL_REQUESTS: string;
   }
 }
