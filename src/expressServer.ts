@@ -86,8 +86,9 @@ const logRequestsFinished = function (req: any, res: any, startTime: [number, nu
   } else if (res.statusCode < 400) {
     logger.warn(`Request without route: ${req.originalUrl}`);
   }
-
-  logger.debug(`${req.method} -> ${req.originalUrl} ${res.statusCode} ${`${diffInMs}ms`}`);
+  if (!Boolean(process.env.DISABLE_LOG_ALL_REQUESTS)) {
+    logger.debug(`${req.method} -> ${req.originalUrl} ${res.statusCode} ${`${diffInMs}ms`}`);
+  }
   if (diffInMs > SLOW_READ_MAX && req.method === "GET") {
     logger.warn(
       `Slow GET request, ${JSON.stringify({
@@ -132,7 +133,9 @@ export function logRequests(req: any, res: any, next: any) {
     body = ` Body: ${JSON.stringify(bodyCopy)}`;
   }
 
-  logger.debug(`${req.method} <- ${req.url}${userString}${body}`);
+  if (!Boolean(process.env.DISABLE_LOG_ALL_REQUESTS)) {
+    logger.debug(`${req.method} <- ${req.url}${userString}${body}`);
+  }
   onFinished(res, () => logRequestsFinished(req, res, startTime));
   next();
 }
