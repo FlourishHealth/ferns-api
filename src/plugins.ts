@@ -1,4 +1,4 @@
-import {FilterQuery, Schema} from "mongoose";
+import {FilterQuery, Query, Schema} from "mongoose";
 
 import {APIError, APIErrorConstructor} from "./errors";
 
@@ -20,11 +20,17 @@ export interface IsDeleted {
 
 export function isDeletedPlugin(schema: Schema<any, any, any, any>, defaultValue = false) {
   schema.add({deleted: {type: Boolean, default: defaultValue, index: true}});
-  schema.pre("find", function () {
-    const query = this.getQuery();
+  function applyDeleteFilter(q: Query<any, any>) {
+    const query = q.getQuery();
     if (query && query.deleted === undefined) {
-      this.where({deleted: {$ne: true}});
+      q.where({deleted: {$ne: true}});
     }
+  }
+  schema.pre("find", function () {
+    applyDeleteFilter(this);
+  });
+  schema.pre("findOne", function () {
+    applyDeleteFilter(this);
   });
 }
 

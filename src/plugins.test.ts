@@ -4,7 +4,7 @@ import {model, Schema} from "mongoose";
 import sinon from "sinon";
 chai.use(chaiAsPromised);
 
-import {createdUpdatedPlugin, findExactlyOne, findOneOrThrow} from "./plugins";
+import {createdUpdatedPlugin, findExactlyOne, findOneOrThrow, isDeletedPlugin} from "./plugins";
 import {setupDb} from "./tests";
 
 interface Stuff {
@@ -20,6 +20,7 @@ const stuffSchema = new Schema<Stuff>({
   ownerId: String,
 });
 
+stuffSchema.plugin(isDeletedPlugin);
 stuffSchema.plugin(findOneOrThrow);
 stuffSchema.plugin(findExactlyOne);
 stuffSchema.plugin(createdUpdatedPlugin);
@@ -44,6 +45,41 @@ describe("createdUpdate", function () {
     assert.equal(stuff.updated?.toISOString(), "2022-12-17T03:24:10.000Z");
 
     clock.restore();
+  });
+});
+
+describe("isDeleted", function () {
+  beforeEach(async function () {
+    await stuffModel.deleteMany({});
+    await Promise.all([
+      stuffModel.create({
+        name: "Things",
+        ownerId: "123",
+        deleted: true,
+      }),
+      stuffModel.create({
+        name: "StuffNThings",
+        ownerId: "123",
+      }),
+    ]);
+  });
+
+  it('filters out deleted documents from "find"', async function () {
+    let stuff = await stuffModel.find({});
+    assert.lengthOf(stuff, 1);
+    assert.equal(stuff[0].name, "StuffNThings");
+    // Providing deleted in query should return deleted documents:
+    stuff = await stuffModel.find({deleted: true});
+    assert.lengthOf(stuff, 1);
+    assert.equal(stuff[0].name, "Things");
+  });
+
+  it('filters out deleted documents from "findOne"', async function () {
+    let stuff = await stuffModel.findOne({});
+    assert.equal(stuff?.name, "StuffNThings");
+    // Providing deleted in query should return deleted document:
+    stuff = await stuffModel.findOne({deleted: true});
+    assert.equal(stuff?.name, "Things");
   });
 });
 
