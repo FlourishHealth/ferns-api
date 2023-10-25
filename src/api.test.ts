@@ -151,7 +151,7 @@ describe("ferns-api", () => {
       let deleteCalled = false;
       app.use(
         "/food",
-        fernsRouter(FoodModel, {
+        fernsRouter(FoodModel as any, {
           allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
