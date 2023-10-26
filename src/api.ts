@@ -152,7 +152,7 @@ export interface FernsRouterOptions<T> {
    * perform dependent changes to other models or performing async tasks/side effects, such as cascading object
    * deletions.
    * Throw an APIError to return a 400 with an error message. */
-  postDelete?: (request: express.Request) => void | Promise<void>;
+  postDelete?: (request: express.Request, value: T) => void | Promise<void>;
   /** Hook that runs after the object is fetched but before it is serialized.
    * Returns a promise so that asynchronous actions can be included in the function.
    * Throw an APIError to return a 400 with an error message.
@@ -783,7 +783,7 @@ export function fernsRouter<T>(
 
       if (options.postDelete) {
         try {
-          await options.postDelete(req);
+          await options.postDelete(req, doc);
         } catch (e: any) {
           throw new APIError({
             status: 400,
