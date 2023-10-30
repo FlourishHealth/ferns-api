@@ -41,13 +41,6 @@ exports[`openApi gets the openapi.json 1`] = `
               "type": "number",
             },
           },
-          {
-            "in": "query",
-            "name": "period",
-            "schema": {
-              "type": "string",
-            },
-          },
         ],
         "responses": {
           "200": {
