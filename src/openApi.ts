@@ -247,12 +247,6 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
         const params: {name: string; in: "query"; schema: any}[] = [];
 
         // Check for datetime/number to support gt/gte/lt/lte
-        params.push({
-          name: field,
-          in: "query",
-          schema: modelSwagger.properties[field],
-        });
-
         if (
           modelSwagger.properties[field]?.type === "number" ||
           modelSwagger.properties[field]?.format === "date-time"
@@ -269,6 +263,12 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
                 $lt: modelSwagger.properties[field],
               },
             },
+          });
+        } else {
+          params.push({
+            name: field,
+            in: "query",
+            schema: modelSwagger.properties[field],
           });
         }
 
