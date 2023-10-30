@@ -302,14 +302,6 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
               type: "number",
             },
           },
-          // special param for period, like "1d"
-          {
-            name: "period",
-            in: "query",
-            schema: {
-              type: "string",
-            },
-          },
         ],
         responses: {
           200: {
