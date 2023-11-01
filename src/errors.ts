@@ -41,6 +41,8 @@ export interface APIErrorConstructor {
   // A meta object containing non-standard meta-information about the error.
   meta?: {[id: string]: string};
   error?: Error;
+  // If true, this error will not be sent to external error reporting tools like Sentry.
+  disableExternalErrorTracking?: boolean;
 }
 
 /**
@@ -80,6 +82,8 @@ export class APIError extends Error {
   meta: {[id: string]: any} | undefined;
 
   error?: Error;
+
+  disableExternalErrorTracking?: boolean;
 
   constructor(data: APIErrorConstructor) {
     // Include details in when the error is printed to the console or sent to Sentry.
@@ -174,7 +178,9 @@ export function apiUnauthorizedMiddleware(
 
 export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
   if (isAPIError(err)) {
-    Sentry.captureException(err);
+    if (!err.disableExternalErrorTracking) {
+      Sentry.captureException(err);
+    }
     res.status(err.status).json(getAPIErrorBody(err)).send();
   } else {
     next(err);
