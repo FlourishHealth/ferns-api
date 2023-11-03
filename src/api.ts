@@ -303,7 +303,7 @@ export function fernsRouter<T>(
       if (!(await checkPermissions("create", options.permissions.create, req.user))) {
         throw new APIError({
           status: 405,
-          title: `Access to POST on ${model.name} denied for ${req.user?.id}`,
+          title: `Access to POST on ${model.modelName} denied for ${req.user?.id}`,
         });
       }
 
@@ -396,7 +396,7 @@ export function fernsRouter<T>(
       if (!(await checkPermissions("list", options.permissions.list, req.user))) {
         throw new APIError({
           status: 403,
-          title: `Access to LIST on ${model.name} denied for ${req.user?.id}`,
+          title: `Access to LIST on ${model.modelName} denied for ${req.user?.id}`,
         });
       }
 
@@ -537,7 +537,7 @@ export function fernsRouter<T>(
       if (!(await checkPermissions("read", options.permissions.read, req.user))) {
         throw new APIError({
           status: 405,
-          title: `Access to GET on ${model.name} denied for ${req.user?.id}`,
+          title: `Access to GET on ${model.modelName} denied for ${req.user?.id}`,
         });
       }
 
@@ -553,18 +553,17 @@ export function fernsRouter<T>(
           error: e,
         });
       }
-
       if (!data) {
         throw new APIError({
           status: 404,
-          title: `Document ${req.params.id} not found`,
+          title: `Document ${req.params.id} not found for model ${model.modelName}`,
         });
       }
 
       if (!(await checkPermissions("read", options.permissions.read, req.user, data))) {
         throw new APIError({
           status: 403,
-          title: `Access to GET on ${model.name}:${req.params.id} denied for ${req.user?.id}`,
+          title: `Access to GET on ${model.modelName}:${req.params.id} denied for ${req.user?.id}`,
         });
       }
 
@@ -605,7 +604,7 @@ export function fernsRouter<T>(
       if (!(await checkPermissions("update", options.permissions.update, req.user))) {
         throw new APIError({
           status: 405,
-          title: `Access to PATCH on ${model.name} denied for ${req.user?.id}`,
+          title: `Access to PATCH on ${model.modelName} denied for ${req.user?.id}`,
         });
       }
 
@@ -710,7 +709,7 @@ export function fernsRouter<T>(
       if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
         throw new APIError({
           status: 405,
-          title: `Access to DELETE on ${model.name} denied for ${req.user?.id}`,
+          title: `Access to DELETE on ${model.modelName} denied for ${req.user?.id}`,
         });
       }
 
@@ -727,7 +726,7 @@ export function fernsRouter<T>(
       if (!(await checkPermissions("delete", options.permissions.delete, req.user, doc))) {
         throw new APIError({
           status: 403,
-          title: `Access to DELETE on ${model.name}:${req.params.id} denied for ${req.user?.id}`,
+          title: `Access to DELETE on ${model.modelName}:${req.params.id} denied for ${req.user?.id}`,
         });
       }
 
@@ -807,7 +806,7 @@ export function fernsRouter<T>(
 
     if (!(await checkPermissions("update", options.permissions.update, req.user))) {
       throw new APIError({
-        title: `Access to PATCH on ${model.name} denied for ${req.user?.id}`,
+        title: `Access to PATCH on ${model.modelName} denied for ${req.user?.id}`,
         status: 405,
       });
     }
