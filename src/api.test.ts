@@ -678,6 +678,32 @@ describe("ferns-api", () => {
       assert.equal(res.body.data[0].name, "Green Beans");
     });
 
+    it("query with a regex", async function () {
+      const greenBeans = await FoodModel.create({
+        name: "Green Beans",
+        calories: 102,
+        created: new Date().getTime() - 10,
+        ownerId: admin?._id,
+      });
+
+      // Case sensitive does match correct casing
+      let res = await agent.get(`/food?${qs.stringify({name: {$regex: "Green"}})}`).expect(200);
+      assert.lengthOf(res.body.data, 1);
+      assert.equal(res.body.data[0].id, greenBeans!.id);
+      assert.equal(res.body.data[0].name, "Green Beans");
+
+      // Fails with different casing and sensitive
+      res = await agent.get(`/food?${qs.stringify({name: {$regex: "green"}})}`).expect(200);
+      assert.lengthOf(res.body.data, 0);
+
+      // Case insensitive does match different casing
+      res = await agent
+        .get(`/food?${qs.stringify({name: {$regex: "green", $options: "i"}})}`)
+        .expect(200);
+      assert.lengthOf(res.body.data, 1);
+      assert.equal(res.body.data[0].id, greenBeans!.id);
+    });
+
     it("query with an $in operator", async function () {
       // Query including a hidden food
       let res = await server
