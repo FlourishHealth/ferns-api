@@ -281,8 +281,8 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
                       },
                     },
                   },
-                }
-              ]
+                },
+              ],
             },
           });
         }
