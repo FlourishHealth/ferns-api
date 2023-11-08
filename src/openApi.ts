@@ -268,7 +268,22 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
           params.push({
             name: field,
             in: "query",
-            schema: modelSwagger.properties[field],
+            schema: {
+              oneOf: [
+                modelSwagger.properties[field],
+                {
+                  type: "object",
+                  properties: {
+                    $in: {
+                      type: "array",
+                      items: {
+                        type: modelSwagger.properties[field]?.type,
+                      },
+                    },
+                  },
+                },
+              ],
+            },
           });
         }
 
