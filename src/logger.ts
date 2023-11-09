@@ -66,6 +66,9 @@ export const logger = {
   info: (msg: string) => winstonLogger.info(msg),
   warn: (msg: string) => winstonLogger.warn(msg),
   error: (msg: string) => winstonLogger.error(msg),
+  // simple way to log a caught exception. e.g. promise().catch(logger.catch)
+  catch: (e: unknown) =>
+    winstonLogger.error(`Caught: ${(e as Error)?.message} ${(e as Error)?.stack}`),
 };
 
 export interface LoggingOptions {

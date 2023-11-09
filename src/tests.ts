@@ -3,11 +3,10 @@ import mongoose, {Model, model, Schema} from "mongoose";
 import passportLocalMongoose from "passport-local-mongoose";
 import supertest from "supertest";
 
+import {logger} from "./logger";
 import {createdUpdatedPlugin} from "./plugins";
 
-mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch((e) => {
-  console.error("Error connecting to mongo", e);
-});
+mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch(logger.catch);
 
 export interface User {
   admin: boolean;
@@ -176,8 +175,10 @@ export async function setupDb() {
   process.env.TOKEN_ISSUER = "example.com";
   process.env.SESSION_SECRET = "session";
 
+  // Broken out of the try/catch below so you can test the catch logger by shutting down mongo.
+  await Promise.all([UserModel.deleteMany({}), FoodModel.deleteMany({})]).catch(logger.catch);
+
   try {
-    await Promise.all([UserModel.deleteMany({}), FoodModel.deleteMany({})]);
     const [notAdmin, admin, adminOther] = await Promise.all([
       UserModel.create({email: "notAdmin@example.com"}),
       UserModel.create({email: "admin@example.com", admin: true}),
