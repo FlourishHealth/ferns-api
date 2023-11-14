@@ -451,7 +451,7 @@ export function fernsRouter<T>(
         query = {...query, ...queryFilter};
       }
 
-      let limit = options.defaultLimit ?? 100;
+      let limit = options.defaultLimit ?? 25;
       if (Number(req.query.limit)) {
         limit = Math.min(Number(req.query.limit), options.maxLimit ?? 500);
       }
