@@ -79,6 +79,9 @@ export interface FernsRouterOptions<T> {
     user?: User,
     query?: Record<string, any>
   ) => Record<string, any> | null | Promise<Record<string, any> | null>;
+  /** queryTransform is a function to transform the query params before they are used to query the database. This can be
+   * used to run intermediate queries to generate query fields for the main query. Runs before the queryFilter.  */
+  queryTransform?: (query: Record<string, any>) => Record<string, any>;
   /** Transformers allow data to be transformed before actions are executed, and serialized before being returned to
    * the user.
    *
@@ -428,6 +431,10 @@ export function fernsRouter<T>(
 
       if (req.query.$autocomplete) {
         mongoose.connection.db.collection(model.collection.collectionName);
+      }
+
+      if (options.queryTransform) {
+        query = options.queryTransform(query);
       }
 
       // Check if any of the keys in the query are not allowed by options.queryFilter
