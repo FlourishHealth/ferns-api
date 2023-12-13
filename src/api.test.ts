@@ -449,6 +449,7 @@ describe("ferns-api", () => {
           hidden: false,
           source: {
             name: "Brand",
+            href: "https://www.google.com",
           },
           lastEatenWith: {
             dressing: "2021-12-03T19:00:30.000Z",
@@ -824,6 +825,19 @@ describe("ferns-api", () => {
         dressing: "2023-12-03T00:00:20.000Z",
         cucumber: "2023-12-04T12:00:20.000Z",
       });
+    });
+
+    it("update using dot notation", async function () {
+      // Allows updating a single field in a nested object.
+      const res = await agent
+        .patch(`/food/${spinach._id}`)
+        .send({"source.href": "https://food.com"})
+        .expect(200);
+      assert.equal(res.body.data.source.name, "Kale");
+      assert.equal(res.body.data.source.href, "https://food.com");
+      const dbSpinach = await FoodModel.findById(spinach._id);
+      assert.equal(dbSpinach?.source.name, "Kale");
+      assert.equal(dbSpinach?.source.href, "https://food.com");
     });
   });
 

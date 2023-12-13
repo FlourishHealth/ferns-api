@@ -6,7 +6,7 @@ import supertest from "supertest";
 import {logger} from "./logger";
 import {createdUpdatedPlugin} from "./plugins";
 
-mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch(logger.catch);
+mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch(logger.error);
 
 export interface User {
   admin: boolean;
@@ -38,6 +38,7 @@ export interface Food {
   hidden?: boolean;
   source: {
     name: string;
+    href?: string;
   };
   tags: string[];
   eatenBy: [Schema.Types.ObjectId | User];
@@ -96,6 +97,7 @@ const foodSchema = new Schema<Food>(
     ownerId: {type: "ObjectId", ref: "User"},
     source: {
       name: String,
+      href: String,
     },
     hidden: {type: Boolean, default: false},
     tags: [String],
@@ -176,7 +178,7 @@ export async function setupDb() {
   process.env.SESSION_SECRET = "session";
 
   // Broken out of the try/catch below so you can test the catch logger by shutting down mongo.
-  await Promise.all([UserModel.deleteMany({}), FoodModel.deleteMany({})]).catch(logger.catch);
+  await Promise.all([UserModel.deleteMany({}), FoodModel.deleteMany({})]).catch(logger.error);
 
   try {
     const [notAdmin, admin, adminOther] = await Promise.all([

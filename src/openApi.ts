@@ -115,7 +115,7 @@ export function convertModel(
   }: {populatePaths?: PopulatePaths; extraModelProperties?: any} = {}
 ): {properties: any; required: string[]} {
   const modelSwagger = m2s(model, {
-    props: ["required", "enum"],
+    props: ["required", "enum", "default"],
   });
 
   // TODO: this should use OpenAPIs Components to fill in the referenced model instead.
