@@ -152,8 +152,8 @@ export function getBaseServer(): Express {
   return app;
 }
 
-afterAll(() => {
-  mongoose.connection.close();
+afterAll(async () => {
+  await mongoose.connection.close();
 });
 
 export async function authAsUser(
@@ -165,7 +165,7 @@ export async function authAsUser(
 
   const agent = supertest.agent(app);
   const res = await agent.post("/auth/login").send({email, password}).expect(200);
-  agent.set("authorization", `Bearer ${res.body.data.token}`);
+  await agent.set("authorization", `Bearer ${res.body.data.token}`);
   return agent;
 }
 

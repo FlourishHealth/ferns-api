@@ -5,10 +5,18 @@ import passportLocalMongoose from "passport-local-mongoose";
 import {fernsRouter, FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
 import {setupServer} from "./expressServer";
+import {logger} from "./logger";
 import {Permissions} from "./permissions";
 import {baseUserPlugin, createdUpdatedPlugin} from "./plugins";
 
-mongoose.connect("mongodb://localhost:27017/example");
+mongoose
+  .connect("mongodb://localhost:27017/example")
+  .then(() => {
+    logger.debug("Connected to mongo");
+  })
+  .catch((err) => {
+    logger.error(`Error connecting to mongo ${err}`);
+  });
 
 interface User {
   admin: boolean;

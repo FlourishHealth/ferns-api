@@ -359,14 +359,14 @@ export interface WrapScriptOptions {
 export async function wrapScript(func: () => Promise<any>, options: WrapScriptOptions = {}) {
   const name = require.main?.filename.split("/").slice(-1)[0].replace(".ts", "");
   logger.info(`Running script ${name}`);
-  sendToSlack(`Running script ${name}`, options.slackChannel);
+  await sendToSlack(`Running script ${name}`, options.slackChannel);
 
   if (options.terminateTimeout !== 0) {
     const warnTime = ((options.terminateTimeout ?? 300) / 2) * 1000;
     const closeTime = (options.terminateTimeout ?? 300) * 1000;
-    setTimeout(() => {
+    setTimeout(async () => {
       const msg = `Script ${name} is taking a while, currently ${warnTime / 1000} seconds`;
-      sendToSlack(msg);
+      await sendToSlack(msg);
       logger.warn(msg);
     }, warnTime);
 
@@ -389,7 +389,7 @@ export async function wrapScript(func: () => Promise<any>, options: WrapScriptOp
   } catch (e) {
     Sentry.captureException(e);
     logger.error(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
-    sendToSlack(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
+    await sendToSlack(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
     await Sentry.flush();
     process.exit(1);
   }

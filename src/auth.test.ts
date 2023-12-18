@@ -90,7 +90,7 @@ describe("auth tests", function () {
       .post("/auth/login")
       .send({email: "new@example.com", password: "123"})
       .expect(200);
-    agent.set("authorization", `Bearer ${res.body.data.token}`);
+    await agent.set("authorization", `Bearer ${res.body.data.token}`);
 
     userId = res.body.data.userId;
     token = res.body.data.token;
@@ -196,7 +196,7 @@ describe("auth tests", function () {
     assert.isDefined(userId);
     assert.isDefined(token);
 
-    agent.set("authorization", `Bearer ${res.body.data.token}`);
+    await agent.set("authorization", `Bearer ${res.body.data.token}`);
 
     const meRes = await agent.get("/auth/me").expect(200);
     assert.isDefined(meRes.body.data._id);
@@ -282,7 +282,7 @@ describe("auth tests", function () {
     assert.isDefined(initialLoginRes.body.data.token);
     assert.isDefined(initialLoginRes.body.data.refreshToken);
     const initialToken = initialLoginRes.body.data.token;
-    agent.set("authorization", `Bearer ${initialToken}`);
+    await agent.set("authorization", `Bearer ${initialToken}`);
 
     // get new auth token from refresh token
     const refreshRes = await agent
@@ -296,7 +296,7 @@ describe("auth tests", function () {
     // an HMAC signature will always be the same for a header + payload combination that is equal.
 
     // make sure new token works
-    agent.set("authorization", `Bearer ${newToken}`);
+    await agent.set("authorization", `Bearer ${newToken}`);
     const meRes = await agent.get("/auth/me").expect(200);
     assert.isDefined(meRes.body.data._id);
   });

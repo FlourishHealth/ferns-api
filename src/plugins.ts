@@ -23,7 +23,7 @@ export function isDeletedPlugin(schema: Schema<any, any, any, any>, defaultValue
   function applyDeleteFilter(q: Query<any, any>) {
     const query = q.getQuery();
     if (query && query.deleted === undefined) {
-      q.where({deleted: {$ne: true}});
+      void q.where({deleted: {$ne: true}});
     }
   }
   schema.pre("find", function () {
@@ -57,8 +57,8 @@ export function createdUpdatedPlugin(schema: Schema<any, any, any, any>) {
     next();
   });
 
-  schema.pre(/save|updateOne|insertMany/, function (next) {
-    this.updateOne({}, {$set: {updated: new Date()}});
+  schema.pre(/save|updateOne|insertMany/, async function (next) {
+    await this.updateOne({}, {$set: {updated: new Date()}});
     next();
   });
 }
