@@ -6,8 +6,6 @@ import supertest from "supertest";
 import {logger} from "./logger";
 import {createdUpdatedPlugin} from "./plugins";
 
-mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch(logger.catch);
-
 export interface User {
   admin: boolean;
   username: string;
@@ -152,8 +150,12 @@ export function getBaseServer(): Express {
   return app;
 }
 
-afterAll(() => {
-  mongoose.connection.close();
+beforeAll(async () => {
+  await mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch(logger.catch);
+});
+
+afterAll(async () => {
+  await mongoose.connection.close();
 });
 
 export async function authAsUser(
@@ -165,7 +167,7 @@ export async function authAsUser(
 
   const agent = supertest.agent(app);
   const res = await agent.post("/auth/login").send({email, password}).expect(200);
-  agent.set("authorization", `Bearer ${res.body.data.token}`);
+  await agent.set("authorization", `Bearer ${res.body.data.token}`);
   return agent;
 }
 
