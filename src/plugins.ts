@@ -57,8 +57,8 @@ export function createdUpdatedPlugin(schema: Schema<any, any, any, any>) {
     next();
   });
 
-  schema.pre(/save|updateOne|insertMany/, async function (next) {
-    await this.updateOne({}, {$set: {updated: new Date()}});
+  schema.pre(/save|updateOne|insertMany/, function (next) {
+    void this.updateOne({}, {$set: {updated: new Date()}});
     next();
   });
 }

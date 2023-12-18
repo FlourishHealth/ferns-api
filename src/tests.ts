@@ -6,8 +6,6 @@ import supertest from "supertest";
 import {logger} from "./logger";
 import {createdUpdatedPlugin} from "./plugins";
 
-mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch(logger.catch);
-
 export interface User {
   admin: boolean;
   username: string;
@@ -151,6 +149,10 @@ export function getBaseServer(): Express {
   app.use(express.json());
   return app;
 }
+
+beforeAll(async () => {
+  await mongoose.connect("mongodb://127.0.0.1/ferns?&connectTimeoutMS=360000").catch(logger.catch);
+});
 
 afterAll(async () => {
   await mongoose.connection.close();
