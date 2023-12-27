@@ -6,6 +6,8 @@
 import express, {NextFunction, Request, Response} from "express";
 import cloneDeep from "lodash/cloneDeep";
 import isFunction from "lodash/isFunction";
+import merge from "lodash/merge";
+import set from "lodash/set";
 import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
@@ -274,6 +276,25 @@ function checkQueryParamAllowed(
       title: `${queryParam} is not allowed as a query param.`,
     });
   }
+}
+
+// Handles dot notation patches, creates a normal object to be used for updates.
+function convertPatchData(data: any) {
+  const result = {};
+
+  for (const key in data) {
+    if (data.hasOwnProperty(key)) {
+      if (typeof data[key] === "object" && !key.includes(".")) {
+        // If the value is an object and the key does not contain a dot, merge it
+        merge(result, {[key]: data[key]});
+      } else {
+        // Otherwise, use _.set() to handle dot notation
+        set(result, key, data[key]);
+      }
+    }
+  }
+
+  return result;
 }
 
 /**
@@ -625,8 +646,11 @@ export function fernsRouter<T>(
       }
 
       let body;
+      // Convert dot notation to object
+      const updates = convertPatchData(req.body);
+
       try {
-        body = transform<T>(options, req.body, "update", req.user);
+        body = transform<T>(options, updates, "update", req.user);
       } catch (e: any) {
         throw new APIError({
           status: 403,
@@ -669,7 +693,8 @@ export function fernsRouter<T>(
       // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
       // wind up with corrupted data, just an API error.
       try {
-        Object.assign(doc, body);
+        console.log(body, doc);
+        doc = merge(doc, body);
         await doc.save();
       } catch (e: any) {
         throw new APIError({
