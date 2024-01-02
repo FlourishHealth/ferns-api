@@ -81,6 +81,7 @@ const logRequestsFinished = function (req: any, res: any, startTime: [number, nu
   const slowReadMs = options.logSlowRequestsReadMs ?? SLOW_READ_MAX;
   const slowWriteMs = options.logSlowRequestsWriteMs ?? SLOW_WRITE_MAX;
 
+  // TODO: hrtime is legacy. Use process.hrtime.bigint() instead.
   const diff = process.hrtime(startTime);
   const diffInMs = Math.round(diff[0] * 1000 + diff[1] * 0.000001);
   let pathName = "unknown";
