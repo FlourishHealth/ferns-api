@@ -351,15 +351,20 @@ export function cronjob(
 }
 
 // Convenience method to send data to a Slack webhook.
-export async function sendToSlack(text: string, channel = "bots") {
-  const slackWebhookUrl = process.env.SLACK_WEBHOOK;
-  if (!slackWebhookUrl) {
-    throw new Error("You must set SLACK_WEBHOOK in the environment.");
+export async function sendToSlack(text: string, slackChannel?: string) {
+  // since Slack now requires a webhook for each channel, we need to store them in the environment
+  // as an object, so we can look them up by channel name.
+  const slackWebhooksString = process.env.SLACK_WEBHOOKS;
+  if (!slackWebhooksString) {
+    logger.debug("You must set SLACK_WEBHOOKS in the environment to use sendToSlack.");
+    return;
   }
+  const slackWebhooks = JSON.parse(slackWebhooksString ?? "{}");
+  // get the webhook url from the channel name as the key
+  const slackWebhookUrl = slackWebhooks[slackChannel ?? "default"];
   try {
     await axios.post(slackWebhookUrl, {
       text,
-      channel,
     });
   } catch (e: any) {
     logger.error(`Error posting to slack: ${e.text}`);
