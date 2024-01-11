@@ -76,12 +76,6 @@ export function setupEnvironment(): void {
 export type AddRoutes = (router: Router, options?: Partial<FernsRouterOptions<any>>) => void;
 
 const logRequestsFinished = function (req: any, res: any, startTime: [number, number]) {
-  const options = (req.loggingOptions ?? {}) as LoggingOptions;
-
-  const slowReadMs = options.logSlowRequestsReadMs ?? SLOW_READ_MAX;
-  const slowWriteMs = options.logSlowRequestsWriteMs ?? SLOW_WRITE_MAX;
-
-  // TODO: hrtime is legacy. Use process.hrtime.bigint() instead.
   const diff = process.hrtime(startTime);
   const diffInMs = Math.round(diff[0] * 1000 + diff[1] * 0.000001);
   let pathName = "unknown";
@@ -95,24 +89,22 @@ const logRequestsFinished = function (req: any, res: any, startTime: [number, nu
   if (!Boolean(process.env.DISABLE_LOG_ALL_REQUESTS)) {
     logger.debug(`${req.method} -> ${req.originalUrl} ${res.statusCode} ${`${diffInMs}ms`}`);
   }
-  if (options.logSlowRequests) {
-    if (diffInMs > slowReadMs && req.method === "GET") {
-      logger.warn(
-        `Slow GET request, ${JSON.stringify({
-          requestTime: diffInMs,
-          pathName,
-          url: req.originalUrl,
-        })}`
-      );
-    } else if (diffInMs > slowWriteMs) {
-      logger.warn(
-        `Slow write request ${JSON.stringify({
-          requestTime: diffInMs,
-          pathName,
-          url: req.originalUrl,
-        })}`
-      );
-    }
+  if (diffInMs > SLOW_READ_MAX && req.method === "GET") {
+    logger.warn(
+      `Slow GET request, ${JSON.stringify({
+        requestTime: diffInMs,
+        pathName,
+        url: req.originalUrl,
+      })}`
+    );
+  } else if (diffInMs > SLOW_WRITE_MAX) {
+    logger.warn(
+      `Slow write request ${JSON.stringify({
+        requestTime: diffInMs,
+        pathName,
+        url: req.originalUrl,
+      })}`
+    );
   }
 };
 
@@ -182,9 +174,7 @@ interface InitializeRoutesOptions {
   // Whether requests should be logged. In production, you may want to disable this if using another
   // logger (e.g. Google Cloud).
   logRequests?: boolean;
-  // Whether to ignore certain traces when logging to Sentry.
   ignoreTraces?: string[];
-  loggingOptions?: LoggingOptions;
 }
 
 function initializeRoutes(
@@ -203,12 +193,6 @@ function initializeRoutes(
       description: "Generated docs from an Express api",
       version: "1.0.0",
     },
-  });
-
-  // Store the logging options on the request so we can access them later.
-  app.use((req, _, next) => {
-    (req as any).loggingOptions = options.loggingOptions;
-    next();
   });
 
   // TODO: Log a warning when we hit the array limit.
@@ -310,7 +294,6 @@ export function setupServer(options: SetupServerOptions) {
       corsOrigin: options.corsOrigin,
       addMiddleware: options.addMiddleware,
       ignoreTraces: options.ignoreTraces,
-      loggingOptions: options.loggingOptions,
     });
   } catch (e) {
     logger.error(`Error initializing routes: ${e}`);
@@ -351,20 +334,15 @@ export function cronjob(
 }
 
 // Convenience method to send data to a Slack webhook.
-export async function sendToSlack(text: string, slackChannel?: string) {
-  // since Slack now requires a webhook for each channel, we need to store them in the environment
-  // as an object, so we can look them up by channel name.
-  const slackWebhooksString = process.env.SLACK_WEBHOOKS;
-  if (!slackWebhooksString) {
-    logger.debug("You must set SLACK_WEBHOOKS in the environment to use sendToSlack.");
-    return;
+export async function sendToSlack(text: string, channel = "bots") {
+  const slackWebhookUrl = process.env.SLACK_WEBHOOK;
+  if (!slackWebhookUrl) {
+    throw new Error("You must set SLACK_WEBHOOK in the environment.");
   }
-  const slackWebhooks = JSON.parse(slackWebhooksString ?? "{}");
-  // get the webhook url from the channel name as the key
-  const slackWebhookUrl = slackWebhooks[slackChannel ?? "default"];
   try {
     await axios.post(slackWebhookUrl, {
       text,
+      channel,
     });
   } catch (e: any) {
     logger.error(`Error posting to slack: ${e.text}`);
