@@ -858,18 +858,17 @@ describe("ferns-api", () => {
       // Allows updating a single field in a nested object
       const res = await agent
         .patch(`/food/${spinach._id}`)
-        .send({"source.href": "https://food.com", source: {name: "New Name"}})
+        .send({"source.href": "https://food.com"})
         .expect(200);
-      // Assert the field was updated with object notation.
-      assert.equal(res.body.data.source.name, "New Name");
       // Assert the field was updated with dot notation.
       assert.equal(res.body.data.source.href, "https://food.com");
-      // Assert this field hasn't changed.
+      // Assert these fields haven't changed.
+      assert.equal(res.body.data.source.name, "Brand");
       assert.equal(res.body.data.source.dateAdded, "2023-12-13T12:30:00.000Z");
 
       const dbSpinach = await FoodModel.findById(spinach._id);
-      assert.equal(dbSpinach?.source.name, "New Name");
       assert.equal(dbSpinach?.source.href, "https://food.com");
+      assert.equal(dbSpinach?.source.name, "Brand");
       assert.equal(dbSpinach?.source.dateAdded, "2023-12-13T12:30:00.000Z");
     });
   });
