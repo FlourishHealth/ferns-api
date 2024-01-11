@@ -380,15 +380,8 @@ export function fernsRouter<T>(
           });
         }
       }
-      try {
-        const serialized = await responseHandler(data, "create", req, options);
-        return res.status(201).json({data: serialized});
-      } catch (e: any) {
-        throw new APIError({
-          title: `responseHandler error: ${e.message}`,
-          error: e,
-        });
-      }
+      const serialized = await responseHandler(data, "create", req, options);
+      return res.status(201).json({data: serialized});
     })
   );
 
@@ -511,16 +504,7 @@ export function fernsRouter<T>(
       // Uses metadata rather than counting the number of documents in the array for performance.
       const total = await model.estimatedDocumentCount();
 
-      let serialized;
-
-      try {
-        serialized = await responseHandler(data, "list", req, options);
-      } catch (e: any) {
-        throw new APIError({
-          title: `responseHandler error: ${e.message}`,
-          error: e,
-        });
-      }
+      let serialized = await responseHandler(data, "list", req, options);
 
       let more;
       try {
@@ -595,15 +579,8 @@ export function fernsRouter<T>(
         }
       }
 
-      try {
-        const serialized = await responseHandler(data, "read", req, options);
-        return res.json({data: serialized});
-      } catch (e: any) {
-        throw new APIError({
-          title: `responseHandler error: ${e.message}`,
-          error: e,
-        });
-      }
+      const serialized = await responseHandler(data, "read", req, options);
+      return res.json({data: serialized});
     })
   );
 
@@ -719,16 +696,8 @@ export function fernsRouter<T>(
           });
         }
       }
-
-      try {
-        const serialized = await responseHandler(doc, "update", req, options);
-        return res.json({data: serialized});
-      } catch (e: any) {
-        throw new APIError({
-          title: `responseHandler error: ${e.message}`,
-          error: e,
-        });
-      }
+      const serialized = await responseHandler(doc, "update", req, options);
+      return res.json({data: serialized});
     })
   );
 
