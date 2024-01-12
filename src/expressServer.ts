@@ -75,9 +75,14 @@ export function setupEnvironment(): void {
 
 export type AddRoutes = (router: Router, options?: Partial<FernsRouterOptions<any>>) => void;
 
-const logRequestsFinished = function (req: any, res: any, startTime: [number, number]) {
-  const diff = process.hrtime(startTime);
-  const diffInMs = Math.round(diff[0] * 1000 + diff[1] * 0.000001);
+const logRequestsFinished = function (req: any, res: any, startTime: bigint) {
+  const options = (res.locals.loggingOptions ?? {}) as LoggingOptions;
+
+  const slowReadMs = options.logSlowRequestsReadMs ?? SLOW_READ_MAX;
+  const slowWriteMs = options.logSlowRequestsWriteMs ?? SLOW_WRITE_MAX;
+
+  const diff = process.hrtime.bigint() - startTime;
+  const diffInMs = Number(diff) / 1000000;
   let pathName = "unknown";
   if (req.route && req.routeMount) {
     pathName = `${req.routeMount}${req.route.path}`;
@@ -89,27 +94,29 @@ const logRequestsFinished = function (req: any, res: any, startTime: [number, nu
   if (!Boolean(process.env.DISABLE_LOG_ALL_REQUESTS)) {
     logger.debug(`${req.method} -> ${req.originalUrl} ${res.statusCode} ${`${diffInMs}ms`}`);
   }
-  if (diffInMs > SLOW_READ_MAX && req.method === "GET") {
-    logger.warn(
-      `Slow GET request, ${JSON.stringify({
-        requestTime: diffInMs,
-        pathName,
-        url: req.originalUrl,
-      })}`
-    );
-  } else if (diffInMs > SLOW_WRITE_MAX) {
-    logger.warn(
-      `Slow write request ${JSON.stringify({
-        requestTime: diffInMs,
-        pathName,
-        url: req.originalUrl,
-      })}`
-    );
+  if (options.logSlowRequests) {
+    if (diffInMs > slowReadMs && req.method === "GET") {
+      logger.warn(
+        `Slow GET request, ${JSON.stringify({
+          requestTime: diffInMs,
+          pathName,
+          url: req.originalUrl,
+        })}`
+      );
+    } else if (diffInMs > slowWriteMs) {
+      logger.warn(
+        `Slow write request ${JSON.stringify({
+          requestTime: diffInMs,
+          pathName,
+          url: req.originalUrl,
+        })}`
+      );
+    }
   }
 };
 
 export function logRequests(req: any, res: any, next: any) {
-  const startTime = process.hrtime();
+  const startTime = process.hrtime.bigint();
 
   let userString = "";
   if (req.user) {
@@ -175,6 +182,7 @@ interface InitializeRoutesOptions {
   // logger (e.g. Google Cloud).
   logRequests?: boolean;
   ignoreTraces?: string[];
+  loggingOptions?: LoggingOptions;
 }
 
 function initializeRoutes(
@@ -218,6 +226,13 @@ function initializeRoutes(
   if (options.logRequests !== false) {
     app.use(logRequests);
   }
+
+  // Store the logging options on the request so we can access them later.
+  app.use((req, res, next) => {
+    res.locals.loggingOptions = options.loggingOptions;
+    next();
+  });
+
   // Add Sentry scopes for session, transaction, and userId if any are set
   app.all("*", function (req: any, _res: any, next: any) {
     const transactionId = req.header("X-Transaction-ID");
