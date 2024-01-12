@@ -160,6 +160,20 @@ export function convertModel(
     };
   }
 
+  // Check subschemas for virtuals. One level deep should be sufficient.
+  if (model.schema.childSchemas.length > 0) {
+    for (const childSchema of model.schema.childSchemas) {
+      for (const virtual of Object.keys(childSchema.schema.virtuals)) {
+        if (virtual === "id" || virtual === "__v") {
+          continue;
+        }
+        modelSwagger.properties[childSchema.model.path].properties[virtual] = {
+          type: "any",
+        };
+      }
+    }
+  }
+
   return {
     properties: {...modelSwagger.properties, ...extraModelProperties},
     required: modelSwagger.required ?? [],
