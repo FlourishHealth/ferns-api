@@ -80,6 +80,12 @@ export interface LoggingOptions {
   showConsoleTimestamps?: boolean;
   logDirectory?: string;
   logRequests?: boolean;
+  // Whether to log when requests are slow.
+  logSlowRequests?: boolean;
+  // The threshold in ms for logging slow requests. Defaults to 200ms for read requests.
+  logSlowRequestsReadMs?: number;
+  // The threshold in ms for logging slow requests. Defaults to 500ms for write requests.
+  logSlowRequestsWriteMs?: number;
 }
 
 export function setupLogging(options?: LoggingOptions) {
