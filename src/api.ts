@@ -660,7 +660,8 @@ export function fernsRouter<T>(
           // TODO: Send flattened dot notation body to preUpdate, then merge the returned body
           // with the original body, maintaining the dot notation. This way we don't have to write
           // two preUpdate branches downstream, one looking at the dot notation style and
-          // one looking at normal object style.   body = await options.preUpdate(body, req);
+          // one looking at normal object style.
+          body = await options.preUpdate(body, req);
         } catch (e: any) {
           if (isAPIError(e)) {
             throw e;
