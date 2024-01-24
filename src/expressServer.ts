@@ -238,19 +238,13 @@ function initializeRoutes(
     const transactionId = req.header("X-Transaction-ID");
     const sessionId = req.header("X-Session-ID");
     if (transactionId) {
-      Sentry.configureScope((scope) => {
-        scope.setTag("transaction_id", transactionId);
-      });
+      Sentry.getCurrentScope().setTag("transaction_id", transactionId);
     }
     if (sessionId) {
-      Sentry.configureScope((scope) => {
-        scope.setTag("session_id", sessionId);
-      });
+      Sentry.getCurrentScope().setTag("session_id", sessionId);
     }
     if (req.user?._id) {
-      Sentry.configureScope((scope) => {
-        scope.setUser({id: req.user._id});
-      });
+      Sentry.getCurrentScope().setTag("user", req.user._id);
     }
     next();
   });
