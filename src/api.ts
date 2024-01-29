@@ -32,7 +32,7 @@ export type JSONValue = JSONPrimitive | JSONObject | JSONArray;
 // Rate limiting
 
 // These are the query params that are reserved for pagination.
-const PAGINATION_QUERY_PARAMS = ["limit", "page"];
+const PAGINATION_QUERY_PARAMS = ["limit", "page", "sort"];
 
 // Add support for more complex queries.
 const COMPLEX_QUERY_PARAMS = ["$and", "$or"];
@@ -480,7 +480,10 @@ export function fernsRouter<T>(
         builtQuery = builtQuery.skip((Number(req.query.page) - 1) * limit);
       }
 
-      if (options.sort) {
+      // Query param sort takes precedence over options.sort.
+      if (req.query.sort) {
+        builtQuery = builtQuery.sort(req.query.sort as string);
+      } else if (options.sort) {
         builtQuery = builtQuery.sort(options.sort);
       }
 

@@ -77,7 +77,7 @@
     "chai": "^4.3.10",
     "chai-as-promised": "^7.1.1",
     "eslint": "^8.56.0",
-    "eslint-config-ferns": "^0.5.0",
+    "eslint-plugin-ferns": "^0.3.0",
     "eslint-config-prettier": "^9.1.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-lodash": "^7.1.0",
