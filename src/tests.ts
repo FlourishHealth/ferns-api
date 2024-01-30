@@ -36,6 +36,8 @@ export interface Food {
   hidden?: boolean;
   source: {
     name: string;
+    href?: string;
+    dateAdded?: string;
   };
   tags: string[];
   eatenBy: [Schema.Types.ObjectId | User];
@@ -94,6 +96,8 @@ const foodSchema = new Schema<Food>(
     ownerId: {type: "ObjectId", ref: "User"},
     source: {
       name: String,
+      href: String,
+      dateAdded: String,
     },
     hidden: {type: Boolean, default: false},
     tags: [String],

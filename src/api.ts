@@ -276,6 +276,25 @@ function checkQueryParamAllowed(
   }
 }
 
+// Handles dot notation patches, creates a normal object to be used for updates.
+// function flattenDotNotationPatch(data: any) {
+//   const result = {};
+//
+//   for (const key in data) {
+//     if (data.hasOwnProperty(key)) {
+//       if (typeof data[key] === "object" && !key.includes(".")) {
+//         // If the value is an object and the key does not contain a dot, merge it
+//         merge(result, {[key]: data[key]});
+//       } else {
+//         // Otherwise, use _.set() to handle dot notation
+//         set(result, key, data[key]);
+//       }
+//     }
+//   }
+//
+//   return result;
+// }
+
 /**
  * Create a set of CRUD routes given a Mongoose model $baseModel and configuration options.
  *
@@ -648,6 +667,7 @@ export function fernsRouter<T>(
       }
 
       let body;
+
       try {
         body = transform<T>(options, req.body, "update", req.user);
       } catch (e: any) {
@@ -660,6 +680,10 @@ export function fernsRouter<T>(
 
       if (options.preUpdate) {
         try {
+          // TODO: Send flattened dot notation body to preUpdate, then merge the returned body
+          // with the original body, maintaining the dot notation. This way we don't have to write
+          // two preUpdate branches downstream, one looking at the dot notation style and
+          // one looking at normal object style.
           body = await options.preUpdate(body, req);
         } catch (e: any) {
           if (isAPIError(e)) {
@@ -692,7 +716,7 @@ export function fernsRouter<T>(
       // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
       // wind up with corrupted data, just an API error.
       try {
-        Object.assign(doc, body);
+        doc.set(body);
         await doc.save();
       } catch (e: any) {
         throw new APIError({

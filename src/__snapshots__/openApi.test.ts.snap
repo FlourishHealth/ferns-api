@@ -195,6 +195,12 @@ exports[`openApi gets the openapi.json 1`] = `
                           },
                           "source": {
                             "properties": {
+                              "dateAdded": {
+                                "type": "string",
+                              },
+                              "href": {
+                                "type": "string",
+                              },
                               "name": {
                                 "type": "string",
                               },
@@ -658,6 +664,12 @@ exports[`openApi gets the openapi.json 1`] = `
                   },
                   "source": {
                     "properties": {
+                      "dateAdded": {
+                        "type": "string",
+                      },
+                      "href": {
+                        "type": "string",
+                      },
                       "name": {
                         "type": "string",
                       },
@@ -827,6 +839,12 @@ exports[`openApi gets the openapi.json 1`] = `
                     },
                     "source": {
                       "properties": {
+                        "dateAdded": {
+                          "type": "string",
+                        },
+                        "href": {
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
@@ -1573,6 +1591,12 @@ exports[`openApi gets the openapi.json 1`] = `
                     },
                     "source": {
                       "properties": {
+                        "dateAdded": {
+                          "type": "string",
+                        },
+                        "href": {
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
@@ -2029,6 +2053,12 @@ exports[`openApi gets the openapi.json 1`] = `
                   },
                   "source": {
                     "properties": {
+                      "dateAdded": {
+                        "type": "string",
+                      },
+                      "href": {
+                        "type": "string",
+                      },
                       "name": {
                         "type": "string",
                       },
@@ -2198,6 +2228,12 @@ exports[`openApi gets the openapi.json 1`] = `
                     },
                     "source": {
                       "properties": {
+                        "dateAdded": {
+                          "type": "string",
+                        },
+                        "href": {
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
