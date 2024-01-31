@@ -88,6 +88,10 @@ const generateTokens = async (user: any) => {
   if (!tokenSecretOrKey) {
     throw new Error(`TOKEN_SECRET must be set in env.`);
   }
+  if (!user?._id) {
+    logger.warn("No user found for token generation");
+    return {token: null, refreshToken: null};
+  }
   const token = jwt.sign({id: user._id.toString()}, tokenSecretOrKey, getTokenOptions());
   const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
   let refreshToken;
