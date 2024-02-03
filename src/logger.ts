@@ -13,8 +13,9 @@ function formatWithInspect(val: any) {
   return prefix + (shouldFormat ? inspect(val, {depth: null, colors: true}) : val);
 }
 
-// Winston doesn't operate like console.log by default, e.g. `logger.error('error', error)` only prints the message
-// and no args. Add handling for all the args, while also supporting splat logging.
+// Winston doesn't operate like console.log by default, e.g. `logger.error('error',
+// error)` only prints the message and no args. Add handling for all the args,
+// while also supporting splat logging.
 function printf(timestamp = false) {
   return (info: winston.Logform.TransformableInfo) => {
     const msg = formatWithInspect(info.message);

@@ -13,10 +13,13 @@ import {UserModel} from "./tests";
 export interface User {
   _id: ObjectId | string;
   id: string;
-  // Whether the user should be treated as an admin or not. Admins can have extra abilities in permissions
-  // declarations
+  // Whether the user should be treated as an admin or not.
+  // Admins can have extra abilities in permissions declarations
   admin: boolean;
-  /** We support anonymous users, which do not yet have login information. This can be helpful for pre-signup users. */
+  /**
+   * We support anonymous users, which do not yet have login information.
+   * This can be helpful for pre-signup users.
+   */
   isAnonymous?: boolean;
 }
 
@@ -49,7 +52,8 @@ export async function signupUser(
   password: string,
   body?: any
 ) {
-  // Strip email and password from the body. They can cause mongoose to throw an error if strict is set.
+  // Strip email and password from the body. They can cause mongoose to throw an error if strict is
+  // set.
   const {email: _email, password: _password, ...bodyRest} = body;
 
   try {
@@ -128,8 +132,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       async (req, email, password, done) => {
         try {
           done(undefined, await signupUser(userModel, email, password, req.body));
-        } catch (e) {
-          return done(e);
+        } catch (error) {
+          return done(error);
         }
       }
     )
@@ -180,9 +184,9 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         }
         try {
           user = await userModel.findById(jwtPayload.id);
-        } catch (e) {
-          logger.warn(`[jwt] Error finding user from id: ${e}`);
-          return done(e, false);
+        } catch (error) {
+          logger.warn(`[jwt] Error finding user from id: ${error}`);
+          return done(error, false);
         }
         if (user) {
           return done(null, user);
@@ -200,9 +204,9 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     );
   }
 
-  // Adds req.user to the request. This may wind up duplicating requests with passport, but passport doesn't give us
-  // req.user early enough.
-  // TODO: move info required for good logging (admin/testUser/type) into the JWT token.
+  // Adds req.user to the request. This may wind up duplicating requests with passport,
+  // but passport doesn't give us req.user early enough. TODO:
+  // move info required for good logging (admin/testUser/type) into the JWT token.
   async function decodeJWTMiddleware(req, res, next) {
     if (!process.env.TOKEN_SECRET) {
       return next();
@@ -210,7 +214,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
     const token = customTokenExtractor(req);
 
-    // For some reason, our app will happily put null into the authorization header when logging out then back in.
+    // For some reason, our app will happily put null into the authorization header when logging
+    // out then back in.
     if (!token || token === "null" || token === "undefined") {
       return next();
     }
@@ -219,15 +224,15 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
     try {
       decoded = jwt.verify(token, process.env.TOKEN_SECRET, getTokenOptions()) as jwt.JwtPayload;
-    } catch (e) {
+    } catch (error) {
       // Ignore the error here, the rest of the auth handler will handle it gracefully.
       return;
     }
     if (decoded.id) {
       try {
         req.user = await userModel.findById(decoded.id);
-      } catch (e) {
-        logger.warn(`[jwt] Error finding user from id: ${e}`);
+      } catch (error) {
+        logger.warn(`[jwt] Error finding user from id: ${error}`);
       }
     }
     return next();
@@ -268,9 +273,9 @@ export function addAuthRoutes(app: express.Application, userModel: UserModel): v
     let decoded;
     try {
       decoded = jwt.verify(req.body.refreshToken, refreshTokenSecretOrKey) as JwtPayload;
-    } catch (e: any) {
-      logger.error(`Error refreshing token: ${e}`);
-      return res.status(401).json({message: e?.message});
+    } catch (error: any) {
+      logger.error(`Error refreshing token: ${error}`);
+      return res.status(401).json({message: error?.message});
     }
     if (decoded && decoded.id) {
       const user = await userModel.findById(decoded.id);
@@ -331,8 +336,8 @@ export function addAuthRoutes(app: express.Application, userModel: UserModel): v
       const dataObject = doc.toObject();
       (dataObject as any).id = doc._id;
       return res.json({data: dataObject});
-    } catch (e) {
-      return res.status(403).send({message: (e as any).message});
+    } catch (error) {
+      return res.status(403).send({message: (error as any).message});
     }
   });
 

@@ -304,9 +304,9 @@ export function setupServer(options: SetupServerOptions) {
       addMiddleware: options.addMiddleware,
       ignoreTraces: options.ignoreTraces,
     });
-  } catch (e) {
-    logger.error(`Error initializing routes: ${e}`);
-    throw e;
+  } catch (error) {
+    logger.error(`Error initializing routes: ${error}`);
+    throw error;
   }
 
   if (!options.skipListen) {
@@ -315,8 +315,8 @@ export function setupServer(options: SetupServerOptions) {
       app.listen(port, () => {
         logger.info(`Listening at on port ${port}`);
       });
-    } catch (err) {
-      logger.error(`Error trying to start HTTP server: ${err}\n${(err as any).stack}`);
+    } catch (error) {
+      logger.error(`Error trying to start HTTP server: ${error}\n${(error as any).stack}`);
       process.exit(1);
     }
   }
@@ -337,8 +337,8 @@ export function cronjob(
   logger.info(`Adding cronjob ${name}, running at: ${schedule}`);
   try {
     new cron.CronJob(schedule, callback, null, true, "America/Chicago");
-  } catch (e) {
-    throw new Error(`Failed to create cronjob: ${e}`);
+  } catch (error) {
+    throw new Error(`Failed to create cronjob: ${error}`);
   }
 }
 
@@ -358,8 +358,8 @@ export async function sendToSlack(text: string, slackChannel?: string) {
     await axios.post(slackWebhookUrl, {
       text,
     });
-  } catch (e: any) {
-    logger.error(`Error posting to slack: ${e.text}`);
+  } catch (error: any) {
+    logger.error(`Error posting to slack: ${error.text ?? error.message}`);
   }
 }
 
@@ -400,10 +400,10 @@ export async function wrapScript(func: () => Promise<any>, options: WrapScriptOp
     if (options.onFinish) {
       await options.onFinish(result);
     }
-  } catch (e) {
-    Sentry.captureException(e);
-    logger.error(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
-    await sendToSlack(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
+  } catch (error) {
+    Sentry.captureException(error);
+    logger.error(`Error running script ${name}: ${error}\n${(error as Error).stack}`);
+    await sendToSlack(`Error running script ${name}: ${error}\n${(error as Error).stack}`);
     await Sentry.flush();
     process.exit(1);
   }

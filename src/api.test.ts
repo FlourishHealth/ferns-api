@@ -1268,7 +1268,8 @@ describe("ferns-api", () => {
         .expect(201);
 
       assert.equal(res.body.data.email, "brucewayne@example.com");
-      // Because we pass __t, this should create a SuperUser which has no department, so this is dropped.
+      // Because we pass __t, this should create a SuperUser which has no department, so this is
+      // dropped.
       assert.isUndefined(res.body.data.department);
       assert.equal(res.body.data.superTitle, "Batman");
 

@@ -325,6 +325,13 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
             },
           },
           {
+            name: "sort",
+            in: "query",
+            schema: {
+              type: "string",
+            },
+          },
+          {
             name: "limit",
             in: "query",
             schema: {
