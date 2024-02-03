@@ -264,8 +264,8 @@ function populate(
   if (isFunction(populatePaths)) {
     try {
       paths = populatePaths(req);
-    } catch (error) {
-      throw new APIError({status: 500, title: `Error in populatePaths function: ${e}`, error: e});
+    } catch (error: any) {
+      throw new APIError({status: 500, title: `Error in populatePaths function: ${error}`, error});
     }
   } else {
     paths = populatePaths ?? [];
@@ -336,23 +336,23 @@ export function fernsRouter<T>(
       let body: Partial<T> | (Partial<T> | undefined)[] | null | undefined;
       try {
         body = transform<T>(options, req.body, "create", req.user);
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
           status: 400,
-          title: e.message,
-          error: e,
+          title: error.message,
+          error,
         });
       }
       if (options.preCreate) {
         try {
           body = await options.preCreate(body, req);
-        } catch (error) {
-          if (isAPIError(e)) {
-            throw e;
+        } catch (error: any) {
+          if (isAPIError(error)) {
+            throw error;
           } else {
             throw new APIError({
-              title: `preCreate hook error: ${e.message}`,
-              error: e,
+              title: `preCreate hook error: ${error.message}`,
+              error,
             });
           }
         }
@@ -373,11 +373,11 @@ export function fernsRouter<T>(
       let data;
       try {
         data = await model.create(body);
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
           status: 400,
-          title: e.message,
-          error: e,
+          title: error.message,
+          error,
         });
       }
 
@@ -386,11 +386,11 @@ export function fernsRouter<T>(
           let populateQuery = model.findById(data._id);
           populateQuery = populate(req, populateQuery, options.populatePaths);
           data = await populateQuery.exec();
-        } catch (error) {
+        } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: `Populate error: ${e.message}`,
-            error: e,
+            title: `Populate error: ${error.message}`,
+            error,
           });
         }
       }
@@ -398,21 +398,21 @@ export function fernsRouter<T>(
       if (options.postCreate) {
         try {
           await options.postCreate(data, req);
-        } catch (error) {
+        } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: `postCreate hook error: ${e.message}`,
-            error: e,
+            title: `postCreate hook error: ${error.message}`,
+            error,
           });
         }
       }
       try {
         const serialized = await responseHandler(data, "create", req, options);
         return res.status(201).json({data: serialized});
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
-          title: `responseHandler error: ${e.message}`,
-          error: e,
+          title: `responseHandler error: ${error.message}`,
+          error,
         });
       }
     })
@@ -468,11 +468,11 @@ export function fernsRouter<T>(
         let queryFilter;
         try {
           queryFilter = await options.queryFilter(req.user, query);
-        } catch (error) {
+        } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: `Query filter error: ${e}`,
-            error: e,
+            title: `Query filter error: ${error}`,
+            error,
           });
         }
 
@@ -519,21 +519,21 @@ export function fernsRouter<T>(
       let data: (Document<any, any, any> & T)[];
       try {
         data = await populatedQuery.exec();
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
-          title: `List error: ${e.stack}`,
-          error: e,
+          title: `List error: ${error.stack}`,
+          error,
         });
       }
 
       if (options.postList) {
         try {
           data = await options.postList(data, req);
-        } catch (error) {
+        } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: `postList hook error on ${req.params.id}: ${e.message}`,
-            error: e,
+            title: `postList hook error on ${req.params.id}: ${error.message}`,
+            error,
           });
         }
       }
@@ -545,10 +545,10 @@ export function fernsRouter<T>(
 
       try {
         serialized = await responseHandler(data, "list", req, options);
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
-          title: `responseHandler error: ${e.message}`,
-          error: e,
+          title: `responseHandler error: ${error.message}`,
+          error,
         });
       }
 
@@ -564,10 +564,10 @@ export function fernsRouter<T>(
         } else {
           return res.json({data: serialized});
         }
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
-          title: `Serialization error: ${e.message}`,
-          error: e,
+          title: `Serialization error: ${error.message}`,
+          error,
         });
       }
     })
@@ -593,10 +593,10 @@ export function fernsRouter<T>(
       let data;
       try {
         data = await populatedQuery.exec();
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
           title: `GET failed on ${req.params.id}`,
-          error: e,
+          error,
         });
       }
       if (!data) {
@@ -616,11 +616,11 @@ export function fernsRouter<T>(
       if (options.postGet) {
         try {
           data = await options.postGet(data, req);
-        } catch (error) {
+        } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: `postGet hook error on ${req.params.id}: ${e.message}`,
-            error: e,
+            title: `postGet hook error on ${req.params.id}: ${error.message}`,
+            error,
           });
         }
       }
@@ -628,10 +628,10 @@ export function fernsRouter<T>(
       try {
         const serialized = await responseHandler(data, "read", req, options);
         return res.json({data: serialized});
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
-          title: `responseHandler error: ${e.message}`,
-          error: e,
+          title: `responseHandler error: ${error.message}`,
+          error,
         });
       }
     })
@@ -681,24 +681,24 @@ export function fernsRouter<T>(
       let body;
       try {
         body = transform<T>(options, req.body, "update", req.user);
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
           status: 403,
-          title: `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${e.message}`,
-          error: e,
+          title: `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${error.message}`,
+          error,
         });
       }
 
       if (options.preUpdate) {
         try {
           body = await options.preUpdate(body, req);
-        } catch (error) {
-          if (isAPIError(e)) {
-            throw e;
+        } catch (error: any) {
+          if (isAPIError(error)) {
+            throw error;
           } else {
             throw new APIError({
-              title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
-              error: e,
+              title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
+              error,
             });
           }
         }
@@ -725,11 +725,11 @@ export function fernsRouter<T>(
       try {
         Object.assign(doc, body);
         await doc.save();
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
           status: 400,
-          title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
-          error: e,
+          title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
+          error,
         });
       }
 
@@ -742,11 +742,11 @@ export function fernsRouter<T>(
       if (options.postUpdate) {
         try {
           await options.postUpdate(doc, body, req, prevDoc);
-        } catch (error) {
+        } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: `postUpdate hook error on ${req.params.id}: ${e.message}`,
-            error: e,
+            title: `postUpdate hook error on ${req.params.id}: ${error.message}`,
+            error,
           });
         }
       }
@@ -754,10 +754,10 @@ export function fernsRouter<T>(
       try {
         const serialized = await responseHandler(doc, "update", req, options);
         return res.json({data: serialized});
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
-          title: `responseHandler error: ${e.message}`,
-          error: e,
+          title: `responseHandler error: ${error.message}`,
+          error,
         });
       }
     })
@@ -797,14 +797,14 @@ export function fernsRouter<T>(
         let body;
         try {
           body = await options.preDelete(doc, req);
-        } catch (error) {
-          if (isAPIError(e)) {
-            throw e;
+        } catch (error: any) {
+          if (isAPIError(error)) {
+            throw error;
           } else {
             throw new APIError({
               status: 403,
-              title: `preDelete hook error on ${req.params.id}: ${e.message}`,
-              error: e,
+              title: `preDelete hook error on ${req.params.id}: ${error.message}`,
+              error,
             });
           }
         }
@@ -834,11 +834,11 @@ export function fernsRouter<T>(
         // For models without the isDeleted plugin
         try {
           await doc.deleteOne();
-        } catch (error) {
+        } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: e.message,
-            error: e,
+            title: error.message,
+            error,
           });
         }
       }
@@ -846,11 +846,11 @@ export function fernsRouter<T>(
       if (options.postDelete) {
         try {
           await options.postDelete(req, doc);
-        } catch (error) {
+        } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: `postDelete hook error: ${e.message}`,
-            error: e,
+            title: `postDelete hook error: ${error.message}`,
+            error,
           });
         }
       }
@@ -936,22 +936,22 @@ export function fernsRouter<T>(
 
     try {
       body = transform<T>(options, body, "update", req.user) as Partial<T>;
-    } catch (error) {
+    } catch (error: any) {
       throw new APIError({
-        title: e.message,
+        title: error.message,
         status: 403,
-        error: e,
+        error,
       });
     }
 
     if (options.preUpdate) {
       try {
         body = await options.preUpdate(body, req);
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
-          title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
+          title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
           status: 400,
-          error: e,
+          error,
         });
       }
       if (body === undefined) {
@@ -977,22 +977,22 @@ export function fernsRouter<T>(
     try {
       Object.assign(doc, body);
       await doc.save();
-    } catch (error) {
+    } catch (error: any) {
       throw new APIError({
-        title: `PATCH Pre Update error on ${req.params.id}: ${e.message}`,
+        title: `PATCH Pre Update error on ${req.params.id}: ${error.message}`,
         status: 400,
-        error: e,
+        error,
       });
     }
 
     if (options.postUpdate) {
       try {
         await options.postUpdate(doc, body, req, prevDoc);
-      } catch (error) {
+      } catch (error: any) {
         throw new APIError({
-          title: `PATCH Post Update error on ${req.params.id}: ${e.message}`,
+          title: `PATCH Post Update error on ${req.params.id}: ${error.message}`,
           status: 400,
-          error: e,
+          error,
         });
       }
     }
