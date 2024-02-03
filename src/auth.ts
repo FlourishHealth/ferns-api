@@ -129,7 +129,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         try {
           done(undefined, await signupUser(userModel, email, password, req.body));
         } catch (error) {
-          return done(e);
+          return done(error);
         }
       }
     )
@@ -181,8 +181,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         try {
           user = await userModel.findById(jwtPayload.id);
         } catch (error) {
-          logger.warn(`[jwt] Error finding user from id: ${e}`);
-          return done(e, false);
+          logger.warn(`[jwt] Error finding user from id: ${error}`);
+          return done(error, false);
         }
         if (user) {
           return done(null, user);
@@ -228,7 +228,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       try {
         req.user = await userModel.findById(decoded.id);
       } catch (error) {
-        logger.warn(`[jwt] Error finding user from id: ${e}`);
+        logger.warn(`[jwt] Error finding user from id: ${error}`);
       }
     }
     return next();
@@ -269,9 +269,9 @@ export function addAuthRoutes(app: express.Application, userModel: UserModel): v
     let decoded;
     try {
       decoded = jwt.verify(req.body.refreshToken, refreshTokenSecretOrKey) as JwtPayload;
-    } catch (error) {
-      logger.error(`Error refreshing token: ${e}`);
-      return res.status(401).json({message: e?.message});
+    } catch (error: any) {
+      logger.error(`Error refreshing token: ${error}`);
+      return res.status(401).json({message: error?.message});
     }
     if (decoded && decoded.id) {
       const user = await userModel.findById(decoded.id);
@@ -333,7 +333,7 @@ export function addAuthRoutes(app: express.Application, userModel: UserModel): v
       (dataObject as any).id = doc._id;
       return res.json({data: dataObject});
     } catch (error) {
-      return res.status(403).send({message: (e as any).message});
+      return res.status(403).send({message: (error as any).message});
     }
   });
 

@@ -197,7 +197,7 @@ export async function setupDb() {
 
     return [admin, notAdmin, adminOther];
   } catch (error) {
-    console.error("Error setting up DB", e);
-    throw e;
+    console.error("Error setting up DB", error);
+    throw error;
   }
 }

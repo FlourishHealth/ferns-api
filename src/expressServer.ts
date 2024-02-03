@@ -311,8 +311,8 @@ export function setupServer(options: SetupServerOptions) {
       ignoreTraces: options.ignoreTraces,
     });
   } catch (error) {
-    logger.error(`Error initializing routes: ${e}`);
-    throw e;
+    logger.error(`Error initializing routes: ${error}`);
+    throw error;
   }
 
   if (!options.skipListen) {
@@ -322,7 +322,7 @@ export function setupServer(options: SetupServerOptions) {
         logger.info(`Listening at on port ${port}`);
       });
     } catch (error) {
-      logger.error(`Error trying to start HTTP server: ${err}\n${(err as any).stack}`);
+      logger.error(`Error trying to start HTTP server: ${error}\n${(error as any).stack}`);
       process.exit(1);
     }
   }
@@ -344,7 +344,7 @@ export function cronjob(
   try {
     new cron.CronJob(schedule, callback, null, true, "America/Chicago");
   } catch (error) {
-    throw new Error(`Failed to create cronjob: ${e}`);
+    throw new Error(`Failed to create cronjob: ${error}`);
   }
 }
 
@@ -364,8 +364,8 @@ export async function sendToSlack(text: string, slackChannel?: string) {
     await axios.post(slackWebhookUrl, {
       text,
     });
-  } catch (error) {
-    logger.error(`Error posting to slack: ${e.text}`);
+  } catch (error: any) {
+    logger.error(`Error posting to slack: ${error.text ?? error.message}`);
   }
 }
 
@@ -407,9 +407,9 @@ export async function wrapScript(func: () => Promise<any>, options: WrapScriptOp
       await options.onFinish(result);
     }
   } catch (error) {
-    Sentry.captureException(e);
-    logger.error(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
-    await sendToSlack(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
+    Sentry.captureException(error);
+    logger.error(`Error running script ${name}: ${error}\n${(error as Error).stack}`);
+    await sendToSlack(`Error running script ${name}: ${error}\n${(error as Error).stack}`);
     await Sentry.flush();
     process.exit(1);
   }
