@@ -51,9 +51,9 @@ export type PopulatePaths = string[] | ((req: Request) => string[]);
  */
 export interface FernsRouterOptions<T> {
   /**
-   * A group of method-level (create/read/update/delete/list) permissions. Determine if the user can perform the
-   * operation at all, and for read/update/delete methods, whether the user can perform the operation on the object
-   * referenced.
+   * A group of method-level (create/read/update/delete/list) permissions.
+   * Determine if the user can perform the operation at all, and for read/update/delete methods,
+   * whether the user can perform the operation on the object referenced.
    * */
   permissions: RESTPermissions<T>;
   /**
@@ -61,7 +61,9 @@ export interface FernsRouterOptions<T> {
    * Defaults to false.
    */
   allowAnonymous?: boolean;
-  /** A list of fields on the model that can be queried using standard comparisons for booleans, strings, dates
+  /**
+   * A list of fields on the model that can be queried using standard comparisons for booleans,
+   * strings, dates
    *    (as ISOStrings), and numbers.
    * For example:
    *  ?foo=true // boolean query
@@ -70,17 +72,22 @@ export interface FernsRouterOptions<T> {
    *  ?foo=2022-07-23T02:34:07.118Z // date query (should first be encoded for query params, not shown here)
    * Note: `limit` and `page` are automatically supported and are reserved. */
   queryFields?: string[];
-  /** queryFilter is a function to parse the query params and see if the query should be allowed. This can be used for
-   * permissioning to make sure less privileged users are not making privileged queries. If a query should not be
-   * allowed, return `null` from the function and an empty query result will be returned to the client without an error.
-   * You can also throw an APIError to be explicit about the issues. You can transform the given query params by
-   * returning different values. If the query is acceptable as-is, return `query` as-is. */
+  /**
+   * queryFilter is a function to parse the query params and see if the query should be allowed.
+   * This can be used for permissioning to make sure less privileged users are not making
+   * privileged queries. If a query should not be allowed,
+   * return `null` from the function and an empty query result will be returned to the client
+   * without an error. You can also throw an APIError to be explicit about the issues.
+   * You can transform the given query params by returning different values.
+   * If the query is acceptable as-is, return `query` as-is.
+   */
   queryFilter?: (
     user?: User,
     query?: Record<string, any>
   ) => Record<string, any> | null | Promise<Record<string, any> | null>;
-  /** Transformers allow data to be transformed before actions are executed, and serialized before being returned to
-   * the user.
+  /**
+   * Transformers allow data to be transformed before actions are executed,
+   * and serialized before being returned to the user.
    *
    * Transformers can be used to throw out fields that the user should not be able to write to, such as the `admin` flag.
    * Serializers can be used to hide data from the client or change how it is presented. Serializers run after the data
@@ -98,60 +105,75 @@ export interface FernsRouterOptions<T> {
    * Note: you should have an index field on these fields or Mongo may slow down considerably.
    * */
   sort?: string | {[key: string]: "ascending" | "descending"};
-  /** Default queries to provide to Mongo before any user queries or transforms happen when making list queries.
-   * Accepts any Mongoose-style queries, and runs for all user types.
+  /**
+   * Default queries to provide to Mongo before any user queries or transforms happen when making
+   * list queries. Accepts any Mongoose-style queries, and runs for all user types.
    *    defaultQueryParams: \{hidden: false\} // By default, don't show objects with hidden=true
    * These can be overridden by the user if not disallowed by queryFilter. */
   defaultQueryParams?: {[key: string]: any};
-  /** Paths to populate before returning data from list queries. Accepts Mongoose-style populate strings.
-   *  May also be a function that takes the request and returns a list of paths to populate. This is handy if you need
-   *  to populate based on the user or request, such as app version.
+  /**
+   * Paths to populate before returning data from list queries. Accepts Mongoose-style populate
+   * strings.
+   *  May also be a function that takes the request and returns a list of paths to populate.
+   *  This is handy if you need to populate based on the user or request, such as app version.
    *    ["ownerId"] // populates the User that matches `ownerId`
    *    ["ownerId.organizationId"] // Nested. Populates the User that matches `ownerId`, as well as their organization.
    *
-   *  Note: The array of strings style will be correctly handled by OpenAPI, but the function style will not currently.
+   *  Note: The array of strings style will be correctly handled by OpenAPI,
+   *  but the function style will not currently.
    * */
   populatePaths?: PopulatePaths;
   /** Default limit applied to list queries if not specified by the user. Defaults to 100. */
   defaultLimit?: number;
-  /** Maximum query limit the user can request. Defaults to 500, and is the lowest of the limit query, max limit,
+  /**
+   * Maximum query limit the user can request. Defaults to 500, and is the lowest of the limit
+   * query, max limit,
    *  or 500. */
   maxLimit?: number; // defaults to 500
   /** */
   endpoints?: (router: any) => void;
-  /** Hook that runs after `transformer.transform` but before the object is created. Can update the body fields based on
-   * the request or the user.
-   * Return null to return a generic 403
-   * error. Throw an APIError to return a 400 with specific error information. */
+  /**
+   * Hook that runs after `transformer.transform` but before the object is created.
+   * Can update the body fields based on the request or the user.
+   * Return null to return a generic 403 error. Throw an APIError to return a 400 with specific
+   * error information.
+   */
   preCreate?: (value: any, request: express.Request) => T | Promise<T> | null;
-  /** Hook that runs after `transformer.transform` but before changes are made for update operations. Can update the
-   * body fields based on the request or the user. Also applies to all array operations.
-   * Return null to return a generic 403
-   * error. Throw an APIError to return a 400 with specific error information. */
+  /**
+   * Hook that runs after `transformer.transform` but before changes are made for update
+   * operations. Can update the body fields based on the request or the user.
+   * Also applies to all array operations. Return null to return a generic 403 error.
+   * Throw an APIError to return a 400 with specific error information.
+   */
   preUpdate?: (value: any, request: express.Request) => T | Promise<T> | null;
   /** Hook that runs after `transformer.transform` but before the object is delete.
    * Return null to return a generic 403
    * error. Throw an APIError to return a 400 with specific error information. */
   preDelete?: (value: any, request: express.Request) => T | Promise<T> | null;
-  /** Hook that runs after the object is created but before the responseHandler serializes and returned. This is a good
-   * spot to perform dependent changes to other models or performing async tasks/side effects, such as sending a push
-   * notification.
-   * Throw an APIError to return a 400 with an error message. */
+  /**
+   * Hook that runs after the object is created but before the responseHandler serializes and
+   * returned. This is a good spot to perform dependent changes to other models or performing async
+   * tasks/side effects, such as sending a push notification.
+   * Throw an APIError to return a 400 with an error message.
+   */
   postCreate?: (value: T, request: express.Request) => void | Promise<void>;
-  /** Hook that runs after the object is updated but before the responseHandler serializes and returned. This is a good
-   * spot to perform dependent changes to other models or performing async tasks/side effects, such as sending a push
-   * notification.
-   * Throw an APIError to return a 400 with an error message. */
+  /**
+   * Hook that runs after the object is updated but before the responseHandler serializes and
+   * returned. This is a good spot to perform dependent changes to other models or performing async
+   * tasks/side effects, such as sending a push notification.
+   * Throw an APIError to return a 400 with an error message.
+   */
   postUpdate?: (
     value: T,
     cleanedBody: any,
     request: express.Request,
     prevValue: T
   ) => void | Promise<void>;
-  /** Hook that runs after the object is deleted. This is a good spot to
-   * perform dependent changes to other models or performing async tasks/side effects, such as cascading object
-   * deletions.
-   * Throw an APIError to return a 400 with an error message. */
+  /**
+   * Hook that runs after the object is deleted. This is a good spot to perform dependent changes
+   * to other models or performing async tasks/side effects, such as cascading object deletions.
+   * Throw an APIError to return a 400 with an error message.
+   */
   postDelete?: (request: express.Request, value: T) => void | Promise<void>;
   /** Hook that runs after the object is fetched but before it is serialized.
    * Returns a promise so that asynchronous actions can be included in the function.
@@ -168,9 +190,10 @@ export interface FernsRouterOptions<T> {
     value: (Document<any, any, any> & T)[],
     request: express.Request
   ) => Promise<(Document<any, any, any> & T)[]>;
-  /** Serialize an object or list of objects before returning to the client. This is a good spot to remove sensitive
-   * information from the object, such as passwords or API keys.
-   * Throw an APIError to return a 400 with an error message.
+  /**
+   * Serialize an object or list of objects before returning to the client.
+   * This is a good spot to remove sensitive information from the object, such as passwords or API
+   * keys. Throw an APIError to return a 400 with an error message.
    */
   responseHandler?: (
     value: (Document<any, any, any> & T) | (Document<any, any, any> & T)[],
@@ -178,9 +201,10 @@ export interface FernsRouterOptions<T> {
     request: express.Request,
     options: FernsRouterOptions<T>
   ) => Promise<JSONValue | null>;
-  /** The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
-   * https://mongoosejs.com/docs/discriminators.html
-   * If this key is provided, you must provide the same key as part of the top level of the body when making performing
+  /**
+   * The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
+   * https://mongoosejs.com/docs/discriminators.html If this key is provided,
+   * you must provide the same key as part of the top level of the body when making performing
    * update or delete operations on this model.
    *    \{discriminatorKey: "__t"\}
    *
@@ -192,8 +216,8 @@ export interface FernsRouterOptions<T> {
    */
   openApi?: any;
   /**
-   * Overwrite parts of the configuration for the OpenAPI generator. This will be merged with the generated
-   * configuration.
+   * Overwrite parts of the configuration for the OpenAPI generator.
+   * This will be merged with the generated configuration.
    */
   openApiOverwrite?: {
     get?: any;
@@ -203,14 +227,16 @@ export interface FernsRouterOptions<T> {
     delete?: any;
   };
   /**
-   * Overwrite parts of the model properties for the OpenAPI generator. This will be merged with the generated
-   * configuration. This is useful if you add custom properties to the model during serialize, for example, that you
-   * want to be documented and typed in the SDK.
+   * Overwrite parts of the model properties for the OpenAPI generator.
+   * This will be merged with the generated configuration.
+   * This is useful if you add custom properties to the model during serialize, for example,
+   * that you want to be documented and typed in the SDK.
    */
   openApiExtraModelProperties?: any;
 }
 
-// A function to decide which model to use. If no discriminators are provided, just returns the base model. If
+// A function to decide which model to use. If no discriminators are provided,
+// just returns the base model. If
 function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOptions<any>) {
   const discriminatorKey = options?.discriminatorKey ?? "__t";
   const modelName = (body ?? {})[discriminatorKey];
@@ -238,7 +264,7 @@ function populate(
   if (isFunction(populatePaths)) {
     try {
       paths = populatePaths(req);
-    } catch (e: any) {
+    } catch (error) {
       throw new APIError({status: 500, title: `Error in populatePaths function: ${e}`, error: e});
     }
   } else {
@@ -257,8 +283,8 @@ function checkQueryParamAllowed(
   queryParamValue: any,
   queryFields: string[] = []
 ) {
-  // Check the values of each of the complex query params. We don't support recursive queries here, just one level of
-  // and/or
+  // Check the values of each of the complex query params. We don't support recursive queries here,
+  // just one level of and/or
   if (COMPLEX_QUERY_PARAMS.includes(queryParam)) {
     // Complex query of the form `$and: [{key1: value1}, {key2: value2}]`
     for (const subQuery of queryParamValue) {
@@ -310,7 +336,7 @@ export function fernsRouter<T>(
       let body: Partial<T> | (Partial<T> | undefined)[] | null | undefined;
       try {
         body = transform<T>(options, req.body, "create", req.user);
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           status: 400,
           title: e.message,
@@ -320,7 +346,7 @@ export function fernsRouter<T>(
       if (options.preCreate) {
         try {
           body = await options.preCreate(body, req);
-        } catch (e: any) {
+        } catch (error) {
           if (isAPIError(e)) {
             throw e;
           } else {
@@ -347,7 +373,7 @@ export function fernsRouter<T>(
       let data;
       try {
         data = await model.create(body);
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           status: 400,
           title: e.message,
@@ -360,7 +386,7 @@ export function fernsRouter<T>(
           let populateQuery = model.findById(data._id);
           populateQuery = populate(req, populateQuery, options.populatePaths);
           data = await populateQuery.exec();
-        } catch (e: any) {
+        } catch (error) {
           throw new APIError({
             status: 400,
             title: `Populate error: ${e.message}`,
@@ -372,7 +398,7 @@ export function fernsRouter<T>(
       if (options.postCreate) {
         try {
           await options.postCreate(data, req);
-        } catch (e: any) {
+        } catch (error) {
           throw new APIError({
             status: 400,
             title: `postCreate hook error: ${e.message}`,
@@ -383,7 +409,7 @@ export function fernsRouter<T>(
       try {
         const serialized = await responseHandler(data, "create", req, options);
         return res.status(201).json({data: serialized});
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `responseHandler error: ${e.message}`,
           error: e,
@@ -442,7 +468,7 @@ export function fernsRouter<T>(
         let queryFilter;
         try {
           queryFilter = await options.queryFilter(req.user, query);
-        } catch (e: any) {
+        } catch (error) {
           throw new APIError({
             status: 400,
             title: `Query filter error: ${e}`,
@@ -464,7 +490,8 @@ export function fernsRouter<T>(
       }
 
       if (query.period) {
-        // need to remove 'period' since it isn't part of any schemas but parsed and applied in queryFilter instead
+        // need to remove 'period' since it isn't part of any schemas but parsed and applied in
+        // queryFilter instead
         delete query.period;
       }
 
@@ -492,7 +519,7 @@ export function fernsRouter<T>(
       let data: (Document<any, any, any> & T)[];
       try {
         data = await populatedQuery.exec();
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `List error: ${e.stack}`,
           error: e,
@@ -502,7 +529,7 @@ export function fernsRouter<T>(
       if (options.postList) {
         try {
           data = await options.postList(data, req);
-        } catch (e: any) {
+        } catch (error) {
           throw new APIError({
             status: 400,
             title: `postList hook error on ${req.params.id}: ${e.message}`,
@@ -518,7 +545,7 @@ export function fernsRouter<T>(
 
       try {
         serialized = await responseHandler(data, "list", req, options);
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `responseHandler error: ${e.message}`,
           error: e,
@@ -537,7 +564,7 @@ export function fernsRouter<T>(
         } else {
           return res.json({data: serialized});
         }
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `Serialization error: ${e.message}`,
           error: e,
@@ -566,7 +593,7 @@ export function fernsRouter<T>(
       let data;
       try {
         data = await populatedQuery.exec();
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `GET failed on ${req.params.id}`,
           error: e,
@@ -589,7 +616,7 @@ export function fernsRouter<T>(
       if (options.postGet) {
         try {
           data = await options.postGet(data, req);
-        } catch (e: any) {
+        } catch (error) {
           throw new APIError({
             status: 400,
             title: `postGet hook error on ${req.params.id}: ${e.message}`,
@@ -601,7 +628,7 @@ export function fernsRouter<T>(
       try {
         const serialized = await responseHandler(data, "read", req, options);
         return res.json({data: serialized});
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `responseHandler error: ${e.message}`,
           error: e,
@@ -635,7 +662,8 @@ export function fernsRouter<T>(
       }
 
       let doc = await model.findById(req.params.id);
-      // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+      // We fail here because we might fetch the document without the __t but we'd be missing all
+      // the hooks.
       if (!doc || (doc.__t && !req.body.__t)) {
         throw new APIError({
           status: 404,
@@ -653,7 +681,7 @@ export function fernsRouter<T>(
       let body;
       try {
         body = transform<T>(options, req.body, "update", req.user);
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           status: 403,
           title: `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${e.message}`,
@@ -664,7 +692,7 @@ export function fernsRouter<T>(
       if (options.preUpdate) {
         try {
           body = await options.preUpdate(body, req);
-        } catch (e: any) {
+        } catch (error) {
           if (isAPIError(e)) {
             throw e;
           } else {
@@ -692,12 +720,12 @@ export function fernsRouter<T>(
       // Make a copy for passing pre-saved values to hooks.
       const prevDoc = cloneDeep(doc);
 
-      // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
-      // wind up with corrupted data, just an API error.
+      // Using .save here runs the risk of a versioning error if you try to make two simultaneous
+      // updates. We won't wind up with corrupted data, just an API error.
       try {
         Object.assign(doc, body);
         await doc.save();
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           status: 400,
           title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
@@ -714,7 +742,7 @@ export function fernsRouter<T>(
       if (options.postUpdate) {
         try {
           await options.postUpdate(doc, body, req, prevDoc);
-        } catch (e: any) {
+        } catch (error) {
           throw new APIError({
             status: 400,
             title: `postUpdate hook error on ${req.params.id}: ${e.message}`,
@@ -726,7 +754,7 @@ export function fernsRouter<T>(
       try {
         const serialized = await responseHandler(doc, "update", req, options);
         return res.json({data: serialized});
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `responseHandler error: ${e.message}`,
           error: e,
@@ -749,7 +777,8 @@ export function fernsRouter<T>(
 
       const doc = await model.findById(req.params.id);
 
-      // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+      // We fail here because we might fetch the document without the __t but we'd be missing all
+      // the hooks.
       if (!doc || (doc.__t && !req.body.__t)) {
         throw new APIError({
           status: 404,
@@ -768,7 +797,7 @@ export function fernsRouter<T>(
         let body;
         try {
           body = await options.preDelete(doc, req);
-        } catch (e: any) {
+        } catch (error) {
           if (isAPIError(e)) {
             throw e;
           } else {
@@ -805,7 +834,7 @@ export function fernsRouter<T>(
         // For models without the isDeleted plugin
         try {
           await doc.deleteOne();
-        } catch (e: any) {
+        } catch (error) {
           throw new APIError({
             status: 400,
             title: e.message,
@@ -817,7 +846,7 @@ export function fernsRouter<T>(
       if (options.postDelete) {
         try {
           await options.postDelete(req, doc);
-        } catch (e: any) {
+        } catch (error) {
           throw new APIError({
             status: 400,
             title: `postDelete hook error: ${e.message}`,
@@ -846,7 +875,8 @@ export function fernsRouter<T>(
     }
 
     const doc = await model.findById(req.params.id);
-    // We fail here because we might fetch the document without the __t but we'd be missing all the hooks.
+    // We fail here because we might fetch the document without the __t but we'd be missing all the
+    // hooks.
     if (!doc || (doc.__t && !req.body.__t)) {
       throw new APIError({
         title: `Could not find document to PATCH: ${req.params.id}`,
@@ -906,7 +936,7 @@ export function fernsRouter<T>(
 
     try {
       body = transform<T>(options, body, "update", req.user) as Partial<T>;
-    } catch (e: any) {
+    } catch (error) {
       throw new APIError({
         title: e.message,
         status: 403,
@@ -917,7 +947,7 @@ export function fernsRouter<T>(
     if (options.preUpdate) {
       try {
         body = await options.preUpdate(body, req);
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `preUpdate hook error on ${req.params.id}: ${e.message}`,
           status: 400,
@@ -942,12 +972,12 @@ export function fernsRouter<T>(
     // Make a copy for passing pre-saved values to hooks.
     const prevDoc = cloneDeep(doc);
 
-    // Using .save here runs the risk of a versioning error if you try to make two simultaneous updates. We won't
-    // wind up with corrupted data, just an API error.
+    // Using .save here runs the risk of a versioning error if you try to make two simultaneous
+    // updates. We won't wind up with corrupted data, just an API error.
     try {
       Object.assign(doc, body);
       await doc.save();
-    } catch (e: any) {
+    } catch (error) {
       throw new APIError({
         title: `PATCH Pre Update error on ${req.params.id}: ${e.message}`,
         status: 400,
@@ -958,7 +988,7 @@ export function fernsRouter<T>(
     if (options.postUpdate) {
       try {
         await options.postUpdate(doc, body, req, prevDoc);
-      } catch (e: any) {
+      } catch (error) {
         throw new APIError({
           title: `PATCH Post Update error on ${req.params.id}: ${e.message}`,
           status: 400,

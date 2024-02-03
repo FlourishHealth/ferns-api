@@ -6,12 +6,12 @@ import {Schema} from "mongoose";
 import {logger} from "./logger";
 
 export interface APIErrorConstructor {
-  // Required. A short, human-readable summary of the problem that SHOULD NOT change from occurrence to occurrence of
-  // the problem, except for purposes of localization.
+  // Required. A short, human-readable summary of the problem that SHOULD NOT change from
+  // occurrence to occurrence of the problem, except for purposes of localization.
   title: string;
 
-  // error messages to be displayed by a field in a form.
-  // this isn't in the JSONAPI spec. It will be folded into `meta` as `meta.fields` in the actual error payload.
+  // error messages to be displayed by a field in a form. this isn't in the JSONAPI spec.
+  // It will be folded into `meta` as `meta.fields` in the actual error payload.
   // This is helpful to add it to the TS interface for ApiError.
   fields?: {[id: string]: string};
 
@@ -24,14 +24,16 @@ export interface APIErrorConstructor {
   // An application-specific error code, expressed as a string value.
   code?: string;
 
-  // A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be
-  // localized.
+  // A human-readable explanation specific to this occurrence of the problem. Like title,
+  // this field’s value can be localized.
   detail?: string;
-  // An object containing references to the source of the error, optionally including any of the following members:
+  // An object containing references to the source of the error,
+  // optionally including any of the following members:
   source?: {
-    // pointer: a JSON Pointer [RFC6901] to the value in the request document that caused the error [e.g. "/data"
-    // for a primary data object, or "/data/attributes/title" for a specific attribute]. This MUST point to a value
-    // in the request document that exists; if it doesn’t, the client SHOULD simply ignore the pointer.
+    // pointer: a JSON Pointer [RFC6901] to the value in the request document that caused the error
+    // [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific
+    // attribute]. This MUST point to a value in the request document that exists; if it doesn’t,
+    // the client SHOULD simply ignore the pointer.
     pointer?: string;
     // a string indicating which URI query parameter caused the error.
     parameter?: string;
@@ -46,8 +48,9 @@ export interface APIErrorConstructor {
 }
 
 /**
- * APIError is a simple way to throw an error in an API route and control what is shown and the HTTP code displayed.
- * It follows the JSONAPI spec to standardize the fields, allowing the UI to show more consistent, better error messages.
+ * APIError is a simple way to throw an error in an API route and control what is shown and the
+ * HTTP code displayed. It follows the JSONAPI spec to standardize the fields,
+ * allowing the UI to show more consistent, better error messages.
  *
  * ```ts
  *  throw new APIError({
@@ -140,7 +143,8 @@ export const ErrorSchema = new Schema({
   meta: Schema.Types.Mixed,
 });
 
-// Create an errors field for storing error information in a JSONAPI compatible form directly on a model.
+// Create an errors field for storing error information in a JSONAPI compatible form directly on a
+// model.
 export function errorsPlugin(schema: Schema): void {
   schema.add({apiErrors: [ErrorSchema]});
 }
@@ -149,8 +153,8 @@ export function isAPIError(error: Error): error is APIError {
   return error.name === "APIError";
 }
 
-// Creates an APIError body to send to clients as JSON. Errors don't have a toJSON defined, and we want to strip out
-// things like message, name, and stack for the client.
+// Creates an APIError body to send to clients as JSON. Errors don't have a toJSON defined,
+// and we want to strip out things like message, name, and stack for the client.
 // There is almost certainly a more elegant solution to this.
 export function getAPIErrorBody(error: APIError): {[id: string]: any} {
   const errorData = {status: error.status, title: error.title};

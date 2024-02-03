@@ -196,7 +196,7 @@ export async function setupDb() {
     await adminOther.save();
 
     return [admin, notAdmin, adminOther];
-  } catch (e) {
+  } catch (error) {
     console.error("Error setting up DB", e);
     throw e;
   }
