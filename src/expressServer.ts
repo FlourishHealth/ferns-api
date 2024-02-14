@@ -12,7 +12,7 @@ import qs from "qs";
 
 import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
-import {apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
+import {APIError, apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
@@ -343,7 +343,7 @@ export function cronjob(
 }
 
 // Convenience method to send data to a Slack webhook.
-export async function sendToSlack(text: string, slackChannel?: string) {
+export async function sendToSlack(text: string, slackChannel?: string, shouldThrow = false) {
   // since Slack now requires a webhook for each channel, we need to store them in the environment
   // as an object, so we can look them up by channel name.
   const slackWebhooksString = process.env.SLACK_WEBHOOKS;
@@ -360,6 +360,12 @@ export async function sendToSlack(text: string, slackChannel?: string) {
     });
   } catch (error: any) {
     logger.error(`Error posting to slack: ${error.text ?? error.message}`);
+    if (shouldThrow) {
+      throw new APIError({
+        status: 500,
+        title: `Error posting to slack: ${error.text ?? error.message}`,
+      });
+    }
   }
 }
 
