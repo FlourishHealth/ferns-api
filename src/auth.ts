@@ -7,6 +7,7 @@ import {JwtFromRequestFunction, Strategy as JwtStrategy, StrategyOptions} from "
 import {Strategy as LocalStrategy} from "passport-local";
 
 import {APIError, apiErrorMiddleware} from "./errors";
+import {AuthOptions} from "./expressServer";
 import {logger} from "./logger";
 import {UserModel} from "./tests";
 
@@ -87,7 +88,7 @@ const getTokenOptions = () => {
   return tokenOptions;
 };
 
-const generateTokens = async (user: any) => {
+const generateTokens = async (user: any, authOptions?: AuthOptions) => {
   const tokenSecretOrKey = process.env.TOKEN_SECRET;
   if (!tokenSecretOrKey) {
     throw new Error(`TOKEN_SECRET must be set in env.`);
@@ -96,7 +97,12 @@ const generateTokens = async (user: any) => {
     logger.warn("No user found for token generation");
     return {token: null, refreshToken: null};
   }
-  const token = jwt.sign({id: user._id.toString()}, tokenSecretOrKey, getTokenOptions());
+  let payload: Record<string, any> = {id: user._id.toString()};
+  if (authOptions?.generateJWTPayload) {
+    payload = {...payload, ...authOptions.generateJWTPayload(user)};
+  }
+
+  const token = jwt.sign(payload, tokenSecretOrKey, getTokenOptions());
   const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
   let refreshToken;
   if (refreshTokenSecretOrKey) {
@@ -106,11 +112,7 @@ const generateTokens = async (user: any) => {
     if (process.env.REFRESH_TOKEN_EXPIRES_IN) {
       refreshTokenOptions.expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN;
     }
-    refreshToken = jwt.sign(
-      {id: user._id.toString()},
-      refreshTokenSecretOrKey,
-      refreshTokenOptions
-    );
+    refreshToken = jwt.sign(payload, refreshTokenSecretOrKey, refreshTokenOptions);
   } else {
     logger.info("REFRESH_TOKEN_SECRET not set so refresh tokens will not be issued");
   }
@@ -205,8 +207,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   }
 
   // Adds req.user to the request. This may wind up duplicating requests with passport,
-  // but passport doesn't give us req.user early enough. TODO:
-  // move info required for good logging (admin/testUser/type) into the JWT token.
+  // but passport doesn't give us req.user early enough.
   async function decodeJWTMiddleware(req, res, next) {
     if (!process.env.TOKEN_SECRET) {
       return next();
@@ -231,6 +232,10 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     if (decoded.id) {
       try {
         req.user = await userModel.findById(decoded.id);
+        if (req.user?.disabled) {
+          logger.warn(`User ${req.user.id} is disabled`);
+          return res.status(401).json({status: 401, title: "User is disabled"});
+        }
       } catch (error) {
         logger.warn(`[jwt] Error finding user from id: ${error}`);
       }
@@ -241,7 +246,11 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   app.use(express.urlencoded({extended: false}) as any);
 }
 
-export function addAuthRoutes(app: express.Application, userModel: UserModel): void {
+export function addAuthRoutes(
+  app: express.Application,
+  userModel: UserModel,
+  authOptions?: AuthOptions
+): void {
   const router = express.Router();
   router.post("/login", async function (req, res, next) {
     passport.authenticate("local", {session: true}, async (err: any, user: any, info: any) => {
@@ -253,7 +262,7 @@ export function addAuthRoutes(app: express.Application, userModel: UserModel): v
         logger.warn(`Invalid login: ${info}`);
         return res.status(401).json({message: info?.message});
       }
-      const tokens = await generateTokens(user);
+      const tokens = await generateTokens(user, authOptions);
       return res.json({
         data: {userId: user?._id, token: tokens.token, refreshToken: tokens.refreshToken},
       });

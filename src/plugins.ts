@@ -19,7 +19,16 @@ export interface IsDeleted {
 }
 
 export function isDeletedPlugin(schema: Schema<any, any, any, any>, defaultValue = false) {
-  schema.add({deleted: {type: Boolean, default: defaultValue, index: true}});
+  schema.add({
+    deleted: {
+      type: Boolean,
+      default: defaultValue,
+      index: true,
+      description:
+        "Deleted objects are not returned in any find() or findOne() by default. " +
+        "Add {deleted: true} to find them.",
+    },
+  });
   function applyDeleteFilter(q: Query<any, any>) {
     const query = q.getQuery();
     if (query && query.deleted === undefined) {
@@ -31,6 +40,17 @@ export function isDeletedPlugin(schema: Schema<any, any, any, any>, defaultValue
   });
   schema.pre("findOne", function () {
     applyDeleteFilter(this);
+  });
+}
+
+export function isDisabledPlugin(schema: Schema<any, any, any, any>, defaultValue = false) {
+  schema.add({
+    disabled: {
+      type: Boolean,
+      default: defaultValue,
+      index: true,
+      description: "When a user is set to disable, all requests will return a 401",
+    },
   });
 }
 
