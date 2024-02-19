@@ -99,7 +99,7 @@ const generateTokens = async (user: any, authOptions?: AuthOptions) => {
   }
   let payload: Record<string, any> = {id: user._id.toString()};
   if (authOptions?.generateJWTPayload) {
-    payload = {...payload, ...authOptions.generateJWTPayload(user)};
+    payload = {...authOptions.generateJWTPayload(user), ...payload};
   }
 
   const token = jwt.sign(payload, tokenSecretOrKey, getTokenOptions());
