@@ -113,6 +113,11 @@ exports[`openApi gets the openapi.json 1`] = `
                                   "format": "date-time",
                                   "type": "string",
                                 },
+                                "disabled": {
+                                  "default": false,
+                                  "description": "When a user is set to disable, all requests will return a 401",
+                                  "type": "boolean",
+                                },
                                 "email": {
                                   "type": "string",
                                 },
@@ -176,6 +181,11 @@ exports[`openApi gets the openapi.json 1`] = `
                               "created": {
                                 "format": "date-time",
                                 "type": "string",
+                              },
+                              "disabled": {
+                                "default": false,
+                                "description": "When a user is set to disable, all requests will return a 401",
+                                "type": "boolean",
                               },
                               "email": {
                                 "type": "string",
@@ -582,6 +592,11 @@ exports[`openApi gets the openapi.json 1`] = `
                           "format": "date-time",
                           "type": "string",
                         },
+                        "disabled": {
+                          "default": false,
+                          "description": "When a user is set to disable, all requests will return a 401",
+                          "type": "boolean",
+                        },
                         "email": {
                           "type": "string",
                         },
@@ -645,6 +660,11 @@ exports[`openApi gets the openapi.json 1`] = `
                       "created": {
                         "format": "date-time",
                         "type": "string",
+                      },
+                      "disabled": {
+                        "default": false,
+                        "description": "When a user is set to disable, all requests will return a 401",
+                        "type": "boolean",
                       },
                       "email": {
                         "type": "string",
@@ -757,6 +777,11 @@ exports[`openApi gets the openapi.json 1`] = `
                             "format": "date-time",
                             "type": "string",
                           },
+                          "disabled": {
+                            "default": false,
+                            "description": "When a user is set to disable, all requests will return a 401",
+                            "type": "boolean",
+                          },
                           "email": {
                             "type": "string",
                           },
@@ -820,6 +845,11 @@ exports[`openApi gets the openapi.json 1`] = `
                         "created": {
                           "format": "date-time",
                           "type": "string",
+                        },
+                        "disabled": {
+                          "default": false,
+                          "description": "When a user is set to disable, all requests will return a 401",
+                          "type": "boolean",
                         },
                         "email": {
                           "type": "string",
@@ -1509,6 +1539,11 @@ exports[`openApi gets the openapi.json 1`] = `
                             "format": "date-time",
                             "type": "string",
                           },
+                          "disabled": {
+                            "default": false,
+                            "description": "When a user is set to disable, all requests will return a 401",
+                            "type": "boolean",
+                          },
                           "email": {
                             "type": "string",
                           },
@@ -1572,6 +1607,11 @@ exports[`openApi gets the openapi.json 1`] = `
                         "created": {
                           "format": "date-time",
                           "type": "string",
+                        },
+                        "disabled": {
+                          "default": false,
+                          "description": "When a user is set to disable, all requests will return a 401",
+                          "type": "boolean",
                         },
                         "email": {
                           "type": "string",
@@ -1971,6 +2011,11 @@ exports[`openApi gets the openapi.json 1`] = `
                           "format": "date-time",
                           "type": "string",
                         },
+                        "disabled": {
+                          "default": false,
+                          "description": "When a user is set to disable, all requests will return a 401",
+                          "type": "boolean",
+                        },
                         "email": {
                           "type": "string",
                         },
@@ -2034,6 +2079,11 @@ exports[`openApi gets the openapi.json 1`] = `
                       "created": {
                         "format": "date-time",
                         "type": "string",
+                      },
+                      "disabled": {
+                        "default": false,
+                        "description": "When a user is set to disable, all requests will return a 401",
+                        "type": "boolean",
                       },
                       "email": {
                         "type": "string",
@@ -2146,6 +2196,11 @@ exports[`openApi gets the openapi.json 1`] = `
                             "format": "date-time",
                             "type": "string",
                           },
+                          "disabled": {
+                            "default": false,
+                            "description": "When a user is set to disable, all requests will return a 401",
+                            "type": "boolean",
+                          },
                           "email": {
                             "type": "string",
                           },
@@ -2209,6 +2264,11 @@ exports[`openApi gets the openapi.json 1`] = `
                         "created": {
                           "format": "date-time",
                           "type": "string",
+                        },
+                        "disabled": {
+                          "default": false,
+                          "description": "When a user is set to disable, all requests will return a 401",
+                          "type": "boolean",
                         },
                         "email": {
                           "type": "string",

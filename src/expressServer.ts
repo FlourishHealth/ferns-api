@@ -173,6 +173,10 @@ export function createRouterWithAuth(
   ]);
 }
 
+export interface AuthOptions {
+  generateJWTPayload?: (user: any) => Record<string, any>;
+}
+
 interface InitializeRoutesOptions {
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
@@ -183,6 +187,7 @@ interface InitializeRoutesOptions {
   logRequests?: boolean;
   ignoreTraces?: string[];
   loggingOptions?: LoggingOptions;
+  authOptions?: AuthOptions;
 }
 
 function initializeRoutes(
@@ -252,7 +257,7 @@ function initializeRoutes(
   app.use(oapi);
   app.use("/swagger", oapi.swaggerui);
 
-  addAuthRoutes(app as any, UserModel as any);
+  addAuthRoutes(app as any, UserModel as any, options?.authOptions);
 
   addRoutes(app, {openApi: oapi});
 
@@ -284,6 +289,7 @@ export interface SetupServerOptions {
   userModel: UserMongooseModel;
   addRoutes: AddRoutes;
   loggingOptions?: LoggingOptions;
+  authOptions?: AuthOptions;
   skipListen?: boolean;
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
@@ -303,6 +309,7 @@ export function setupServer(options: SetupServerOptions) {
       corsOrigin: options.corsOrigin,
       addMiddleware: options.addMiddleware,
       ignoreTraces: options.ignoreTraces,
+      authOptions: options.authOptions,
     });
   } catch (error) {
     logger.error(`Error initializing routes: ${error}`);

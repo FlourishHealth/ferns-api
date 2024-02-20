@@ -146,9 +146,9 @@ export interface FernsRouterOptions<T> {
    * Throw an APIError to return a 400 with specific error information.
    */
   preUpdate?: (value: any, request: express.Request) => T | Promise<T> | null;
-  /** Hook that runs after `transformer.transform` but before the object is delete.
-   * Return null to return a generic 403
-   * error. Throw an APIError to return a 400 with specific error information. */
+  /** Hook that runs after `transformer.transform` but before the object is deleted.
+   * Return null to return a generic 403 error.
+   * Throw an APIError to return a 400 with specific error information. */
   preDelete?: (value: any, request: express.Request) => T | Promise<T> | null;
   /**
    * Hook that runs after the object is created but before the responseHandler serializes and
