@@ -14,6 +14,10 @@ module.exports = {
   transformIgnorePatterns: [`/node_modules/(?!${esModules})`],
   testPathIgnorePatterns: ["<rootDir>/web", "<rootDir>/dist"],
   testLocationInResults: true,
+  reporters:[
+    "default",
+    "github-actions"
+  ]
   // moduleNameMapper: {
   //   "firebase-admin": "<rootDir>/__mocks__/firebaseMock.ts",
   // },
