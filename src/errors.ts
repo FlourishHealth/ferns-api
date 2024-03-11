@@ -90,7 +90,11 @@ export class APIError extends Error {
 
   constructor(data: APIErrorConstructor) {
     // Include details in when the error is printed to the console or sent to Sentry.
-    super(`${data.title}${data.detail ? `: ${data.detail}` : ""}`);
+    super(
+      `${data.title}${data.detail ? `: ${data.detail}` : ""}${
+        data.error ? `\n${data.error.stack}` : ""
+      }`
+    );
     this.name = "APIError";
 
     // eslint-disable-next-line prefer-const
