@@ -152,7 +152,7 @@ export function permissionMiddleware<T>(
         data = await populatedQuery.exec();
       } catch (error: any) {
         throw new APIError({
-          status: 500
+          status: 500,
           title: `GET failed on ${req.params.id}`,
           error,
         });
