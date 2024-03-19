@@ -1,6 +1,10 @@
 // Defaults closed
-import {RESTMethod} from "./api";
+import express, {NextFunction} from "express";
+import {Model} from "mongoose";
+
+import {FernsRouterOptions, getModel, populate, RESTMethod} from "./api";
 import {User} from "./auth";
+import {APIError} from "./errors";
 
 export type PermissionMethod<T> = (
   method: RESTMethod,
@@ -59,7 +63,8 @@ export const Permissions = {
     if (user?.admin) {
       return true;
     }
-    return user?.id && obj?.ownerId && String(obj?.ownerId) === String(user?.id);
+    const ownerId = obj?.ownerId?._id || obj?.ownerId;
+    return user?.id && ownerId && String(ownerId) === String(user?.id);
   },
   IsAdmin: (method: RESTMethod, user?: User) => {
     return Boolean(user?.admin);
@@ -88,4 +93,90 @@ export async function checkPermissions<T>(
     }
   }
   return anyTrue;
+}
+
+// Check the permissions for a given model and method. If the method is a read, update, or delete,
+// finds the relevant object, checks the permissions, and attaches the object to the request as
+// req.obj.
+export function permissionMiddleware<T>(
+  baseModel: Model<T>,
+  options: Pick<FernsRouterOptions<T>, "permissions" | "populatePaths" | "discriminatorKey">
+) {
+  return async (req: express.Request, res: express.Response, next: NextFunction) => {
+    if (req.method === "OPTIONS") {
+      return next();
+    }
+    try {
+      let method: "list" | "create" | "read" | "update" | "delete";
+
+      const reqMethod = req.method.toLowerCase();
+      if (reqMethod === "post") {
+        method = "create";
+      } else if (reqMethod === "get") {
+        if (req.params.id) {
+          method = "read";
+        } else {
+          method = "list";
+        }
+      } else if (reqMethod === "patch") {
+        method = "update";
+      } else if (reqMethod === "delete") {
+        method = "delete";
+      } else {
+        throw new APIError({
+          status: 405,
+          title: `Method ${req.method} not allowed`,
+        });
+      }
+
+      const model = getModel(baseModel, req.body, options);
+
+      // All methods check for permissions.
+      if (!(await checkPermissions(method, options.permissions[method], req.user))) {
+        throw new APIError({
+          status: 405,
+          title: `Access to ${method.toUpperCase()} on ${model.modelName} denied for ${req.user
+            ?.id}`,
+        });
+      }
+
+      if (method === "create" || method === "list") {
+        return next();
+      }
+
+      const builtQuery = model.findById(req.params.id);
+      const populatedQuery = populate(req, builtQuery as any, options.populatePaths);
+
+      let data;
+      try {
+        data = await populatedQuery.exec();
+      } catch (error: any) {
+        throw new APIError({
+          status: 500,
+          title: `GET failed on ${req.params.id}`,
+          error,
+        });
+      }
+      if (!data || (["update", "delete"].includes(method) && data?.__t && !req.body?.__t)) {
+        throw new APIError({
+          status: 404,
+          title: `Document ${req.params.id} not found for model ${model.modelName}`,
+        });
+      }
+
+      if (!(await checkPermissions(method, options.permissions[method], req.user, data))) {
+        throw new APIError({
+          status: 403,
+          title: `Access to GET on ${model.modelName}:${req.params.id} denied for ${req.user?.id}`,
+        });
+      }
+
+      (req as any).obj = data;
+
+      return next();
+    } catch (error) {
+      console.error(`Permissions error: ${error}`);
+      return next(error);
+    }
+  };
 }

@@ -17,7 +17,7 @@ import {
   listOpenApiMiddleware,
   patchOpenApiMiddleware,
 } from "./openApi";
-import {checkPermissions, RESTPermissions} from "./permissions";
+import {checkPermissions, permissionMiddleware, RESTPermissions} from "./permissions";
 import {defaultResponseHandler, FernsTransformer, serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
 
@@ -237,7 +237,7 @@ export interface FernsRouterOptions<T> {
 
 // A function to decide which model to use. If no discriminators are provided,
 // just returns the base model. If
-function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOptions<any>) {
+export function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOptions<any>) {
   const discriminatorKey = options?.discriminatorKey ?? "__t";
   const modelName = (body ?? {})[discriminatorKey];
   if (!modelName) {
@@ -253,7 +253,7 @@ function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOption
   }
 }
 
-function populate(
+export function populate(
   req: express.Request,
   builtQuery: mongoose.Query<any[], any, {}, any>,
   populatePaths?: PopulatePaths
@@ -342,15 +342,13 @@ export function fernsRouter<T>(
 
   router.post(
     "/",
-    [authenticateMiddleware(options.allowAnonymous), createOpenApiMiddleware(baseModel, options)],
+    [
+      authenticateMiddleware(options.allowAnonymous),
+      createOpenApiMiddleware(baseModel, options),
+      permissionMiddleware(baseModel, options),
+    ],
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body?.__t, options);
-      if (!(await checkPermissions("create", options.permissions.create, req.user))) {
-        throw new APIError({
-          status: 405,
-          title: `Access to POST on ${model.modelName} denied for ${req.user?.id}`,
-        });
-      }
 
       let body: Partial<T> | (Partial<T> | undefined)[] | null | undefined;
       try {
@@ -440,17 +438,14 @@ export function fernsRouter<T>(
   // TODO add rate limit
   router.get(
     "/",
-    [authenticateMiddleware(options.allowAnonymous), listOpenApiMiddleware(baseModel, options)],
+    [
+      authenticateMiddleware(options.allowAnonymous),
+      permissionMiddleware(baseModel, options),
+      listOpenApiMiddleware(baseModel, options),
+    ],
     asyncHandler(async (req: Request, res: Response) => {
       // For pure read queries, Mongoose will return the correct data with just the base model.
       const model = baseModel;
-
-      if (!(await checkPermissions("list", options.permissions.list, req.user))) {
-        throw new APIError({
-          status: 403,
-          title: `Access to LIST on ${model.modelName} denied for ${req.user?.id}`,
-        });
-      }
 
       let query: any = {};
       for (const queryParam of Object.keys(options.defaultQueryParams ?? [])) {
@@ -545,18 +540,6 @@ export function fernsRouter<T>(
         });
       }
 
-      if (options.postList) {
-        try {
-          data = await options.postList(data, req);
-        } catch (error: any) {
-          throw new APIError({
-            status: 400,
-            title: `postList hook error on ${req.params.id}: ${error.message}`,
-            error,
-          });
-        }
-      }
-
       // Uses metadata rather than counting the number of documents in the array for performance.
       const total = await model.estimatedDocumentCount();
 
@@ -594,55 +577,13 @@ export function fernsRouter<T>(
 
   router.get(
     "/:id",
-    [authenticateMiddleware(options.allowAnonymous), getOpenApiMiddleware(baseModel, options)],
+    [
+      authenticateMiddleware(options.allowAnonymous),
+      getOpenApiMiddleware(baseModel, options),
+      permissionMiddleware(baseModel, options),
+    ],
     asyncHandler(async (req: Request, res: Response) => {
-      // For pure read queries, Mongoose will return the correct data with just the base model.
-      const model = baseModel;
-
-      if (!(await checkPermissions("read", options.permissions.read, req.user))) {
-        throw new APIError({
-          status: 405,
-          title: `Access to GET on ${model.modelName} denied for ${req.user?.id}`,
-        });
-      }
-
-      const builtQuery = model.findById(req.params.id);
-      const populatedQuery = populate(req, builtQuery as any, options.populatePaths);
-
-      let data;
-      try {
-        data = await populatedQuery.exec();
-      } catch (error: any) {
-        throw new APIError({
-          title: `GET failed on ${req.params.id}`,
-          error,
-        });
-      }
-      if (!data) {
-        throw new APIError({
-          status: 404,
-          title: `Document ${req.params.id} not found for model ${model.modelName}`,
-        });
-      }
-
-      if (!(await checkPermissions("read", options.permissions.read, req.user, data))) {
-        throw new APIError({
-          status: 403,
-          title: `Access to GET on ${model.modelName}:${req.params.id} denied for ${req.user?.id}`,
-        });
-      }
-
-      if (options.postGet) {
-        try {
-          data = await options.postGet(data, req);
-        } catch (error: any) {
-          throw new APIError({
-            status: 400,
-            title: `postGet hook error on ${req.params.id}: ${error.message}`,
-            error,
-          });
-        }
-      }
+      const data: mongoose.Document & T = (req as any).obj;
 
       try {
         const serialized = await responseHandler(data, "read", req, options);
@@ -669,33 +610,15 @@ export function fernsRouter<T>(
 
   router.patch(
     "/:id",
-    [authenticateMiddleware(options.allowAnonymous), patchOpenApiMiddleware(baseModel, options)],
+    [
+      authenticateMiddleware(options.allowAnonymous),
+      patchOpenApiMiddleware(baseModel, options),
+      permissionMiddleware(baseModel, options),
+    ],
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body, options);
 
-      if (!(await checkPermissions("update", options.permissions.update, req.user))) {
-        throw new APIError({
-          status: 405,
-          title: `Access to PATCH on ${model.modelName} denied for ${req.user?.id}`,
-        });
-      }
-
-      let doc = await model.findById(req.params.id);
-      // We fail here because we might fetch the document without the __t but we'd be missing all
-      // the hooks.
-      if (!doc || (doc.__t && !req.body.__t)) {
-        throw new APIError({
-          status: 404,
-          title: `Could not find document to PATCH: ${req.params.id}`,
-        });
-      }
-
-      if (!(await checkPermissions("update", options.permissions.update, req.user, doc))) {
-        throw new APIError({
-          status: 403,
-          title: `PATCH not allowed for user ${req.user?.id} on doc ${doc._id}`,
-        });
-      }
+      let doc: mongoose.Document & T = (req as any).obj;
 
       let body;
 
@@ -789,33 +712,15 @@ export function fernsRouter<T>(
 
   router.delete(
     "/:id",
-    [authenticateMiddleware(options.allowAnonymous), deleteOpenApiMiddleware(baseModel, options)],
+    [
+      authenticateMiddleware(options.allowAnonymous),
+      deleteOpenApiMiddleware(baseModel, options),
+      permissionMiddleware(baseModel, options),
+    ],
     asyncHandler(async (req: Request, res: Response) => {
       const model = getModel(baseModel, req.body, options);
-      if (!(await checkPermissions("delete", options.permissions.delete, req.user))) {
-        throw new APIError({
-          status: 405,
-          title: `Access to DELETE on ${model.modelName} denied for ${req.user?.id}`,
-        });
-      }
 
-      const doc = await model.findById(req.params.id);
-
-      // We fail here because we might fetch the document without the __t but we'd be missing all
-      // the hooks.
-      if (!doc || (doc.__t && !req.body.__t)) {
-        throw new APIError({
-          status: 404,
-          title: `Could not find document to DELETE: ${req.user?.id}`,
-        });
-      }
-
-      if (!(await checkPermissions("delete", options.permissions.delete, req.user, doc))) {
-        throw new APIError({
-          status: 403,
-          title: `Access to DELETE on ${model.modelName}:${req.params.id} denied for ${req.user?.id}`,
-        });
-      }
+      const doc: mongoose.Document & T & {deleted?: boolean} = (req as any).obj;
 
       if (options.preDelete) {
         let body;
