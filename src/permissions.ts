@@ -134,7 +134,7 @@ export function permissionMiddleware<T>(
       // All methods check for permissions.
       if (!(await checkPermissions(method, options.permissions[method], req.user))) {
         throw new APIError({
-          status: 405,
+          status: 403,
           title: `Access to ${method.toUpperCase()} on ${model.modelName} denied for ${req.user
             ?.id}`,
         });
@@ -167,7 +167,9 @@ export function permissionMiddleware<T>(
       if (!(await checkPermissions(method, options.permissions[method], req.user, data))) {
         throw new APIError({
           status: 403,
-          title: `Access to GET on ${model.modelName}:${req.params.id} denied for ${req.user?.id}`,
+          title: `Access to ${method.toUpperCase()} on ${model.modelName}:${
+            req.params.id
+          } denied for ${req.user?.id}`,
         });
       }
 

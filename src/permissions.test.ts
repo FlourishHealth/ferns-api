@@ -87,7 +87,7 @@ describe("permissions", function () {
         name: "Broccoli",
         calories: 15,
       });
-      assert.equal(res.status, 405);
+      assert.equal(res.status, 403);
     });
 
     it("patch", async function () {
@@ -101,7 +101,7 @@ describe("permissions", function () {
     it("delete", async function () {
       const res = await server.get("/food");
       const res2 = await server.delete(`/food/${res.body.data[0]._id}`);
-      assert.equal(res2.status, 405);
+      assert.equal(res2.status, 403);
     });
   });
 
@@ -159,7 +159,7 @@ describe("permissions", function () {
     it("delete", async function () {
       const res = await agent.get("/food");
       const res2 = await agent.delete(`/food/${res.body.data[0]._id}`);
-      assert.equal(res2.status, 405);
+      assert.equal(res2.status, 403);
     });
   });
 
