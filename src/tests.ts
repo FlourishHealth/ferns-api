@@ -2,6 +2,7 @@ import express, {Express} from "express";
 import mongoose, {Model, model, Schema} from "mongoose";
 import passportLocalMongoose from "passport-local-mongoose";
 import supertest from "supertest";
+import TestAgent from "supertest/lib/agent";
 
 import {logger} from "./logger";
 import {createdUpdatedPlugin, isDisabledPlugin} from "./plugins";
@@ -161,7 +162,7 @@ afterAll(async () => {
 export async function authAsUser(
   app: express.Application,
   type: "admin" | "notAdmin"
-): Promise<supertest.SuperAgentTest> {
+): Promise<TestAgent> {
   const email = type === "admin" ? "admin@example.com" : "notAdmin@example.com";
   const password = type === "admin" ? "securePassword" : "password";
 

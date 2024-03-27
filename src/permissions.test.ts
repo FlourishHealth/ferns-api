@@ -1,6 +1,7 @@
 import {assert} from "chai";
 import express from "express";
 import supertest from "supertest";
+import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
@@ -16,7 +17,7 @@ import {
 } from "./tests";
 
 describe("permissions", function () {
-  let server: supertest.SuperTest<supertest.Test>;
+  let server: TestAgent;
   let app: express.Application;
 
   beforeEach(async function () {
@@ -106,7 +107,8 @@ describe("permissions", function () {
   });
 
   describe("non admin food", function () {
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
+
     beforeEach(async function () {
       agent = await authAsUser(app, "notAdmin");
     });
@@ -164,7 +166,7 @@ describe("permissions", function () {
   });
 
   describe("admin food", function () {
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     beforeEach(async function () {
       agent = await authAsUser(app, "admin");

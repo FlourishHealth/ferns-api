@@ -1,5 +1,6 @@
 import express, {Router} from "express";
 import supertest from "supertest";
+import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter, FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
@@ -31,8 +32,9 @@ function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): 
 }
 
 describe("openApi", function () {
-  let server: supertest.SuperTest<supertest.Test>;
+  let server: TestAgent;
   let app: express.Application;
+
   beforeEach(async function () {
     process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
 

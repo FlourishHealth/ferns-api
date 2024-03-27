@@ -2,6 +2,7 @@ import {assert} from "chai";
 import express from "express";
 import {ObjectId} from "mongoose";
 import supertest from "supertest";
+import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
@@ -12,7 +13,7 @@ import {AdminOwnerTransformer} from "./transformers";
 describe("query and transform", function () {
   let notAdmin: any;
   let admin: any;
-  let server: supertest.SuperTest<supertest.Test>;
+  let server: TestAgent;
   let app: express.Application;
 
   beforeEach(async function () {
