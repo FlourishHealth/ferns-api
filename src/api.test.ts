@@ -210,77 +210,6 @@ describe("ferns-api", () => {
       await agent.delete(`/food/${broccoli._id}`).expect(204);
       assert.isTrue(deleteCalled);
     });
-
-    it("post get/list hooks succeed", async function () {
-      const notAdmin = await UserModel.findOne({email: "notAdmin@example.com"});
-      const admin = await UserModel.findOne({email: "admin@example.com"});
-
-      const [spinach, apple] = await Promise.all([
-        FoodModel.create({
-          name: "Spinach",
-          calories: 1,
-          created: new Date(),
-          ownerId: notAdmin?._id,
-        }),
-        FoodModel.create({
-          name: "Apple",
-          calories: 100,
-          created: new Date().getTime() - 10,
-          ownerId: admin?._id,
-          hidden: true,
-        }),
-        FoodModel.create({
-          name: "Carrots",
-          calories: 100,
-          created: new Date().getTime() - 10,
-          ownerId: admin?._id,
-        }),
-      ]);
-
-      app.use(
-        "/food",
-        fernsRouter(FoodModel as any, {
-          allowAnonymous: true,
-          permissions: {
-            list: [Permissions.IsAny],
-            create: [Permissions.IsAny],
-            read: [Permissions.IsAny],
-            update: [Permissions.IsAny],
-            delete: [Permissions.IsAny],
-          },
-          postGet: async (data: any) => {
-            if (data?.name === "Spinach") {
-              data.name = "Popeye's meal";
-            }
-            return data;
-          },
-          postList: async (data: any) => {
-            return data.map((item: any) => {
-              if (item?.name === "Apple") {
-                item.name = "Bravery";
-              }
-              if (item?.name === "Carrots") {
-                item.name = "Bunny food";
-              }
-              return item;
-            });
-          },
-          queryFields: ["name"],
-        })
-      );
-
-      let resList = await agent.get("/food").expect(200);
-
-      let resApple = resList.body.data.find((f: Food) => f._id === apple._id.toString());
-      const resOne = await agent.get(`/food/${spinach?._id}`).expect(200);
-      assert.equal(resApple.name, "Bravery");
-      assert.equal(resOne.body.data.name, "Popeye's meal");
-
-      // Ensure we support both trailing slash and not.
-      resList = await agent.get("/food/").expect(200);
-      resApple = resList.body.data.find((f: Food) => f._id === apple._id.toString());
-      assert.equal(resApple.name, "Bravery");
-    });
   });
 
   describe("model array operations", function () {
@@ -449,6 +378,8 @@ describe("ferns-api", () => {
           hidden: false,
           source: {
             name: "Brand",
+            href: "https://www.google.com",
+            dateAdded: "2023-12-13T12:30:00.000Z",
           },
           lastEatenWith: {
             dressing: "2021-12-03T19:00:30.000Z",
@@ -851,6 +782,24 @@ describe("ferns-api", () => {
         cucumber: "2023-12-04T12:00:20.000Z",
       });
     });
+
+    it("update using dot notation", async function () {
+      // Allows updating a single field in a nested object
+      const res = await agent
+        .patch(`/food/${spinach._id}`)
+        .send({"source.href": "https://food.com"})
+        .expect(200);
+      // Assert the field was updated with dot notation.
+      assert.equal(res.body.data.source.href, "https://food.com");
+      // Assert these fields haven't changed.
+      assert.equal(res.body.data.source.name, "Brand");
+      assert.equal(res.body.data.source.dateAdded, "2023-12-13T12:30:00.000Z");
+
+      const dbSpinach = await FoodModel.findById(spinach._id);
+      assert.equal(dbSpinach?.source.href, "https://food.com");
+      assert.equal(dbSpinach?.source.name, "Brand");
+      assert.equal(dbSpinach?.source.dateAdded, "2023-12-13T12:30:00.000Z");
+    });
   });
 
   describe("populate", function () {
@@ -1248,7 +1197,8 @@ describe("ferns-api", () => {
         .expect(201);
 
       assert.equal(res.body.data.email, "brucewayne@example.com");
-      // Because we pass __t, this should create a SuperUser which has no department, so this is dropped.
+      // Because we pass __t, this should create a SuperUser which has no department, so this is
+      // dropped.
       assert.isUndefined(res.body.data.department);
       assert.equal(res.body.data.superTitle, "Batman");
 

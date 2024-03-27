@@ -301,6 +301,27 @@ describe("auth tests", function () {
     assert.isDefined(meRes.body.data._id);
   });
 
+  it("disabled user fails", async function () {
+    const agent = supertest.agent(app);
+    // initial login
+    const initialLoginRes = await agent
+      .post("/auth/login")
+      .send({email: "ADMIN@example.com", password: "securePassword"})
+      .expect(200);
+    assert.isDefined(initialLoginRes.body.data.token);
+    assert.isDefined(initialLoginRes.body.data.refreshToken);
+    const initialToken = initialLoginRes.body.data.token;
+    await agent.set("authorization", `Bearer ${initialToken}`);
+    const meRes = await agent.get("/auth/me").expect(200);
+    assert.isDefined(meRes.body.data._id);
+
+    admin.disabled = true;
+    await admin.save();
+
+    const failRes = await agent.get("/auth/me").expect(401);
+    assert.deepEqual(failRes.body, {title: "User is disabled", status: 401});
+  });
+
   it("signup user with email that is already registered", async function () {
     await server
       .post("/auth/signup")

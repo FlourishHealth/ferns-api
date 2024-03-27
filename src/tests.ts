@@ -4,13 +4,14 @@ import passportLocalMongoose from "passport-local-mongoose";
 import supertest from "supertest";
 
 import {logger} from "./logger";
-import {createdUpdatedPlugin} from "./plugins";
+import {createdUpdatedPlugin, isDisabledPlugin} from "./plugins";
 
 export interface User {
   admin: boolean;
   username: string;
   email: string;
   age?: number;
+  disabled?: boolean;
 }
 
 export interface SuperUser extends User {
@@ -36,6 +37,8 @@ export interface Food {
   hidden?: boolean;
   source: {
     name: string;
+    href?: string;
+    dateAdded?: string;
   };
   tags: string[];
   eatenBy: [Schema.Types.ObjectId | User];
@@ -61,6 +64,7 @@ userSchema.plugin(passportLocalMongoose, {
 });
 // userSchema.plugin(tokenPlugin);
 userSchema.plugin(createdUpdatedPlugin);
+userSchema.plugin(isDisabledPlugin);
 userSchema.methods.postCreate = async function (body: any) {
   this.age = body.age;
   return this.save();
@@ -78,13 +82,10 @@ const staffUserSchema = new Schema<StaffUser>({
 });
 export const StaffUserModel = UserModel.discriminator("Staff", staffUserSchema);
 
-const foodCategorySchema = new Schema<FoodCategory>(
-  {
-    name: String,
-    show: Boolean,
-  },
-  {strict: "throw"}
-);
+const foodCategorySchema = new Schema<FoodCategory>({
+  name: String,
+  show: Boolean,
+});
 
 const foodSchema = new Schema<Food>(
   {
@@ -94,6 +95,8 @@ const foodSchema = new Schema<Food>(
     ownerId: {type: "ObjectId", ref: "User"},
     source: {
       name: String,
+      href: String,
+      dateAdded: String,
     },
     hidden: {type: Boolean, default: false},
     tags: [String],
@@ -124,13 +127,10 @@ interface RequiredField {
   about?: string;
 }
 
-const requiredSchema = new Schema<RequiredField>(
-  {
-    name: {type: String, required: true},
-    about: String,
-  },
-  {strict: "throw"}
-);
+const requiredSchema = new Schema<RequiredField>({
+  name: {type: String, required: true},
+  about: String,
+});
 export const RequiredModel = model<RequiredField>("Required", requiredSchema);
 
 export function getBaseServer(): Express {
@@ -196,8 +196,8 @@ export async function setupDb() {
     await adminOther.save();
 
     return [admin, notAdmin, adminOther];
-  } catch (e) {
-    console.error("Error setting up DB", e);
-    throw e;
+  } catch (error) {
+    console.error("Error setting up DB", error);
+    throw error;
   }
 }

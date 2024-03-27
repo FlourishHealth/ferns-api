@@ -12,7 +12,7 @@ import qs from "qs";
 
 import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
-import {apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
+import {APIError, apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
@@ -173,6 +173,10 @@ export function createRouterWithAuth(
   ]);
 }
 
+export interface AuthOptions {
+  generateJWTPayload?: (user: any) => Record<string, any>;
+}
+
 interface InitializeRoutesOptions {
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
@@ -183,6 +187,7 @@ interface InitializeRoutesOptions {
   logRequests?: boolean;
   ignoreTraces?: string[];
   loggingOptions?: LoggingOptions;
+  authOptions?: AuthOptions;
 }
 
 function initializeRoutes(
@@ -238,19 +243,13 @@ function initializeRoutes(
     const transactionId = req.header("X-Transaction-ID");
     const sessionId = req.header("X-Session-ID");
     if (transactionId) {
-      Sentry.configureScope((scope) => {
-        scope.setTag("transaction_id", transactionId);
-      });
+      Sentry.getCurrentScope().setTag("transaction_id", transactionId);
     }
     if (sessionId) {
-      Sentry.configureScope((scope) => {
-        scope.setTag("session_id", sessionId);
-      });
+      Sentry.getCurrentScope().setTag("session_id", sessionId);
     }
     if (req.user?._id) {
-      Sentry.configureScope((scope) => {
-        scope.setUser({id: req.user._id});
-      });
+      Sentry.getCurrentScope().setTag("user", req.user._id);
     }
     next();
   });
@@ -258,7 +257,7 @@ function initializeRoutes(
   app.use(oapi);
   app.use("/swagger", oapi.swaggerui);
 
-  addAuthRoutes(app as any, UserModel as any);
+  addAuthRoutes(app as any, UserModel as any, options?.authOptions);
 
   addRoutes(app, {openApi: oapi});
 
@@ -290,6 +289,7 @@ export interface SetupServerOptions {
   userModel: UserMongooseModel;
   addRoutes: AddRoutes;
   loggingOptions?: LoggingOptions;
+  authOptions?: AuthOptions;
   skipListen?: boolean;
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
@@ -309,10 +309,11 @@ export function setupServer(options: SetupServerOptions) {
       corsOrigin: options.corsOrigin,
       addMiddleware: options.addMiddleware,
       ignoreTraces: options.ignoreTraces,
+      authOptions: options.authOptions,
     });
-  } catch (e) {
-    logger.error(`Error initializing routes: ${e}`);
-    throw e;
+  } catch (error) {
+    logger.error(`Error initializing routes: ${error}`);
+    throw error;
   }
 
   if (!options.skipListen) {
@@ -321,8 +322,8 @@ export function setupServer(options: SetupServerOptions) {
       app.listen(port, () => {
         logger.info(`Listening at on port ${port}`);
       });
-    } catch (err) {
-      logger.error(`Error trying to start HTTP server: ${err}\n${(err as any).stack}`);
+    } catch (error) {
+      logger.error(`Error trying to start HTTP server: ${error}\n${(error as any).stack}`);
       process.exit(1);
     }
   }
@@ -343,13 +344,13 @@ export function cronjob(
   logger.info(`Adding cronjob ${name}, running at: ${schedule}`);
   try {
     new cron.CronJob(schedule, callback, null, true, "America/Chicago");
-  } catch (e) {
-    throw new Error(`Failed to create cronjob: ${e}`);
+  } catch (error) {
+    throw new Error(`Failed to create cronjob: ${error}`);
   }
 }
 
 // Convenience method to send data to a Slack webhook.
-export async function sendToSlack(text: string, slackChannel?: string) {
+export async function sendToSlack(text: string, slackChannel?: string, shouldThrow = false) {
   // since Slack now requires a webhook for each channel, we need to store them in the environment
   // as an object, so we can look them up by channel name.
   const slackWebhooksString = process.env.SLACK_WEBHOOKS;
@@ -364,8 +365,14 @@ export async function sendToSlack(text: string, slackChannel?: string) {
     await axios.post(slackWebhookUrl, {
       text,
     });
-  } catch (e: any) {
-    logger.error(`Error posting to slack: ${e.text}`);
+  } catch (error: any) {
+    logger.error(`Error posting to slack: ${error.text ?? error.message}`);
+    if (shouldThrow) {
+      throw new APIError({
+        status: 500,
+        title: `Error posting to slack: ${error.text ?? error.message}`,
+      });
+    }
   }
 }
 
@@ -406,10 +413,10 @@ export async function wrapScript(func: () => Promise<any>, options: WrapScriptOp
     if (options.onFinish) {
       await options.onFinish(result);
     }
-  } catch (e) {
-    Sentry.captureException(e);
-    logger.error(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
-    await sendToSlack(`Error running script ${name}: ${e}\n${(e as Error).stack}`);
+  } catch (error) {
+    Sentry.captureException(error);
+    logger.error(`Error running script ${name}: ${error}\n${(error as Error).stack}`);
+    await sendToSlack(`Error running script ${name}: ${error}\n${(error as Error).stack}`);
     await Sentry.flush();
     process.exit(1);
   }

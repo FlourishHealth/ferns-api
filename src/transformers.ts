@@ -119,7 +119,8 @@ export function serialize<T>(
     const dataObject = serializeData.toObject() as T;
     (dataObject as any).id = serializeData._id;
 
-    // Search for any value that is a Map and transform it to a plain object. Otherwise Express drops the contents.
+    // Search for any value that is a Map and transform it to a plain object.
+    // Otherwise Express drops the contents.
     for (const key in dataObject) {
       const value = dataObject[key];
       if (value instanceof Map) {
@@ -147,8 +148,8 @@ export function serialize<T>(
 }
 
 /**
- * Default response handler for FernsRouter. Calls toObject on each doc and returns the result, using
- * transformers.serializer if provided.
+ * Default response handler for FernsRouter. Calls toObject on each doc and returns the result,
+ * using transformers.serializer if provided.
  */
 export async function defaultResponseHandler<T>(
   doc: (Document<any, any, any> & T) | (Document<any, any, any> & T)[] | null,
