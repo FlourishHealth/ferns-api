@@ -26,6 +26,7 @@ export function setupErrorLogging(app: express.Application, ignoreTraces: string
     }
     Sentry.init({
       dsn,
+      environment: process.env.SENTRY_ENVIRONMENT ?? "production",
       integrations: [
         // enable HTTP calls tracing
         new Sentry.Integrations.Http({tracing: true}),
