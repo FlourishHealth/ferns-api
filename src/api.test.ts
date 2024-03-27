@@ -4,6 +4,7 @@ import sortBy from "lodash/sortBy";
 import mongoose from "mongoose";
 import qs from "qs";
 import supertest from "supertest";
+import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
@@ -25,11 +26,11 @@ import {
 const assert = chai.assert;
 
 describe("ferns-api", () => {
-  let server: supertest.SuperTest<supertest.Test>;
+  let server: TestAgent;
   let app: express.Application;
 
   describe("pre and post hooks", function () {
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     beforeEach(async function () {
       await setupDb();
@@ -216,7 +217,7 @@ describe("ferns-api", () => {
     let admin: any;
     let spinach: Food;
     let apple: Food;
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     beforeEach(async function () {
       process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
@@ -359,7 +360,7 @@ describe("ferns-api", () => {
     let notAdmin: any;
     let admin: any;
     let adminOther: any;
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     let spinach: Food;
     let apple: Food;
@@ -804,7 +805,7 @@ describe("ferns-api", () => {
 
   describe("populate", function () {
     let admin: any;
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     let spinach: Food;
 
@@ -874,7 +875,7 @@ describe("ferns-api", () => {
 
   describe("populate function", function () {
     let admin: any;
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     let spinach: Food;
 
@@ -922,7 +923,7 @@ describe("ferns-api", () => {
 
     it("reads with populate function", async function () {
       // We populate the ownerId field because we set the header.
-      let res = await agent.get(`/food/${spinach._id}`).set({populate: true}).expect(200);
+      let res = await agent.get(`/food/${spinach._id}`).set({populate: "true"}).expect(200);
       assert.equal(res.body.data.ownerId._id, admin._id);
       // No header means we don't set the header.
       res = await agent.get(`/food/${spinach._id}`).expect(200);
@@ -931,7 +932,7 @@ describe("ferns-api", () => {
 
     it("list with populate function", async function () {
       // We populate the ownerId field because we set the header.
-      let res = await agent.get(`/food`).set({populate: true}).expect(200);
+      let res = await agent.get(`/food`).set({populate: "true"}).expect(200);
       assert.equal(res.body.data[0].ownerId._id, admin._id);
       // No header means we don't set the header.
       res = await agent.get(`/food`).expect(200);
@@ -941,7 +942,7 @@ describe("ferns-api", () => {
 
   describe("responseHandler", function () {
     let admin: any;
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     let spinach: Food;
 
@@ -1020,7 +1021,7 @@ describe("ferns-api", () => {
   });
 
   describe("plugins", function () {
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     beforeEach(async function () {
       await setupDb();
@@ -1057,7 +1058,7 @@ describe("ferns-api", () => {
     let superUser: mongoose.Document<SuperUser>;
     let staffUser: mongoose.Document<StaffUser>;
     let notAdmin: mongoose.Document;
-    let agent: supertest.SuperAgentTest;
+    let agent: TestAgent;
 
     beforeEach(async function () {
       [notAdmin] = await setupDb();
