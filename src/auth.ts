@@ -271,11 +271,15 @@ export function addAuthRoutes(
 
   router.post("/refresh_token", async function (req, res) {
     if (!req.body.refreshToken) {
+      logger.error(
+        `No refresh token provided, must provide refreshToken in body, user id: ${req.user?.id}`
+      );
       return res
         .status(401)
         .json({message: "No refresh token provided, must provide refreshToken in body"});
     }
     if (!process.env.REFRESH_TOKEN_SECRET) {
+      logger.error(`No REFRESH_TOKEN_SECRET set, cannot refresh token, user id: ${req.user?.id}`);
       return res.status(401).json({message: "No REFRESH_TOKEN_SECRET set, cannot refresh token"});
     }
     const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
@@ -283,14 +287,16 @@ export function addAuthRoutes(
     try {
       decoded = jwt.verify(req.body.refreshToken, refreshTokenSecretOrKey) as JwtPayload;
     } catch (error: any) {
-      logger.error(`Error refreshing token: ${error}`);
+      logger.error(`Error refreshing token for user ${req.user?.id}: ${error}`);
       return res.status(401).json({message: error?.message});
     }
     if (decoded && decoded.id) {
       const user = await userModel.findById(decoded.id);
       const tokens = await generateTokens(user);
+      logger.debug(`Refreshed token for ${user?.id}`);
       return res.json({data: {token: tokens.token, refreshToken: tokens.refreshToken}});
     }
+    logger.error(`Invalid refresh token, user id: ${req.user?.id}`);
     return res.status(401).json({message: "Invalid refresh token"});
   });
 
