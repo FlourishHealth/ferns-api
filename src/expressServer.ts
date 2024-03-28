@@ -91,7 +91,7 @@ const logRequestsFinished = function (req: any, res: any, startTime: bigint) {
   } else if (res.statusCode < 400) {
     logger.warn(`Request without route: ${req.originalUrl}`);
   }
-  if (!Boolean(process.env.DISABLE_LOG_ALL_REQUESTS)) {
+  if (process.env.DISABLE_LOG_ALL_REQUESTS !== "true") {
     logger.debug(`${req.method} -> ${req.originalUrl} ${res.statusCode} ${`${diffInMs}ms`}`);
   }
   if (options.logSlowRequests) {
@@ -140,7 +140,7 @@ export function logRequests(req: any, res: any, next: any) {
     body = ` Body: ${JSON.stringify(bodyCopy)}`;
   }
 
-  if (!Boolean(process.env.DISABLE_LOG_ALL_REQUESTS)) {
+  if (process.env.DISABLE_LOG_ALL_REQUESTS !== "true") {
     logger.debug(`${req.method} <- ${req.url}${userString}${body}`);
   }
   onFinished(res, () => logRequestsFinished(req, res, startTime));
