@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import chai from "chai";
 import express from "express";
 import sortBy from "lodash/sortBy";
@@ -24,6 +25,18 @@ import {
 } from "./tests";
 
 const assert = chai.assert;
+
+jest.mock("@sentry/node", () => {
+  // Auto-mock the Sentry module
+  const originalModule = jest.requireActual("@sentry/node");
+
+  return {
+    ...originalModule, // Use the original module's implementations
+    captureMessage: jest.fn(),
+    captureException: jest.fn(),
+    isInitialized: jest.fn(() => true), // Override isInitialized
+  };
+});
 
 describe("ferns-api", () => {
   let server: TestAgent;
@@ -490,6 +503,10 @@ describe("ferns-api", () => {
       assert.equal(res.body.data[0].id, (spinach as any).id);
       assert.equal(res.body.data[1].id, (pizza as any).id);
       assert.equal(res.body.data[2].id, (carrots as any).id);
+
+      expect(Sentry.captureMessage).toHaveBeenCalledWith(
+        'More than 3 results returned for foods without pagination, data may be silently truncated. req.query: {"limit":"4"}'
+      );
     });
 
     it("list page", async function () {
