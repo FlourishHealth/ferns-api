@@ -3,6 +3,7 @@
  *
  * @packageDocumentation
  */
+import * as Sentry from "@sentry/node";
 import express, {NextFunction, Request, Response} from "express";
 import cloneDeep from "lodash/cloneDeep";
 import isFunction from "lodash/isFunction";
@@ -10,6 +11,7 @@ import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
 import {APIError, apiErrorMiddleware, isAPIError} from "./errors";
+import {logger} from "./logger";
 import {
   createOpenApiMiddleware,
   deleteOpenApiMiddleware,
@@ -45,6 +47,7 @@ const COMPLEX_QUERY_PARAMS = ["$and", "$or"];
 export type RESTMethod = "list" | "create" | "read" | "update" | "delete";
 
 export type PopulatePaths = string[] | ((req: Request) => string[]);
+
 /**
  * This is the main configuration.
  * @param T - the base document type. This should not include Mongoose models, just the types of the object.
@@ -561,6 +564,17 @@ export function fernsRouter<T>(
           if (more) {
             // Slice off the extra document we fetched to determine if more is true or not.
             serialized = serialized.slice(0, limit);
+
+            if (!req.query.page) {
+              const msg =
+                `More than ${limit} results returned for ${model.collection.name} ` +
+                `without pagination, data may be silently truncated. req.query: ` +
+                `${JSON.stringify(req.query)}`;
+              logger.warn(msg);
+              if (Sentry.isInitialized()) {
+                Sentry.captureMessage(msg);
+              }
+            }
           }
           return res.json({data: serialized, more, page: req.query.page, limit, total});
         } else {
