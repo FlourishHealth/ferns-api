@@ -571,8 +571,10 @@ export function fernsRouter<T>(
                 `without pagination, data may be silently truncated. req.query: ` +
                 `${JSON.stringify(req.query)}`;
               logger.warn(msg);
-              if (Sentry.isInitialized()) {
+              try {
                 Sentry.captureMessage(msg);
+              } catch (error) {
+                logger.error(`Error capturing message: ${error}`);
               }
             }
           }
