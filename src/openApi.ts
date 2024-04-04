@@ -15,7 +15,7 @@ const m2sOptions = {
 
 export const apiErrorContent = {
   "application/json": {
-    schema: "#/components/schemas/APIError",
+    schema: {$ref: "#/components/schemas/APIError"},
   },
 };
 
@@ -118,6 +118,7 @@ export function convertModel(
 
 // We repeat this constantly, so we make it a component so we only have to define it once.
 function createAPIErrorComponent(openApi: any) {
+  // Create a schema component called APIError
   openApi?.component("schemas", "APIError", {
     type: "object",
     properties: {
