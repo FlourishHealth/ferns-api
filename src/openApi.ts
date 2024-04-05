@@ -15,71 +15,7 @@ const m2sOptions = {
 
 export const apiErrorContent = {
   "application/json": {
-    schema: {
-      type: "object",
-      properties: {
-        title: {
-          type: "string",
-          description: "The error message",
-        },
-        status: {
-          type: "number",
-          description:
-            "The HTTP status code applicable to this problem, expressed as a string value.",
-        },
-        id: {
-          type: "string",
-          description: "A unique identifier for this particular occurrence of the problem.",
-        },
-        links: {
-          type: "object",
-          properties: {
-            about: {
-              type: "string",
-              description:
-                "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-            },
-            type: {
-              type: "string",
-              description:
-                "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-            },
-          },
-        },
-        code: {
-          type: "string",
-          description: "An application-specific error code, expressed as a string value.",
-        },
-        detail: {
-          type: "string",
-          description:
-            "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-        },
-        source: {
-          type: "object",
-          properties: {
-            pointer: {
-              type: "string",
-              description:
-                'A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].',
-            },
-            parameter: {
-              type: "string",
-              description: "A string indicating which URI query parameter caused the error.",
-            },
-            header: {
-              type: "string",
-              description:
-                "A string indicating the name of a single request header which caused the error.",
-            },
-          },
-        },
-        meta: {
-          type: "object",
-          description: "A meta object containing non-standard meta-information about the error.",
-        },
-      },
-    },
+    schema: {$ref: "#/components/schemas/APIError"},
   },
 };
 
@@ -180,7 +116,78 @@ export function convertModel(
   };
 }
 
+// We repeat this constantly, so we make it a component so we only have to define it once.
+function createAPIErrorComponent(openApi: any) {
+  // Create a schema component called APIError
+  openApi?.component("schemas", "APIError", {
+    type: "object",
+    properties: {
+      title: {
+        type: "string",
+        description: "The error message",
+      },
+      status: {
+        type: "number",
+        description:
+          "The HTTP status code applicable to this problem, expressed as a string value.",
+      },
+      id: {
+        type: "string",
+        description: "A unique identifier for this particular occurrence of the problem.",
+      },
+      links: {
+        type: "object",
+        properties: {
+          about: {
+            type: "string",
+            description:
+              "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+          },
+          type: {
+            type: "string",
+            description:
+              "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+          },
+        },
+      },
+      code: {
+        type: "string",
+        description: "An application-specific error code, expressed as a string value.",
+      },
+      detail: {
+        type: "string",
+        description:
+          "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+      },
+      source: {
+        type: "object",
+        properties: {
+          pointer: {
+            type: "string",
+            description:
+              'A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].',
+          },
+          parameter: {
+            type: "string",
+            description: "A string indicating which URI query parameter caused the error.",
+          },
+          header: {
+            type: "string",
+            description:
+              "A string indicating the name of a single request header which caused the error.",
+          },
+        },
+      },
+      meta: {
+        type: "object",
+        description: "A meta object containing non-standard meta-information about the error.",
+      },
+    },
+  });
+}
+
 export function getOpenApiMiddleware<T>(model: Model<T>, options: Partial<FernsRouterOptions<T>>) {
+  createAPIErrorComponent(options.openApi);
   if (!options.openApi?.path) {
     // Just log this once rather than for each middleware.
     logger.debug("No options.openApi provided, skipping *OpenApiMiddleware");

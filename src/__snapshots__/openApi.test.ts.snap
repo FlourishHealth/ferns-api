@@ -2,6 +2,69 @@
 
 exports[`openApi gets the openapi.json 1`] = `
 {
+  "components": {
+    "schemas": {
+      "APIError": {
+        "properties": {
+          "code": {
+            "description": "An application-specific error code, expressed as a string value.",
+            "type": "string",
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+            "type": "string",
+          },
+          "id": {
+            "description": "A unique identifier for this particular occurrence of the problem.",
+            "type": "string",
+          },
+          "links": {
+            "properties": {
+              "about": {
+                "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                "type": "string",
+              },
+              "type": {
+                "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                "type": "string",
+              },
+            },
+            "type": "object",
+          },
+          "meta": {
+            "description": "A meta object containing non-standard meta-information about the error.",
+            "type": "object",
+          },
+          "source": {
+            "properties": {
+              "header": {
+                "description": "A string indicating the name of a single request header which caused the error.",
+                "type": "string",
+              },
+              "parameter": {
+                "description": "A string indicating which URI query parameter caused the error.",
+                "type": "string",
+              },
+              "pointer": {
+                "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
+                "type": "string",
+              },
+            },
+            "type": "object",
+          },
+          "status": {
+            "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+            "type": "number",
+          },
+          "title": {
+            "description": "The error message",
+            "type": "string",
+          },
+        },
+        "type": "object",
+      },
+    },
+  },
   "info": {
     "description": "Generated docs from an Express api",
     "title": "Express Application",
@@ -263,63 +326,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -332,63 +339,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -398,63 +349,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -464,63 +359,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -910,63 +749,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -979,63 +762,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1045,63 +772,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1111,63 +782,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1199,63 +814,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1268,63 +827,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1334,63 +837,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1400,63 +847,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1672,63 +1063,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1741,63 +1076,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1807,63 +1086,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -1873,63 +1096,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -2329,63 +1496,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -2398,63 +1509,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -2464,63 +1519,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
@@ -2530,63 +1529,7 @@ exports[`openApi gets the openapi.json 1`] = `
             "content": {
               "application/json": {
                 "schema": {
-                  "properties": {
-                    "code": {
-                      "description": "An application-specific error code, expressed as a string value.",
-                      "type": "string",
-                    },
-                    "detail": {
-                      "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
-                      "type": "string",
-                    },
-                    "id": {
-                      "description": "A unique identifier for this particular occurrence of the problem.",
-                      "type": "string",
-                    },
-                    "links": {
-                      "properties": {
-                        "about": {
-                          "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
-                          "type": "string",
-                        },
-                        "type": {
-                          "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "meta": {
-                      "description": "A meta object containing non-standard meta-information about the error.",
-                      "type": "object",
-                    },
-                    "source": {
-                      "properties": {
-                        "header": {
-                          "description": "A string indicating the name of a single request header which caused the error.",
-                          "type": "string",
-                        },
-                        "parameter": {
-                          "description": "A string indicating which URI query parameter caused the error.",
-                          "type": "string",
-                        },
-                        "pointer": {
-                          "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
-                          "type": "string",
-                        },
-                      },
-                      "type": "object",
-                    },
-                    "status": {
-                      "description": "The HTTP status code applicable to this problem, expressed as a string value.",
-                      "type": "number",
-                    },
-                    "title": {
-                      "description": "The error message",
-                      "type": "string",
-                    },
-                  },
-                  "type": "object",
+                  "$ref": "#/components/schemas/APIError",
                 },
               },
             },
