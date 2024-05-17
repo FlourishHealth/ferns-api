@@ -519,3 +519,47 @@ export function deleteOpenApiMiddleware<T>(
     )
   );
 }
+
+// This is a generic OpenAPI wrapper for a read that returns any object described by `properties`.
+// Useful for endpoints that don't directly map to a model.
+export function readOpenApiMiddleware<T>(
+  options: Partial<FernsRouterOptions<T>>,
+  properties: any,
+  required: string[] = [],
+  queryParameters: any
+): any {
+  if (!options.openApi?.path) {
+    // Just log this once rather than for each middleware.
+    logger.debug("No options.openApi provided, skipping *OpenApiMiddleware");
+    return noop;
+  }
+
+  if (options.permissions?.read?.length === 0) {
+    return noop;
+  }
+
+  return options.openApi.path(
+    merge(
+      {
+        tags: [],
+        responses: {
+          200: {
+            description: "Successful read",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  required,
+                  properties,
+                },
+              },
+            },
+          },
+          ...defaultOpenApiErrorResponses,
+        },
+        parameters: queryParameters,
+      },
+      options.openApiOverwrite?.get ?? {}
+    )
+  );
+}
