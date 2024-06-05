@@ -288,6 +288,7 @@ export function addAuthRoutes(
     try {
       decoded = jwt.verify(req.body.refreshToken, refreshTokenSecretOrKey) as JwtPayload;
     } catch (error: any) {
+      logger.error(`Error refreshing token for user ${req.user?.id}: ${error}`);
       return res.status(401).json({message: error?.message});
     }
     if (decoded && decoded.id) {
