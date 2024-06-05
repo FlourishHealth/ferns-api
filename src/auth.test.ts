@@ -16,6 +16,10 @@ describe("auth tests", function () {
   let notAdmin: any;
 
   beforeEach(async function () {
+    jest.useFakeTimers({
+      now: new Date(),
+      advanceTimers: true,
+    });
     [admin, notAdmin] = await setupDb();
 
     await Promise.all([
@@ -72,6 +76,10 @@ describe("auth tests", function () {
       })
     );
     server = supertest(app);
+  });
+
+  afterEach(async function () {
+    jest.useRealTimers();
   });
 
   it("completes token signup e2e", async function () {
@@ -232,6 +240,26 @@ describe("auth tests", function () {
       .send({name: "Apple Pie"})
       .expect(200);
     assert.equal(updateRes.body.data.name, "Apple Pie");
+  });
+
+  it("login successfully and tokens expire", async function () {
+    const agent = supertest.agent(app);
+    const res = await agent
+      .post("/auth/login")
+      .send({email: "admin@example.com", password: "securePassword"})
+      .expect(200);
+    const {userId, token} = res.body.data;
+    assert.isDefined(userId);
+    assert.isDefined(token);
+
+    await agent.set("authorization", `Bearer ${res.body.data.token}`);
+
+    await agent.get("/auth/me").expect(200);
+
+    // Advance time to past token expiration
+    jest.setSystemTime(new Date().getTime() + 1000 * 60 * 60 * 24 * 30);
+
+    await agent.get("/auth/me").expect(401);
   });
 
   it("locks out after failed password attempts", async function () {

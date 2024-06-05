@@ -227,9 +227,8 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       decoded = jwt.verify(token, process.env.TOKEN_SECRET, {
         issuer: process.env.TOKEN_ISSUER,
       }) as jwt.JwtPayload;
-    } catch (error) {
-      // Ignore the error here, the rest of the auth handler will handle it gracefully.
-      return;
+    } catch (error: any) {
+      return res.status(401).json({message: error?.message});
     }
     if (decoded.id) {
       try {
