@@ -75,19 +75,6 @@ export async function signupUser(
   }
 }
 
-const getTokenOptions = () => {
-  const tokenOptions: jwt.SignOptions = {
-    expiresIn: "15m",
-  };
-  if (process.env.TOKEN_EXPIRES_IN) {
-    tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
-  }
-  if (process.env.TOKEN_ISSUER) {
-    tokenOptions.issuer = process.env.TOKEN_ISSUER;
-  }
-  return tokenOptions;
-};
-
 const generateTokens = async (user: any, authOptions?: AuthOptions) => {
   const tokenSecretOrKey = process.env.TOKEN_SECRET;
   if (!tokenSecretOrKey) {
@@ -101,15 +88,28 @@ const generateTokens = async (user: any, authOptions?: AuthOptions) => {
   if (authOptions?.generateJWTPayload) {
     payload = {...authOptions.generateJWTPayload(user), ...payload};
   }
+  const tokenOptions: jwt.SignOptions = {
+    expiresIn: "15m",
+  };
+  if (authOptions?.generateTokenExpiration) {
+    tokenOptions.expiresIn = authOptions.generateTokenExpiration(user);
+  } else if (process.env.TOKEN_EXPIRES_IN) {
+    tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
+  }
+  if (process.env.TOKEN_ISSUER) {
+    tokenOptions.issuer = process.env.TOKEN_ISSUER;
+  }
 
-  const token = jwt.sign(payload, tokenSecretOrKey, getTokenOptions());
+  const token = jwt.sign(payload, tokenSecretOrKey, tokenOptions);
   const refreshTokenSecretOrKey = process.env.REFRESH_TOKEN_SECRET;
   let refreshToken;
   if (refreshTokenSecretOrKey) {
     const refreshTokenOptions: jwt.SignOptions = {
       expiresIn: "30d",
     };
-    if (process.env.REFRESH_TOKEN_EXPIRES_IN) {
+    if (authOptions?.generateRefreshTokenExpiration) {
+      refreshTokenOptions.expiresIn = authOptions.generateRefreshTokenExpiration(user);
+    } else if (process.env.REFRESH_TOKEN_EXPIRES_IN) {
       refreshTokenOptions.expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN;
     }
     refreshToken = jwt.sign(payload, refreshTokenSecretOrKey, refreshTokenOptions);
@@ -224,7 +224,9 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     let decoded;
 
     try {
-      decoded = jwt.verify(token, process.env.TOKEN_SECRET, getTokenOptions()) as jwt.JwtPayload;
+      decoded = jwt.verify(token, process.env.TOKEN_SECRET, {
+        issuer: process.env.TOKEN_ISSUER,
+      }) as jwt.JwtPayload;
     } catch (error) {
       // Ignore the error here, the rest of the auth handler will handle it gracefully.
       return;
@@ -287,12 +289,11 @@ export function addAuthRoutes(
     try {
       decoded = jwt.verify(req.body.refreshToken, refreshTokenSecretOrKey) as JwtPayload;
     } catch (error: any) {
-      logger.error(`Error refreshing token for user ${req.user?.id}: ${error}`);
       return res.status(401).json({message: error?.message});
     }
     if (decoded && decoded.id) {
       const user = await userModel.findById(decoded.id);
-      const tokens = await generateTokens(user);
+      const tokens = await generateTokens(user, authOptions);
       logger.debug(`Refreshed token for ${user?.id}`);
       return res.json({data: {token: tokens.token, refreshToken: tokens.refreshToken}});
     }
@@ -306,7 +307,7 @@ export function addAuthRoutes(
       "/signup",
       passport.authenticate("signup", {session: false, failWithError: true}),
       async function (req: any, res: any) {
-        const tokens = await generateTokens(req.user);
+        const tokens = await generateTokens(req.user, authOptions);
         return res.json({
           data: {userId: req.user._id, token: tokens.token, refreshToken: tokens.refreshToken},
         });
@@ -320,7 +321,6 @@ export function addAuthRoutes(
       return res.sendStatus(401);
     }
     const data = await userModel.findById(req.user.id);
-
     if (!data) {
       logger.debug("Not user data found for /me");
       return res.sendStatus(404);
