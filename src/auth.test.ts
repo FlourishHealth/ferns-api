@@ -256,6 +256,7 @@ describe("auth tests", function () {
 
     await agent.get("/auth/me").expect(200);
 
+    // Advance time to past token expiration
     jest.setSystemTime(new Date().getTime() + 1000 * 60 * 60 * 24 * 30);
 
     await agent.get("/auth/me").expect(401);
