@@ -176,6 +176,8 @@ export function createRouterWithAuth(
 
 export interface AuthOptions {
   generateJWTPayload?: (user: any) => Record<string, any>;
+  generateTokenExpiration?: (user: any) => string;
+  generateRefreshTokenExpiration?: (user: any) => string;
 }
 
 interface InitializeRoutesOptions {
