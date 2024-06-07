@@ -368,7 +368,6 @@ describe("auth tests", function () {
 
 describe("custom auth options", function () {
   let app: express.Application;
-  // let server: any;
   let admin: any;
   let notAdmin: any;
 
@@ -441,7 +440,6 @@ describe("custom auth options", function () {
         }),
       })
     );
-    // server = supertest(app);
   });
 
   afterEach(async function () {
