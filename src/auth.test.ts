@@ -365,3 +365,128 @@ describe("auth tests", function () {
     assert.equal(res2.body.title, "A user with the given username is already registered");
   });
 });
+
+describe("custom auth options", function () {
+  let app: express.Application;
+  // let server: any;
+  let admin: any;
+  let notAdmin: any;
+
+  beforeEach(async function () {
+    jest.useFakeTimers({
+      now: new Date(),
+      advanceTimers: true,
+    });
+    [admin, notAdmin] = await setupDb();
+
+    await Promise.all([
+      FoodModel.create({
+        name: "Spinach",
+        calories: 1,
+        created: new Date(),
+        ownerId: notAdmin._id,
+      }),
+      FoodModel.create({
+        name: "Apple",
+        calories: 100,
+        created: new Date().getTime() - 10,
+        ownerId: admin._id,
+        hidden: true,
+      }),
+      FoodModel.create({
+        name: "Carrots",
+        calories: 100,
+        created: new Date().getTime() - 10,
+        ownerId: admin._id,
+      }),
+    ]);
+    app = getBaseServer();
+    setupAuth(app, UserModel as any);
+    addAuthRoutes(app, UserModel as any, {
+      // custom refresh token logic based on admin or non admin
+      generateTokenExpiration: (user?: {admin: boolean}) => {
+        if (user?.admin) {
+          return "30d";
+        } else {
+          return "365d";
+        }
+      },
+    });
+    app.use(
+      "/food",
+      fernsRouter(FoodModel, {
+        permissions: {
+          list: [Permissions.IsAny],
+          create: [Permissions.IsAuthenticated],
+          read: [Permissions.IsAny],
+          update: [Permissions.IsAuthenticated],
+          delete: [Permissions.IsAuthenticated],
+        },
+        allowAnonymous: true,
+        queryFilter: (user?: {admin: boolean}) => {
+          if (!user?.admin) {
+            return {hidden: {$ne: true}};
+          }
+          return {};
+        },
+        transformer: AdminOwnerTransformer<Food>({
+          adminReadFields: ["name", "calories", "created", "ownerId"],
+          adminWriteFields: ["name", "calories", "created", "ownerId"],
+          ownerReadFields: ["name", "calories", "created", "ownerId"],
+          ownerWriteFields: ["name", "calories", "created"],
+          authReadFields: ["name", "calories", "created"],
+          authWriteFields: ["name", "calories"],
+          anonReadFields: ["name"],
+          anonWriteFields: [],
+        }),
+      })
+    );
+    // server = supertest(app);
+  });
+
+  afterEach(async function () {
+    jest.useRealTimers();
+  });
+
+  it("login successfully and tokens expire with custom token options", async function () {
+    // login admin and set token
+    const adminAgent = supertest.agent(app);
+    const res = await adminAgent
+      .post("/auth/login")
+      .send({email: "admin@example.com", password: "securePassword"})
+      .expect(200);
+
+    assert.isDefined(res.body.data.userId);
+    assert.isDefined(res.body.data.token);
+
+    await adminAgent.set("authorization", `Bearer ${res.body.data.token}`);
+
+    // login non-admin and set token
+    const notAdminAgent = supertest.agent(app);
+    const res2 = await notAdminAgent
+      .post("/auth/login")
+      .send({email: "notadmin@example.com", password: "password"})
+      .expect(200);
+
+    assert.isDefined(res2.body.data.userId);
+    assert.isDefined(res2.body.data.token);
+
+    await notAdminAgent.set("authorization", `Bearer ${res2.body.data.token}`);
+
+    //  and check that tokens are working for both users
+    await adminAgent.get("/auth/me").expect(200);
+    await notAdminAgent.get("/auth/me").expect(200);
+
+    // Advance time by 30 days check that admin can no longer access with old token,
+    // and non-admin can due to custom times set as auth options
+    jest.setSystemTime(new Date().getTime() + 1000 * 60 * 60 * 24 * 30);
+    await adminAgent.get("/auth/me").expect(401);
+    await notAdminAgent.get("/auth/me").expect(200);
+
+    // Advance time by an additional 335 days to pass the 365 day expiration for non-admin
+    jest.setSystemTime(new Date().getTime() + 1000 * 60 * 60 * 24 * 365);
+
+    // ensure non-admin can no longer access
+    await notAdminAgent.get("/auth/me").expect(401);
+  });
+});
