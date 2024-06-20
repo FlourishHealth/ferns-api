@@ -363,19 +363,20 @@ export async function sendToSlack(text: string, slackChannel?: string, shouldThr
   }
   const slackWebhooks = JSON.parse(slackWebhooksString ?? "{}");
 
-    // use "default" channel if no slackChannel is provided
-    const channel = slackChannel ?? "default";
+  // use "default" channel if no slackChannel is provided
+  const channel = slackChannel ?? "default";
 
   // if the url for channel is not found, use "default" channel as key
-  const slackWebhookUrl = slackWebhooks[channel] ?? slackWebhooks["default"];
+  const slackWebhookUrl = slackWebhooks[channel] ?? slackWebhooks.default;
 
   // if no channel or default channel is found, capture error and return
-    if (!slackWebhookUrl) {
-    Sentry.captureException(new Error(`No webhook url set in env for ${channel}. Slack message not sent`));
+  if (!slackWebhookUrl) {
+    Sentry.captureException(
+      new Error(`No webhook url set in env for ${channel}. Slack message not sent`)
+    );
     logger.debug(`No webhook url set in env for ${channel}.`);
     return;
   }
-
 
   try {
     await axios.post(slackWebhookUrl, {
