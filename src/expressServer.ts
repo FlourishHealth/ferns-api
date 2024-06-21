@@ -363,13 +363,10 @@ export async function sendToSlack(text: string, slackChannel?: string, shouldThr
   }
   const slackWebhooks = JSON.parse(slackWebhooksString ?? "{}");
 
-  // use "default" channel if no slackChannel is provided
   const channel = slackChannel ?? "default";
 
-  // if the url for channel is not found, use "default" channel as key
   const slackWebhookUrl = slackWebhooks[channel] ?? slackWebhooks.default;
 
-  // if no channel or default channel is found, capture error and return
   if (!slackWebhookUrl) {
     Sentry.captureException(
       new Error(`No webhook url set in env for ${channel}. Slack message not sent`)
@@ -384,7 +381,6 @@ export async function sendToSlack(text: string, slackChannel?: string, shouldThr
     });
   } catch (error: any) {
     logger.error(`Error posting to slack: ${error.text ?? error.message}`);
-    // capture error if send to slack fails
     Sentry.captureException(error);
     if (shouldThrow) {
       throw new APIError({
