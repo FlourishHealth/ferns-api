@@ -36,7 +36,7 @@
     "axios": "^1.6.2",
     "cors": "^2.8.5",
     "cron": "^3.1.6",
-    "expo-server-sdk": "^3.6.0",
+    "expo-server-sdk": "^3.10.0",
     "express": "^4.17.1",
     "generaterr": "^1.5.0",
     "jsonwebtoken": "^9.0.2",
