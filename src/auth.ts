@@ -5,7 +5,9 @@ import passport from "passport";
 import {Strategy as AnonymousStrategy} from "passport-anonymous";
 import {JwtFromRequestFunction, Strategy as JwtStrategy, StrategyOptions} from "passport-jwt";
 import {Strategy as LocalStrategy} from "passport-local";
+import {UAParser} from "ua-parser-js";
 
+import {UserAgent} from "../types";
 import {APIError, apiErrorMiddleware} from "./errors";
 import {AuthOptions} from "./expressServer";
 import {logger} from "./logger";
@@ -75,7 +77,8 @@ export async function signupUser(
   }
 }
 
-const generateTokens = async (user: any, authOptions?: AuthOptions) => {
+const generateTokens = async (user: any, userAgent?: UserAgent, authOptions?: AuthOptions) => {
+  console.log({userAgent});
   const tokenSecretOrKey = process.env.TOKEN_SECRET;
   if (!tokenSecretOrKey) {
     throw new Error(`TOKEN_SECRET must be set in env.`);
@@ -92,7 +95,7 @@ const generateTokens = async (user: any, authOptions?: AuthOptions) => {
     expiresIn: "15m",
   };
   if (authOptions?.generateTokenExpiration) {
-    tokenOptions.expiresIn = authOptions.generateTokenExpiration(user);
+    tokenOptions.expiresIn = authOptions.generateTokenExpiration(user, userAgent);
   } else if (process.env.TOKEN_EXPIRES_IN) {
     tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
   }
@@ -244,6 +247,13 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     return next();
   }
   app.use(decodeJWTMiddleware);
+
+  app.use((req, res, next) => {
+    const ua = new UAParser(req.headers["user-agent"]);
+    req.userAgent = ua.getResult();
+    next();
+  });
+
   app.use(express.urlencoded({extended: false}) as any);
 }
 
@@ -263,7 +273,7 @@ export function addAuthRoutes(
         logger.warn(`Invalid login: ${info}`);
         return res.status(401).json({message: info?.message});
       }
-      const tokens = await generateTokens(user, authOptions);
+      const tokens = await generateTokens(user, req.userAgent, authOptions);
       return res.json({
         data: {userId: user?._id, token: tokens.token, refreshToken: tokens.refreshToken},
       });
@@ -293,7 +303,7 @@ export function addAuthRoutes(
     }
     if (decoded && decoded.id) {
       const user = await userModel.findById(decoded.id);
-      const tokens = await generateTokens(user, authOptions);
+      const tokens = await generateTokens(user, req.userAgent, authOptions);
       logger.debug(`Refreshed token for ${user?.id}`);
       return res.json({data: {token: tokens.token, refreshToken: tokens.refreshToken}});
     }
@@ -307,7 +317,7 @@ export function addAuthRoutes(
       "/signup",
       passport.authenticate("signup", {session: false, failWithError: true}),
       async function (req: any, res: any) {
-        const tokens = await generateTokens(req.user, authOptions);
+        const tokens = await generateTokens(req.user, req.userAgent, authOptions);
         return res.json({
           data: {userId: req.user._id, token: tokens.token, refreshToken: tokens.refreshToken},
         });

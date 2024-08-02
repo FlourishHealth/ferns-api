@@ -13,3 +13,11 @@ declare namespace NodeJS {
     DISABLE_LOG_ALL_REQUESTS: string;
   }
 }
+
+export interface UserAgent {
+  browser: string;
+  version: string;
+  os: string;
+  platform: string;
+  source: string;
+}

@@ -9,7 +9,9 @@ import cloneDeep from "lodash/cloneDeep";
 import onFinished from "on-finished";
 import passport from "passport";
 import qs from "qs";
+import {UAParser} from "ua-parser-js";
 
+import {UserAgent} from "../types";
 import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
 import {APIError, apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
@@ -176,7 +178,7 @@ export function createRouterWithAuth(
 
 export interface AuthOptions {
   generateJWTPayload?: (user: any) => Record<string, any>;
-  generateTokenExpiration?: (user: any) => string;
+  generateTokenExpiration?: (user: any, userAgent?: UserAgent) => string;
   generateRefreshTokenExpiration?: (user: any) => string;
 }
 
@@ -228,6 +230,12 @@ function initializeRoutes(
   );
 
   app.use(express.json());
+
+  app.use((req, res, next) => {
+    const ua = new UAParser(req.headers["user-agent"]);
+    req.userAgent = ua.getResult();
+    next();
+  });
 
   setupAuth(app as any, UserModel as any);
 
