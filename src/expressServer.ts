@@ -278,13 +278,6 @@ function initializeRoutes(
     res.end(`${res.sentry}\n`);
   });
 
-  logger.debug("Listening on routes:");
-  app._router.stack.forEach((r: any) => {
-    if (r.route && r.route.path) {
-      logger.debug(`[Route] ${r.route.path}`);
-    }
-  });
-
   return app;
 }
 
