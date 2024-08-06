@@ -513,6 +513,7 @@ export function fernsRouter<T>(
       }
 
       let builtQuery = model.find(query).limit(limit + 1);
+      const total = model.estimatedDocumentCount(query);
 
       if (req.query.page) {
         if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
@@ -557,7 +558,6 @@ export function fernsRouter<T>(
       let more;
       try {
         if (serialized && Array.isArray(serialized)) {
-          const total = serialized.length;
           more = serialized.length === limit + 1 && serialized.length > 0;
           if (more) {
             // Slice off the extra document we fetched to determine if more is true or not.
