@@ -526,7 +526,7 @@ export function fernsRouter<T>(
 
       // Query param sort takes precedence over options.sort.
       if (req.query.sort) {
-        builtQuery = builtQuery.sort(req.query.sort as string);
+        builtQuery = builtQuery.sort(req.query.sort as MongooseSortValue);
       } else if (options.sort) {
         builtQuery = builtQuery.sort(options.sort);
       }
@@ -543,9 +543,6 @@ export function fernsRouter<T>(
         });
       }
 
-      // Uses metadata rather than counting the number of documents in the array for performance.
-      const total = await model.estimatedDocumentCount();
-
       let serialized;
 
       try {
@@ -560,6 +557,7 @@ export function fernsRouter<T>(
       let more;
       try {
         if (serialized && Array.isArray(serialized)) {
+          const total = serialized.length;
           more = serialized.length === limit + 1 && serialized.length > 0;
           if (more) {
             // Slice off the extra document we fetched to determine if more is true or not.
@@ -578,7 +576,13 @@ export function fernsRouter<T>(
               }
             }
           }
-          return res.json({data: serialized, more, page: req.query.page, limit, total});
+          return res.json({
+            data: serialized,
+            more,
+            page: req.query.page,
+            limit,
+            total,
+          });
         } else {
           return res.json({data: serialized});
         }
