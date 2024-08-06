@@ -526,7 +526,7 @@ export function fernsRouter<T>(
 
       // Query param sort takes precedence over options.sort.
       if (req.query.sort) {
-        builtQuery = builtQuery.sort(req.query.sort as MongooseSortValue);
+        builtQuery = builtQuery.sort(req.query.sort as string);
       } else if (options.sort) {
         builtQuery = builtQuery.sort(options.sort);
       }
