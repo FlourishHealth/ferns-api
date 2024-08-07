@@ -513,6 +513,7 @@ export function fernsRouter<T>(
       }
 
       let builtQuery = model.find(query).limit(limit + 1);
+      const total = await model.estimatedDocumentCount(query);
 
       if (req.query.page) {
         if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
@@ -542,9 +543,6 @@ export function fernsRouter<T>(
           error,
         });
       }
-
-      // Uses metadata rather than counting the number of documents in the array for performance.
-      const total = await model.estimatedDocumentCount();
 
       let serialized;
 
@@ -578,7 +576,13 @@ export function fernsRouter<T>(
               }
             }
           }
-          return res.json({data: serialized, more, page: req.query.page, limit, total});
+          return res.json({
+            data: serialized,
+            more,
+            page: req.query.page,
+            limit,
+            total,
+          });
         } else {
           return res.json({data: serialized});
         }
