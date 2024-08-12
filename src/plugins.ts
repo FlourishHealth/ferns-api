@@ -1,4 +1,12 @@
-import {FilterQuery, Query, Schema} from "mongoose";
+import {DateTime} from "luxon";
+import {
+  Error as MongooseError,
+  FilterQuery,
+  Query,
+  Schema,
+  SchemaType,
+  SchemaTypeOptions,
+} from "mongoose";
 
 import {APIError, APIErrorConstructor} from "./errors";
 
@@ -148,3 +156,45 @@ export function findExactlyOne<T>(schema: Schema<any, any, any, any>) {
     }
   };
 }
+
+export class DateOnly extends SchemaType {
+  constructor(key: string, options: SchemaTypeOptions<any>) {
+    super(key, options, "DateOnly");
+  }
+
+  cast(val: any): Date | undefined {
+    if (val instanceof Date) {
+      const date = DateTime.fromJSDate(val).toUTC().startOf("day");
+      if (!date.isValid) {
+        throw new MongooseError.CastError(
+          "DateOnly",
+          val,
+          this.path,
+          new Error("Value is not a valid date")
+        );
+      }
+      return date.toJSDate();
+    } else if (typeof val === "string" || typeof val === "number") {
+      const date = DateTime.fromJSDate(new Date(val)).toUTC().startOf("day");
+      // Check validity using Luxons isValid property
+      if (!date.isValid) {
+        throw new MongooseError.CastError(
+          "DateOnly",
+          val,
+          this.path,
+          new Error("Value is not a valid date")
+        );
+      }
+      return date.toJSDate();
+    }
+    throw new MongooseError.CastError(
+      "DateOnly",
+      val,
+      this.path,
+      new Error("Value is not a valid date")
+    );
+  }
+}
+
+// Register the schema type with Mongoose
+(Schema.Types as any).DateOnly = DateOnly;

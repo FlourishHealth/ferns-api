@@ -41,6 +41,7 @@
     "generaterr": "^1.5.0",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
+    "luxon": "^3.5.0",
     "mongoose-to-swagger": "^1.4.0",
     "on-finished": "^2.3.0",
     "passport": "^0.7.0",

@@ -4,13 +4,20 @@ import {model, Schema} from "mongoose";
 import sinon from "sinon";
 chai.use(chaiAsPromised);
 
-import {createdUpdatedPlugin, findExactlyOne, findOneOrThrow, isDeletedPlugin} from "./plugins";
+import {
+  createdUpdatedPlugin,
+  DateOnly,
+  findExactlyOne,
+  findOneOrThrow,
+  isDeletedPlugin,
+} from "./plugins";
 import {setupDb} from "./tests";
 
 interface Stuff {
   _id: string;
   name: string;
   ownerId: string;
+  date: Date;
   created: Date;
   updated?: Date;
 }
@@ -18,6 +25,7 @@ interface Stuff {
 const stuffSchema = new Schema<Stuff>({
   name: String,
   ownerId: String,
+  date: DateOnly,
 });
 
 stuffSchema.plugin(isDeletedPlugin);
@@ -182,5 +190,26 @@ describe("findExactlyOne", function () {
       assert.equal(error.status, 400);
       assert.equal(error.detail, 'query: {"ownerId":"123"}');
     }
+  });
+});
+
+describe("DateOnly", function () {
+  it("throws error with invalid date", async function () {
+    try {
+      await stuffModel.create({name: "Things", ownerId: "123", date: "foo" as any});
+    } catch (error: any) {
+      assert.match(error.message, /Cast to DateOnly failed/);
+      return;
+    }
+    assert.fail(`Expected error was not thrown`);
+  });
+
+  it("adjusts date to date only", async function () {
+    const res = await stuffModel.create({
+      name: "Things",
+      ownerId: "123",
+      date: "2005-10-10T17:17:17.017Z" as any,
+    });
+    assert.strictEqual(res.date.toISOString(), "2005-10-10T00:00:00.000Z");
   });
 });
