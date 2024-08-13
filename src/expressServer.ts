@@ -208,7 +208,7 @@ function initializeRoutes(
       title: "Express Application",
       description: "Generated docs from an Express api",
       version: "1.0.0",
-    },
+    }
   });
 
   // TODO: Log a warning when we hit the array limit.
@@ -258,7 +258,7 @@ function initializeRoutes(
   });
 
   app.use(oapi);
-  app.use("/swagger", oapi.swaggerui);
+  app.use("/swagger", oapi.swaggerui());
 
   addAuthRoutes(app as any, UserModel as any, options?.authOptions);
 
