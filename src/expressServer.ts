@@ -208,7 +208,7 @@ function initializeRoutes(
       title: "Express Application",
       description: "Generated docs from an Express api",
       version: "1.0.0",
-    }
+    },
   });
 
   // TODO: Log a warning when we hit the array limit.
