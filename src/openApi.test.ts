@@ -8,6 +8,38 @@ import {setupServer} from "./expressServer";
 import {Permissions} from "./permissions";
 import {FoodModel, setupDb, UserModel} from "./tests";
 
+function getMessageSummaryOpenApiMiddleware(options: Partial<FernsRouterOptions<any>>): any {
+  return options.openApi.path({
+    tags: ["Food"],
+    parameters: [
+      {
+        name: "foodIds",
+        in: "query",
+        schema: {
+          type: "string",
+        },
+      },
+    ],
+    responses: {
+      200: {
+        description: "Success",
+        content: {
+          "application/json": {
+            schema: {
+              type: "object",
+              properties: {
+                message: {
+                  type: "string",
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+}
+
 function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): void {
   router.use(
     "/food",
@@ -29,6 +61,9 @@ function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): 
       },
     })
   );
+  router.use("/food/count", getMessageSummaryOpenApiMiddleware, async (req, res) => {
+    res.json({message: "count"});
+  });
 }
 
 describe("openApi", function () {
@@ -61,5 +96,13 @@ describe("openApi", function () {
     const food = await FoodModel.create({name: "test", ownerId: notAdmin._id});
     const res = await server.get(`/food/${food._id}`).expect(200);
     expect(res.body.data.ownerId._id).toEqual(notAdmin._id.toString());
+  });
+
+  // create a test for a custom express endpoint that doesnt use fernsRouter and manually adds it
+  // to openapi
+  it("gets the openapi.json with custom endpoint", async function () {
+    server = supertest(app);
+    const res = await server.get("/openapi.json").expect(200);
+    expect(res.body).toMatchSnapshot();
   });
 });

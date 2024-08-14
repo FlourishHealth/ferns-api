@@ -258,7 +258,7 @@ function initializeRoutes(
   });
 
   app.use(oapi);
-  app.use("/swagger", oapi.swaggerui);
+  app.use("/swagger", oapi.swaggerui());
 
   addAuthRoutes(app as any, UserModel as any, options?.authOptions);
 
