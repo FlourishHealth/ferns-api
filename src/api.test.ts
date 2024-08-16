@@ -478,6 +478,7 @@ describe("ferns-api", () => {
       assert.deepEqual(res.body.data[1].lastEatenWith, undefined);
 
       assert.isTrue(res.body.more);
+      assert.equal(res.body.total, 3);
     });
 
     it("list limit", async function () {
@@ -486,6 +487,7 @@ describe("ferns-api", () => {
       assert.equal(res.body.data[0].id, (spinach as any).id);
       assert.equal(res.body.data[0].ownerId._id, notAdmin.id);
       assert.isTrue(res.body.more);
+      assert.equal(res.body.total, 3);
     });
 
     it("list limit over", async function () {
@@ -500,6 +502,7 @@ describe("ferns-api", () => {
       const res = await agent.get("/food?limit=4").expect(200);
       assert.lengthOf(res.body.data, 3);
       assert.isTrue(res.body.more);
+      assert.equal(res.body.total, 4);
       assert.equal(res.body.data[0].id, (spinach as any).id);
       assert.equal(res.body.data[1].id, (pizza as any).id);
       assert.equal(res.body.data[2].id, (carrots as any).id);
@@ -514,6 +517,7 @@ describe("ferns-api", () => {
       const res = await agent.get("/food?limit=1&page=2").expect(200);
       assert.lengthOf(res.body.data, 1);
       assert.isTrue(res.body.more);
+      assert.equal(res.body.total, 3);
       assert.equal(res.body.data[0].id, (pizza as any).id);
     });
 
@@ -532,6 +536,7 @@ describe("ferns-api", () => {
       const res = await agent.get("/food?limit=1&page=5").expect(200);
       assert.lengthOf(res.body.data, 0);
       assert.isFalse(res.body.more);
+      assert.equal(res.body.total, 3);
     });
 
     it("list query params", async function () {
@@ -539,6 +544,7 @@ describe("ferns-api", () => {
       const res = await agent.get("/food?hidden=true").expect(200);
       assert.lengthOf(res.body.data, 1);
       assert.isFalse(res.body.more);
+      assert.equal(res.body.total, 1);
       assert.equal(res.body.data[0].id, (apple as any).id);
     });
 
@@ -552,6 +558,7 @@ describe("ferns-api", () => {
       // Should skip to carrots since apples are hidden
       const res = await agent.get("/food?source.name=USDA").expect(200);
       assert.lengthOf(res.body.data, 1);
+      assert.equal(res.body.total, 1);
       assert.equal(res.body.data[0].id, (carrots as any).id);
     });
 
@@ -697,6 +704,7 @@ describe("ferns-api", () => {
         )
         .expect(200);
       assert.isFalse(res.body.more);
+      assert.equal(res.body.total, 2);
       assert.lengthOf(res.body.data, 2);
       assert.sameDeepMembers(
         res.body.data.map((d: any) => d.name),

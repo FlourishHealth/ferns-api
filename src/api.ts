@@ -513,7 +513,8 @@ export function fernsRouter<T>(
       }
 
       let builtQuery = model.find(query).limit(limit + 1);
-      const total = await model.estimatedDocumentCount(query);
+      let total = 0;
+      total = await model.countDocuments(query);
 
       if (req.query.page) {
         if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
