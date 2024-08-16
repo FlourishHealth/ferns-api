@@ -289,7 +289,7 @@ export function addAuthRoutes(
       decoded = jwt.verify(req.body.refreshToken, refreshTokenSecretOrKey) as JwtPayload;
     } catch (error: any) {
       logger.error(`Error refreshing token for user ${req.user?.id}: ${error}`);
-      return res.status(401).json({message: error?.message});
+      return res.status(401).json({message: `Error refresh token: ${error?.message}`});
     }
     if (decoded && decoded.id) {
       const user = await userModel.findById(decoded.id);
