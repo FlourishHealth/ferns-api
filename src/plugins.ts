@@ -162,6 +162,36 @@ export class DateOnly extends SchemaType {
     super(key, options, "DateOnly");
   }
 
+  handleSingle(val) {
+    return this.cast(val);
+  }
+
+  $conditionalHandlers = {
+    ...(SchemaType as any).prototype.$conditionalHandlers,
+    $gt: this.handleSingle,
+    $gte: this.handleSingle,
+    $lt: this.handleSingle,
+    $lte: this.handleSingle,
+  };
+
+  // Based on castForQuery in mongoose/lib/schema/date.js
+  // When using $gt, $gte, $lt, $lte, etc, we need to cast the value to a Date
+  castForQuery($conditional, val, context): Date | undefined {
+    if ($conditional == null) {
+      return (this as any).applySetters(val, context);
+    }
+
+    const handler = this.$conditionalHandlers[$conditional];
+
+    if (!handler) {
+      throw new Error(`Can't use ${$conditional} with DateOnly.`);
+    }
+
+    return handler.call(this, val);
+  }
+
+  // When either setting a value to a DateOnly or fetching from the DB,
+  // we want to strip off the time portion.
   cast(val: any): Date | undefined {
     if (val instanceof Date) {
       const date = DateTime.fromJSDate(val).toUTC().startOf("day");
@@ -176,7 +206,6 @@ export class DateOnly extends SchemaType {
       return date.toJSDate();
     } else if (typeof val === "string" || typeof val === "number") {
       const date = DateTime.fromJSDate(new Date(val)).toUTC().startOf("day");
-      // Check validity using Luxons isValid property
       if (!date.isValid) {
         throw new MongooseError.CastError(
           "DateOnly",
@@ -187,12 +216,20 @@ export class DateOnly extends SchemaType {
       }
       return date.toJSDate();
     }
+    // Handle $gte, $lte, etc
+    if (typeof val === "object") {
+      return val;
+    }
     throw new MongooseError.CastError(
       "DateOnly",
       val,
       this.path,
       new Error("Value is not a valid date")
     );
+  }
+
+  get(val: any): this {
+    return val instanceof Date ? DateTime.fromJSDate(val).startOf("day").toJSDate() : val;
   }
 }
 

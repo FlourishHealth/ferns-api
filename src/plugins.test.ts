@@ -208,8 +208,20 @@ describe("DateOnly", function () {
     const res = await stuffModel.create({
       name: "Things",
       ownerId: "123",
-      date: "2005-10-10T17:17:17.017Z" as any,
+      date: "2005-10-10T17:17:17.017Z",
     });
     assert.strictEqual(res.date.toISOString(), "2005-10-10T00:00:00.000Z");
+  });
+
+  it("filter on date only", async function () {
+    await stuffModel.create({
+      name: "Things",
+      ownerId: "123",
+      date: "2000-10-10T17:17:17.017Z",
+    });
+    const found = await stuffModel.findOne({
+      date: {$gte: "2000-01-01T00:00:00.000Z", $lt: "2001-01-01T00:00:00.000Z"},
+    });
+    assert.strictEqual(found!.date.toISOString(), "2000-10-10T00:00:00.000Z");
   });
 });
