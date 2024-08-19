@@ -4,6 +4,7 @@ import supertest from "supertest";
 
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
+import {setupServer} from "./expressServer";
 import {Permissions} from "./permissions";
 import {Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
 import {AdminOwnerTransformer} from "./transformers";
@@ -43,39 +44,43 @@ describe("auth tests", function () {
         ownerId: admin._id,
       }),
     ]);
-    app = getBaseServer();
-    setupAuth(app, UserModel as any);
-    addAuthRoutes(app, UserModel as any);
-    app.use(
-      "/food",
-      fernsRouter(FoodModel, {
-        permissions: {
-          list: [Permissions.IsAny],
-          create: [Permissions.IsAuthenticated],
-          read: [Permissions.IsAny],
-          update: [Permissions.IsAuthenticated],
-          delete: [Permissions.IsAuthenticated],
-        },
-        allowAnonymous: true,
-        queryFilter: (user?: {admin: boolean}) => {
-          if (!user?.admin) {
-            return {hidden: {$ne: true}};
-          }
-          return {};
-        },
-        transformer: AdminOwnerTransformer<Food>({
-          adminReadFields: ["name", "calories", "created", "ownerId"],
-          adminWriteFields: ["name", "calories", "created", "ownerId"],
-          ownerReadFields: ["name", "calories", "created", "ownerId"],
-          ownerWriteFields: ["name", "calories", "created"],
-          authReadFields: ["name", "calories", "created"],
-          authWriteFields: ["name", "calories"],
-          anonReadFields: ["name"],
-          anonWriteFields: [],
-        }),
-      })
-    );
-    server = supertest(app);
+
+    function addRoutes(router: express.Router, options: any): void {
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAuthenticated],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAuthenticated],
+            delete: [Permissions.IsAuthenticated],
+          },
+          allowAnonymous: true,
+          queryFilter: (user?: {admin: boolean}) => {
+            if (!user?.admin) {
+              return {hidden: {$ne: true}};
+            }
+            return {};
+          },
+          transformer: AdminOwnerTransformer<Food>({
+            adminReadFields: ["name", "calories", "created", "ownerId"],
+            adminWriteFields: ["name", "calories", "created", "ownerId"],
+            ownerReadFields: ["name", "calories", "created", "ownerId"],
+            ownerWriteFields: ["name", "calories", "created"],
+            authReadFields: ["name", "calories", "created"],
+            authWriteFields: ["name", "calories"],
+            anonReadFields: ["name"],
+            anonWriteFields: [],
+          }),
+        })
+      );
+    }
+    server = setupServer({
+      userModel: UserModel as any,
+      skipListen: true,
+      addRoutes,
+    });
   });
 
   afterEach(async function () {
