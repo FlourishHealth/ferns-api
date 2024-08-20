@@ -219,8 +219,12 @@ describe("DateOnly", function () {
       ownerId: "123",
       date: "2000-10-10T17:17:17.017Z",
     });
-    const found = await stuffModel.findOne({
+    let found = await stuffModel.findOne({
       date: {$gte: "2000-01-01T00:00:00.000Z", $lt: "2001-01-01T00:00:00.000Z"},
+    });
+    assert.strictEqual(found!.date.toISOString(), "2000-10-10T00:00:00.000Z");
+    found = await stuffModel.findOne({
+      date: {$gte: "2000-01-01T12:12:12.000Z", $lt: "2001-01-01T12:12:12.000Z"},
     });
     assert.strictEqual(found!.date.toISOString(), "2000-10-10T00:00:00.000Z");
   });
