@@ -45,7 +45,7 @@ describe("auth tests", function () {
       }),
     ]);
 
-    function addRoutes(router: express.Router, options: any): void {
+    function addRoutes(): void {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
