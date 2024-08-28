@@ -1,9 +1,11 @@
 import {assert} from "chai";
 import express from "express";
 import supertest from "supertest";
+import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter} from "./api";
-import {addAuthRoutes, setupAuth} from "./auth";
+import {addAuthRoutes, addMeRoutes, setupAuth} from "./auth";
+import {setupServer} from "./expressServer";
 import {Permissions} from "./permissions";
 import {Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
 import {AdminOwnerTransformer} from "./transformers";
@@ -11,9 +13,9 @@ import {timeout} from "./utils";
 
 describe("auth tests", function () {
   let app: express.Application;
-  let server: any;
   let admin: any;
   let notAdmin: any;
+  let agent: TestAgent;
 
   beforeEach(async function () {
     jest.useFakeTimers({
@@ -43,39 +45,44 @@ describe("auth tests", function () {
         ownerId: admin._id,
       }),
     ]);
-    app = getBaseServer();
-    setupAuth(app, UserModel as any);
-    addAuthRoutes(app, UserModel as any);
-    app.use(
-      "/food",
-      fernsRouter(FoodModel, {
-        permissions: {
-          list: [Permissions.IsAny],
-          create: [Permissions.IsAuthenticated],
-          read: [Permissions.IsAny],
-          update: [Permissions.IsAuthenticated],
-          delete: [Permissions.IsAuthenticated],
-        },
-        allowAnonymous: true,
-        queryFilter: (user?: {admin: boolean}) => {
-          if (!user?.admin) {
-            return {hidden: {$ne: true}};
-          }
-          return {};
-        },
-        transformer: AdminOwnerTransformer<Food>({
-          adminReadFields: ["name", "calories", "created", "ownerId"],
-          adminWriteFields: ["name", "calories", "created", "ownerId"],
-          ownerReadFields: ["name", "calories", "created", "ownerId"],
-          ownerWriteFields: ["name", "calories", "created"],
-          authReadFields: ["name", "calories", "created"],
-          authWriteFields: ["name", "calories"],
-          anonReadFields: ["name"],
-          anonWriteFields: [],
-        }),
-      })
-    );
-    server = supertest(app);
+
+    function addRoutes(router: express.Router): void {
+      router.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAuthenticated],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAuthenticated],
+            delete: [Permissions.IsAuthenticated],
+          },
+          allowAnonymous: true,
+          queryFilter: (user?: {admin: boolean}) => {
+            if (!user?.admin) {
+              return {hidden: {$ne: true}};
+            }
+            return {};
+          },
+          transformer: AdminOwnerTransformer<Food>({
+            adminReadFields: ["name", "calories", "created", "ownerId"],
+            adminWriteFields: ["name", "calories", "created", "ownerId"],
+            ownerReadFields: ["name", "calories", "created", "ownerId"],
+            ownerWriteFields: ["name", "calories", "created"],
+            authReadFields: ["name", "calories", "created"],
+            authWriteFields: ["name", "calories"],
+            anonReadFields: ["name"],
+            anonWriteFields: [],
+          }),
+        })
+      );
+    }
+    app = setupServer({
+      userModel: UserModel as any,
+      skipListen: true,
+      addRoutes,
+    });
+    agent = supertest.agent(app);
   });
 
   afterEach(async function () {
@@ -83,8 +90,7 @@ describe("auth tests", function () {
   });
 
   it("completes token signup e2e", async function () {
-    const agent = supertest.agent(app);
-    let res = await server
+    let res = await agent
       .post("/auth/signup")
       .send({email: "new@example.com", password: "123"})
       .expect(200);
@@ -94,7 +100,7 @@ describe("auth tests", function () {
     assert.isDefined(token);
     assert.isDefined(refreshToken);
 
-    res = await server
+    res = await agent
       .post("/auth/login")
       .send({email: "new@example.com", password: "123"})
       .expect(200);
@@ -122,7 +128,7 @@ describe("auth tests", function () {
     assert.isDefined(meRes.body.data.created);
     assert.isFalse(meRes.body.data.admin);
 
-    const mePatchRes = await server
+    const mePatchRes = await agent
       .patch("/auth/me")
       .send({email: "new2@example.com"})
       .set("authorization", `Bearer ${token}`)
@@ -149,7 +155,7 @@ describe("auth tests", function () {
   });
 
   it("signup with extra data", async function () {
-    const res = await server
+    const res = await agent
       .post("/auth/signup")
       .send({email: "new@example.com", password: "123", age: 25})
       .expect(200);
@@ -163,12 +169,12 @@ describe("auth tests", function () {
   });
 
   it("login failure", async function () {
-    let res = await server
+    let res = await agent
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
     assert.deepEqual(res.body, {message: "Password or username is incorrect"});
-    res = await server
+    res = await agent
       .post("/auth/login")
       .send({email: "nope@example.com", password: "wrong"})
       .expect(401);
@@ -177,7 +183,6 @@ describe("auth tests", function () {
   });
 
   it("case insensitive email", async function () {
-    const agent = supertest.agent(app);
     const res = await agent
       .post("/auth/login")
       .send({email: "ADMIN@example.com", password: "securePassword"})
@@ -186,7 +191,6 @@ describe("auth tests", function () {
   });
 
   it("case insensitive email with emails with symbols", async function () {
-    const agent = supertest.agent(app);
     const res = await agent
       .post("/auth/login")
       .send({email: "ADMIN+other@example.com", password: "otherPassword"})
@@ -195,7 +199,6 @@ describe("auth tests", function () {
   });
 
   it("completes token login e2e", async function () {
-    const agent = supertest.agent(app);
     const res = await agent
       .post("/auth/login")
       .send({email: "admin@example.com", password: "securePassword"})
@@ -234,7 +237,7 @@ describe("auth tests", function () {
     const food = getRes.body.data.find((f: any) => f.name === "Apple");
     assert.isDefined(food);
 
-    const updateRes = await server
+    const updateRes = await agent
       .patch(`/food/${food.id}`)
       .set("authorization", `Bearer ${token}`)
       .send({name: "Apple Pie"})
@@ -243,7 +246,6 @@ describe("auth tests", function () {
   });
 
   it("login successfully and tokens expire", async function () {
-    const agent = supertest.agent(app);
     const res = await agent
       .post("/auth/login")
       .send({email: "admin@example.com", password: "securePassword"})
@@ -263,7 +265,7 @@ describe("auth tests", function () {
   });
 
   it("locks out after failed password attempts", async function () {
-    let res = await server
+    let res = await agent
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
@@ -271,7 +273,7 @@ describe("auth tests", function () {
     assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     let user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 1);
-    res = await server
+    res = await agent
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
@@ -279,7 +281,7 @@ describe("auth tests", function () {
     assert.deepEqual(res.body, {message: "Password or username is incorrect"});
     user = await UserModel.findById(admin._id);
     assert.equal((user as any)?.attempts, 2);
-    res = await server
+    res = await agent
       .post("/auth/login")
       .send({email: "admin@example.com", password: "wrong"})
       .expect(401);
@@ -289,7 +291,7 @@ describe("auth tests", function () {
     assert.equal((user as any)?.attempts, 3);
 
     // Logging in with correct password fails because account is locked
-    res = await server
+    res = await agent
       .post("/auth/login")
       .send({email: "admin@example.com", password: "securePassword"})
       .expect(401);
@@ -301,7 +303,6 @@ describe("auth tests", function () {
   });
 
   it("refresh token allows refresh of auth token", async function () {
-    const agent = supertest.agent(app);
     // initial login
     const initialLoginRes = await agent
       .post("/auth/login")
@@ -330,7 +331,6 @@ describe("auth tests", function () {
   });
 
   it("disabled user fails", async function () {
-    const agent = supertest.agent(app);
     // initial login
     const initialLoginRes = await agent
       .post("/auth/login")
@@ -351,12 +351,12 @@ describe("auth tests", function () {
   });
 
   it("signup user with email that is already registered", async function () {
-    await server
+    await agent
       .post("/auth/signup")
       .send({email: "new@example.com", password: "123", age: 25})
       .expect(200);
 
-    const res2 = await server
+    const res2 = await agent
       .post("/auth/signup")
       .send({email: "new@example.com", password: "456", age: 31})
       .expect(500);
@@ -400,7 +400,6 @@ describe("custom auth options", function () {
       }),
     ]);
     app = getBaseServer();
-    setupAuth(app, UserModel as any);
     addAuthRoutes(app, UserModel as any, {
       // custom refresh token logic based on admin or non admin
       generateTokenExpiration: (user?: {admin: boolean}) => {
@@ -411,6 +410,8 @@ describe("custom auth options", function () {
         }
       },
     });
+    setupAuth(app, UserModel as any);
+    addMeRoutes(app, UserModel as any);
     app.use(
       "/food",
       fernsRouter(FoodModel, {

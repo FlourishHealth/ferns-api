@@ -11,7 +11,7 @@ import passport from "passport";
 import qs from "qs";
 
 import {FernsRouterOptions} from "./api";
-import {addAuthRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
+import {addAuthRoutes, addMeRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
 import {APIError, apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
 
@@ -229,6 +229,9 @@ function initializeRoutes(
 
   app.use(express.json());
 
+  // Add login/signup/refresh_token before the JWT/auth middlewares
+  addAuthRoutes(app, UserModel as any, options?.authOptions);
+
   setupAuth(app as any, UserModel as any);
 
   if (options.logRequests !== false) {
@@ -260,8 +263,7 @@ function initializeRoutes(
   app.use(oapi);
   app.use("/swagger", oapi.swaggerui());
 
-  addAuthRoutes(app as any, UserModel as any, options?.authOptions);
-
+  addMeRoutes(app, UserModel as any, options?.authOptions);
   addRoutes(app, {openApi: oapi});
 
   // The error handler must be before any other error middleware and after all controllers

@@ -228,13 +228,16 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         issuer: process.env.TOKEN_ISSUER,
       }) as jwt.JwtPayload;
     } catch (error: any) {
-      return res.status(401).json({message: error?.message});
+      const userText = req.user?._id ? ` for user ${req.user._id} ` : "";
+      const details = `[jwt] Error decoding token${userText}: ${error}, expired at ${error?.expiredAt}, current time: ${Date.now()}`;
+      logger.warn(details);
+      return res.status(401).json({message: error?.message, details});
     }
     if (decoded.id) {
       try {
         req.user = await userModel.findById(decoded.id);
         if (req.user?.disabled) {
-          logger.warn(`User ${req.user.id} is disabled`);
+          logger.warn(`[jwt] User ${req.user.id} is disabled`);
           return res.status(401).json({status: 401, title: "User is disabled"});
         }
       } catch (error) {
@@ -314,7 +317,16 @@ export function addAuthRoutes(
       }
     );
   }
+  app.set("etag", false);
+  app.use("/auth", router);
+}
 
+export function addMeRoutes(
+  app: express.Application,
+  userModel: UserModel,
+  _authOptions?: AuthOptions
+): void {
+  const router = express.Router();
   router.get("/me", authenticateMiddleware(), async (req, res) => {
     if (!req.user?.id) {
       logger.debug("Not user found for /me");
