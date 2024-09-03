@@ -6,6 +6,7 @@ import cors from "cors";
 import cron from "cron";
 import express, {Router} from "express";
 import cloneDeep from "lodash/cloneDeep";
+import merge from "lodash/merge";
 import onFinished from "on-finished";
 import passport from "passport";
 import qs from "qs";
@@ -18,13 +19,17 @@ import {logger, LoggingOptions, setupLogging} from "./logger";
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
 
-export function setupErrorLogging(app: express.Application, ignoreTraces: string[] = []) {
+export function setupErrorLogging(
+  app: express.Application,
+  ignoreTraces: string[] = [],
+  sentryOptions?: Sentry.NodeOptions
+) {
   const dsn = process.env.SENTRY_DSN;
   if (process.env.NODE_ENV === "production") {
     if (!dsn) {
       throw new Error("You must set SENTRY_DSN in the environment.");
     }
-    Sentry.init({
+    const defaultSentryOptions = {
       dsn,
       environment: process.env.SENTRY_ENVIRONMENT ?? "production",
       integrations: [
@@ -48,7 +53,8 @@ export function setupErrorLogging(app: express.Application, ignoreTraces: string
       profilesSampleRate: process.env.SENTRY_PROFILES_SAMPLE_RATE
         ? parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE)
         : 0.1,
-    });
+    };
+    Sentry.init(merge({}, defaultSentryOptions, sentryOptions));
     logger.debug(`Initialized Sentry with DSN ${dsn}`);
   }
 }
@@ -191,6 +197,8 @@ interface InitializeRoutesOptions {
   ignoreTraces?: string[];
   loggingOptions?: LoggingOptions;
   authOptions?: AuthOptions;
+  // Options merged with the default Sentry init options.
+  sentryOptions?: Sentry.NodeOptions;
 }
 
 function initializeRoutes(
@@ -200,7 +208,7 @@ function initializeRoutes(
 ) {
   const app = express();
 
-  setupErrorLogging(app, options.ignoreTraces);
+  setupErrorLogging(app, options.ignoreTraces, options.sentryOptions);
 
   const oapi = openapi({
     openapi: "3.0.0",
@@ -292,6 +300,7 @@ export interface SetupServerOptions {
   corsOrigin?: string;
   addMiddleware?: AddRoutes;
   ignoreTraces?: string[];
+  sentryOptions?: Sentry.NodeOptions;
 }
 
 // Sets up the routes and returns a function to launch the API.
@@ -308,6 +317,7 @@ export function setupServer(options: SetupServerOptions) {
       addMiddleware: options.addMiddleware,
       ignoreTraces: options.ignoreTraces,
       authOptions: options.authOptions,
+      sentryOptions: options.sentryOptions,
     });
   } catch (error) {
     logger.error(`Error initializing routes: ${error}`);
