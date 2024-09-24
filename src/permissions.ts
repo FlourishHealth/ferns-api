@@ -2,7 +2,7 @@
 import express, {NextFunction} from "express";
 import {Model} from "mongoose";
 
-import {FernsRouterOptions, getModel, populate, RESTMethod} from "./api";
+import {addPopulateToQuery, FernsRouterOptions, getModel, RESTMethod} from "./api";
 import {User} from "./auth";
 import {APIError} from "./errors";
 
@@ -135,9 +135,8 @@ export function permissionMiddleware<T>(
       if (!(await checkPermissions(method, options.permissions[method], req.user))) {
         throw new APIError({
           status: 405,
-          title: `Access to ${method.toUpperCase()} on ${model.modelName} denied for ${
-            req.user?.id
-          }`,
+          title: `Access to ${method.toUpperCase()} on ${model.modelName} denied for ${req.user
+            ?.id}`,
         });
       }
 
@@ -146,7 +145,7 @@ export function permissionMiddleware<T>(
       }
 
       const builtQuery = model.findById(req.params.id);
-      const populatedQuery = populate(req, builtQuery as any, options.populatePaths);
+      const populatedQuery = addPopulateToQuery(req, builtQuery as any, options.populatePaths);
 
       let data;
       try {

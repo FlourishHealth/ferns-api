@@ -1,3 +1,4 @@
+import {assert} from "chai";
 import express, {Router} from "express";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
@@ -46,7 +47,7 @@ function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): 
     fernsRouter(FoodModel as any, {
       ...options,
       allowAnonymous: true,
-      populatePaths: ["ownerId", "eatenBy"],
+      populatePaths: [{path: "ownerId"}, {path: "eatenBy"}],
       permissions: {
         list: [Permissions.IsAny],
         create: [Permissions.IsAny],
@@ -103,6 +104,140 @@ describe("openApi", function () {
   it("gets the openapi.json with custom endpoint", async function () {
     server = supertest(app);
     const res = await server.get("/openapi.json").expect(200);
+    expect(res.body).toMatchSnapshot();
+  });
+});
+
+function addRoutesPopulate(router: Router, options?: Partial<FernsRouterOptions<any>>): void {
+  options?.openApi.component("schemas", "LimitedUser", {
+    type: "object",
+    properties: {
+      name: {
+        type: "string",
+        description: "LimitedUser's name",
+      },
+      email: {
+        type: "string",
+        description: "LimitedUser's email",
+      },
+    },
+  });
+
+  router.use(
+    "/food",
+    fernsRouter(FoodModel as any, {
+      ...options,
+      allowAnonymous: true,
+      populatePaths: [
+        {path: "ownerId", fields: ["name", "email"]},
+        {
+          path: "eatenBy",
+          fields: ["name", "email"],
+          openApiComponent: "LimitedUser",
+        },
+        {
+          path: "likesIds.userId",
+          fields: ["name", "email"],
+          openApiComponent: "LimitedUser",
+        },
+      ],
+      permissions: {
+        list: [Permissions.IsAny],
+        create: [Permissions.IsAny],
+        read: [Permissions.IsAny],
+        update: [Permissions.IsAny],
+        delete: [Permissions.IsAny],
+      },
+      openApiExtraModelProperties: {
+        foo: {
+          type: "string",
+        },
+      },
+    })
+  );
+}
+
+describe("openApi populate", function () {
+  let server: TestAgent;
+  let app: express.Application;
+
+  beforeEach(async function () {
+    process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
+
+    app = setupServer({
+      addRoutes: addRoutesPopulate,
+      userModel: UserModel as any,
+      skipListen: true,
+    });
+    setupAuth(app, UserModel as any);
+    addAuthRoutes(app, UserModel as any);
+  });
+
+  it("gets the openapi.json with populate", async function () {
+    server = supertest(app);
+    const res = await server.get("/openapi.json").expect(200);
+    const properties =
+      res.body.paths["/food/{id}"].get.responses["200"].content["application/json"].schema
+        .properties;
+
+    // console.log("EATENBY", properties.eatenBy);
+    // console.log("LIKESID", properties.likesIds);
+
+    // There's no component here, so we automatically generate the limited properties.
+    assert.deepEqual(properties.ownerId, {
+      properties: {
+        name: {
+          type: "string",
+        },
+        email: {
+          type: "string",
+        },
+      },
+      type: "object",
+    });
+
+    // We only reference the component here, rather than listing each field each time.
+    assert.deepEqual(properties.eatenBy, {
+      items: {
+        $ref: "#/components/schemas/LimitedUser",
+      },
+      type: "array",
+    });
+
+    assert.deepEqual(properties.likesIds, {
+      items: {
+        properties: {
+          _id: {
+            type: "string",
+          },
+          likes: {
+            type: "boolean",
+          },
+          userId: {
+            $ref: "#/components/schemas/LimitedUser",
+          },
+        },
+        required: [],
+        type: "object",
+      },
+      type: "array",
+    });
+
+    // Ensure the component is registered and used.
+    assert.deepEqual(res.body.components.schemas.LimitedUser, {
+      properties: {
+        email: {
+          description: "LimitedUser's email",
+          type: "string",
+        },
+        name: {
+          description: "LimitedUser's name",
+          type: "string",
+        },
+      },
+      type: "object",
+    });
+
     expect(res.body).toMatchSnapshot();
   });
 });

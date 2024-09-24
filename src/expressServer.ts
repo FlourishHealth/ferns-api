@@ -319,8 +319,8 @@ export function setupServer(options: SetupServerOptions) {
       authOptions: options.authOptions,
       sentryOptions: options.sentryOptions,
     });
-  } catch (error) {
-    logger.error(`Error initializing routes: ${error}`);
+  } catch (error: any) {
+    logger.error(`Error initializing routes: ${error.stack}`);
     throw error;
   }
 
