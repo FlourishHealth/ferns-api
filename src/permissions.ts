@@ -135,8 +135,9 @@ export function permissionMiddleware<T>(
       if (!(await checkPermissions(method, options.permissions[method], req.user))) {
         throw new APIError({
           status: 405,
-          title: `Access to ${method.toUpperCase()} on ${model.modelName} denied for ${req.user
-            ?.id}`,
+          title:
+            `Access to ${method.toUpperCase()} on ${model.modelName} ` +
+            `denied for ${req.user?.id}`,
         });
       }
 
