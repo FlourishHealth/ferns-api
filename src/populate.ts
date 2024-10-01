@@ -25,19 +25,46 @@ export type PopulatePath = {
   fields?: string[];
 };
 
+// This function filters an object to only include specified keys.
+// It supports nested keys using dot notation (e.g., 'user.name').
+// If no keys are provided, it returns the original object.
+// The function recursively traverses the object structure to handle nested properties.
 const filterKeys = (obj: Record<string, any>, keysToKeep?: string[]): Record<string, any> => {
   if (!keysToKeep) {
     return obj;
   }
-  return Object.keys(obj).reduce(
-    (acc, key) => {
-      if (keysToKeep.includes(key)) {
-        acc[key] = obj[key];
+
+  const result: Record<string, any> = {};
+
+  const filterNestedKeys = (
+    currentObj: Record<string, any>,
+    currentResult: Record<string, any>,
+    remainingKeys: string[]
+  ) => {
+    const currentKey = remainingKeys[0];
+    const nestedKeys = currentKey.split(".");
+
+    if (nestedKeys.length > 1) {
+      const [firstKey, ...rest] = nestedKeys;
+      if (!currentResult[firstKey]) {
+        currentResult[firstKey] = {};
       }
-      return acc;
-    },
-    {} as Record<string, any>
-  );
+      filterNestedKeys(currentObj[firstKey], currentResult[firstKey], [
+        rest.join("."),
+        ...remainingKeys.slice(1),
+      ]);
+    } else {
+      if (currentObj.hasOwnProperty(currentKey)) {
+        currentResult[currentKey] = currentObj[currentKey];
+      }
+      if (remainingKeys.length > 1) {
+        filterNestedKeys(currentObj, currentResult, remainingKeys.slice(1));
+      }
+    }
+  };
+
+  filterNestedKeys(obj, result, keysToKeep);
+  return result;
 };
 
 // Helper function to get the path in the OpenAPI schema, so we can swap out the type for the

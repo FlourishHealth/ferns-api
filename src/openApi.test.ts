@@ -180,9 +180,6 @@ describe("openApi populate", function () {
       res.body.paths["/food/{id}"].get.responses["200"].content["application/json"].schema
         .properties;
 
-    // console.log("EATENBY", properties.eatenBy);
-    // console.log("LIKESID", properties.likesIds);
-
     // There's no component here, so we automatically generate the limited properties.
     assert.deepEqual(properties.ownerId, {
       properties: {

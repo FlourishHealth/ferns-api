@@ -146,7 +146,7 @@ export function permissionMiddleware<T>(
       }
 
       const builtQuery = model.findById(req.params.id);
-      const populatedQuery = addPopulateToQuery(req, builtQuery as any, options.populatePaths);
+      const populatedQuery = addPopulateToQuery(builtQuery as any, options.populatePaths);
 
       let data;
       try {
