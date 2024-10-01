@@ -29,7 +29,6 @@ export type JSONObject = {[member: string]: JSONValue};
 export type JSONValue = JSONPrimitive | JSONObject | JSONArray;
 
 export function addPopulateToQuery(
-  req: express.Request,
   builtQuery: mongoose.Query<any[], any, {}, any>,
   populatePaths?: PopulatePath[]
 ) {
@@ -135,7 +134,8 @@ export interface FernsRouterOptions<T> {
    *  fields: An array of strings to filter on the populated objects, following Mongoose's select
    *    rules. If each field starts a preceding "-", will act as a block list and only remove those
    *    fields. If each field does not start with a "-", will act as an allow list and only
-   *    return those fields. Mixing is not supported.
+   *    return those fields. Mixing allow and blocking is not supported. e.g. "-created updated"
+   *    is an error.
    *  openApiComponent: If you have a component already registered,
    *    use that instead of autogenerating the types for the populated fields.
    *
@@ -395,7 +395,7 @@ export function fernsRouter<T>(
       if (options.populatePaths) {
         try {
           let populateQuery = model.findById(data._id);
-          populateQuery = addPopulateToQuery(req, populateQuery, options.populatePaths);
+          populateQuery = addPopulateToQuery(populateQuery, options.populatePaths);
           data = await populateQuery.exec();
         } catch (error: any) {
           throw new APIError({
@@ -522,7 +522,7 @@ export function fernsRouter<T>(
         builtQuery = builtQuery.sort(options.sort);
       }
 
-      const populatedQuery = addPopulateToQuery(req, builtQuery, options.populatePaths);
+      const populatedQuery = addPopulateToQuery(builtQuery, options.populatePaths);
 
       let data: (Document<any, any, any> & T)[];
       try {
@@ -692,7 +692,7 @@ export function fernsRouter<T>(
 
       if (options.populatePaths) {
         let populateQuery = model.findById(doc._id);
-        populateQuery = addPopulateToQuery(req, populateQuery, options.populatePaths);
+        populateQuery = addPopulateToQuery(populateQuery, options.populatePaths);
         doc = await populateQuery.exec();
       }
 
