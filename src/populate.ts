@@ -46,6 +46,9 @@ const filterKeys = (obj: Record<string, any>, keysToKeep?: string[]): Record<str
 
     if (nestedKeys.length > 1) {
       const [firstKey, ...rest] = nestedKeys;
+      if (firstKey === '__proto__' || firstKey === 'constructor' || firstKey === 'prototype') {
+        return;
+      }
       if (!currentResult[firstKey]) {
         currentResult[firstKey] = {};
       }
