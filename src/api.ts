@@ -6,7 +6,6 @@
 import * as Sentry from "@sentry/node";
 import express, {NextFunction, Request, Response} from "express";
 import cloneDeep from "lodash/cloneDeep";
-import isFunction from "lodash/isFunction";
 import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
@@ -20,6 +19,7 @@ import {
   patchOpenApiMiddleware,
 } from "./openApi";
 import {checkPermissions, permissionMiddleware, RESTPermissions} from "./permissions";
+import {PopulatePath} from "./populate";
 import {defaultResponseHandler, FernsTransformer, serialize, transform} from "./transformers";
 import {isValidObjectId} from "./utils";
 
@@ -27,6 +27,20 @@ export type JSONPrimitive = string | number | boolean | null;
 export interface JSONArray extends Array<JSONValue> {}
 export type JSONObject = {[member: string]: JSONValue};
 export type JSONValue = JSONPrimitive | JSONObject | JSONArray;
+
+export function addPopulateToQuery(
+  builtQuery: mongoose.Query<any[], any, {}, any>,
+  populatePaths?: PopulatePath[]
+) {
+  const paths = populatePaths ?? [];
+
+  for (const populatePath of paths) {
+    const path = populatePath.path;
+    const select = populatePath.fields;
+    builtQuery = builtQuery.populate({path, select});
+  }
+  return builtQuery;
+}
 
 // TODOS:
 // Support bulk actions
@@ -45,8 +59,6 @@ const COMPLEX_QUERY_PARAMS = ["$and", "$or"];
  * @returns The sum of `a` and `b`
  */
 export type RESTMethod = "list" | "create" | "read" | "update" | "delete";
-
-export type PopulatePaths = string[] | ((req: Request) => string[]);
 
 /**
  * This is the main configuration.
@@ -115,17 +127,20 @@ export interface FernsRouterOptions<T> {
    * These can be overridden by the user if not disallowed by queryFilter. */
   defaultQueryParams?: {[key: string]: any};
   /**
-   * Paths to populate before returning data from list queries. Accepts Mongoose-style populate
-   * strings.
-   *  May also be a function that takes the request and returns a list of paths to populate.
-   *  This is handy if you need to populate based on the user or request, such as app version.
-   *    ["ownerId"] // populates the User that matches `ownerId`
-   *    ["ownerId.organizationId"] // Nested. Populates the User that matches `ownerId`, as well as their organization.
+   * Manages Mongoose populations before returning from all methods (list, read, create, etc).
+   * For each population:
+   *  path: Accepts Mongoose-style populate strings for path. e.g. "user" or "users.userId"
+   *    (for an array of subschemas with userId)
+   *  fields: An array of strings to filter on the populated objects, following Mongoose's select
+   *    rules. If each field starts a preceding "-", will act as a block list and only remove those
+   *    fields. If each field does not start with a "-", will act as an allow list and only
+   *    return those fields. Mixing allow and blocking is not supported. e.g. "-created updated"
+   *    is an error.
+   *  openApiComponent: If you have a component already registered,
+   *    use that instead of autogenerating the types for the populated fields.
    *
-   *  Note: The array of strings style will be correctly handled by OpenAPI,
-   *  but the function style will not currently.
-   * */
-  populatePaths?: PopulatePaths;
+   */
+  populatePaths?: PopulatePath[];
   /** Default limit applied to list queries if not specified by the user. Defaults to 100. */
   defaultLimit?: number;
   /**
@@ -203,7 +218,7 @@ export interface FernsRouterOptions<T> {
     method: "list" | "create" | "read" | "update" | "delete",
     request: express.Request,
     options: FernsRouterOptions<T>
-  ) => Promise<JSONValue | null>;
+  ) => Promise<JSONValue>;
   /**
    * The discriminatorKey that you passed when creating the Mongoose models. Defaults to __t. See:
    * https://mongoosejs.com/docs/discriminators.html If this key is provided,
@@ -254,30 +269,6 @@ export function getModel(baseModel: Model<any>, body?: any, options?: FernsRoute
     }
     return model;
   }
-}
-
-export function populate(
-  req: express.Request,
-  builtQuery: mongoose.Query<any[], any, {}, any>,
-  populatePaths?: PopulatePaths
-) {
-  // TODO: we should handle nested serializers here.
-  let paths: string[];
-
-  if (isFunction(populatePaths)) {
-    try {
-      paths = populatePaths(req);
-    } catch (error: any) {
-      throw new APIError({status: 500, title: `Error in populatePaths function: ${error}`, error});
-    }
-  } else {
-    paths = populatePaths ?? [];
-  }
-
-  for (const populatePath of paths) {
-    builtQuery = builtQuery.populate(populatePath);
-  }
-  return builtQuery;
 }
 
 // Ensures query params are allowed. Also checks nested query params when using $and/$or.
@@ -404,7 +395,7 @@ export function fernsRouter<T>(
       if (options.populatePaths) {
         try {
           let populateQuery = model.findById(data._id);
-          populateQuery = populate(req, populateQuery, options.populatePaths);
+          populateQuery = addPopulateToQuery(populateQuery, options.populatePaths);
           data = await populateQuery.exec();
         } catch (error: any) {
           throw new APIError({
@@ -531,7 +522,7 @@ export function fernsRouter<T>(
         builtQuery = builtQuery.sort(options.sort);
       }
 
-      const populatedQuery = populate(req, builtQuery, options.populatePaths);
+      const populatedQuery = addPopulateToQuery(builtQuery, options.populatePaths);
 
       let data: (Document<any, any, any> & T)[];
       try {
@@ -701,7 +692,7 @@ export function fernsRouter<T>(
 
       if (options.populatePaths) {
         let populateQuery = model.findById(doc._id);
-        populateQuery = populate(req, populateQuery, options.populatePaths);
+        populateQuery = addPopulateToQuery(populateQuery, options.populatePaths);
         doc = await populateQuery.exec();
       }
 

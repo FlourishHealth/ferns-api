@@ -5,10 +5,11 @@ import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
 
 import {logger} from "./logger";
-import {createdUpdatedPlugin, isDisabledPlugin} from "./plugins";
+import {createdUpdatedPlugin, DateOnly, isDisabledPlugin} from "./plugins";
 
 export interface User {
   admin: boolean;
+  name?: string;
   username: string;
   email: string;
   age?: number;
@@ -46,12 +47,15 @@ export interface Food {
   // We want to test that map type works.
   lastEatenWith: {[name: string]: Date};
   categories: FoodCategory[];
+  expiration: string;
+  likesIds: {userId: string; likes: boolean}[];
 }
 
 const userSchema = new Schema<User>({
   username: String,
   admin: {type: Boolean, default: false},
   age: Number,
+  name: String,
 });
 
 userSchema.plugin(passportLocalMongoose, {
@@ -88,6 +92,11 @@ const foodCategorySchema = new Schema<FoodCategory>({
   show: Boolean,
 });
 
+const likesSchema = new Schema<any>({
+  userId: {type: "ObjectId", ref: "User"},
+  likes: Boolean,
+});
+
 const foodSchema = new Schema<Food>(
   {
     name: String,
@@ -113,6 +122,8 @@ const foodSchema = new Schema<Food>(
         required: true,
       },
     ],
+    expiration: DateOnly,
+    likesIds: {type: [likesSchema], required: true},
   },
   {strict: "throw", toJSON: {virtuals: true}, toObject: {virtuals: true}}
 );
@@ -183,9 +194,9 @@ export async function setupDb() {
 
   try {
     const [notAdmin, admin, adminOther] = await Promise.all([
-      UserModel.create({email: "notAdmin@example.com"}),
-      UserModel.create({email: "admin@example.com", admin: true}),
-      UserModel.create({email: "admin+other@example.com", admin: true}),
+      UserModel.create({email: "notAdmin@example.com", name: "Not Admin"}),
+      UserModel.create({email: "admin@example.com", admin: true, name: "Admin"}),
+      UserModel.create({email: "admin+other@example.com", admin: true, name: "Admin Other"}),
     ]);
     await (notAdmin as any).setPassword("password");
     await notAdmin.save();
@@ -194,6 +205,7 @@ export async function setupDb() {
     await admin.save();
 
     await (adminOther as any).setPassword("otherPassword");
+
     await adminOther.save();
 
     return [admin, notAdmin, adminOther];

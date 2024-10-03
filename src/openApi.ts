@@ -1,11 +1,11 @@
 import flatten from "lodash/flatten";
-import isArray from "lodash/isArray";
 import merge from "lodash/merge";
 import {Model} from "mongoose";
 import m2s from "mongoose-to-swagger";
 
-import {FernsRouterOptions, PopulatePaths} from "./api";
+import {FernsRouterOptions} from "./api";
 import {logger} from "./logger";
+import {getOpenApiSpecForModel} from "./populate";
 
 const noop = (_a, _b, next) => next();
 
@@ -41,80 +41,6 @@ export const defaultOpenApiErrorResponses = {
     content: apiErrorContent,
   },
 };
-
-// Replaces populated properties with the populated schema.
-export function convertModel(
-  model: any,
-  {
-    populatePaths,
-    extraModelProperties,
-  }: {populatePaths?: PopulatePaths; extraModelProperties?: any} = {}
-): {properties: any; required: string[]} {
-  const modelSwagger = m2s(model, {
-    props: ["required", "enum"],
-  });
-
-  // TODO: this should use OpenAPIs Components to fill in the referenced model instead.
-  if (populatePaths && isArray(populatePaths)) {
-    // Get the referenced populate model from the model schema.
-
-    populatePaths.forEach((populatePath) => {
-      let populateModel = model.schema.path(populatePath).options.ref;
-      const populatePathIsArray = Array.isArray(model.schema.path(populatePath).options.type);
-      if (populatePathIsArray) {
-        populateModel = model.schema.path(populatePath).options.type[0].ref;
-      }
-      if (!populateModel) {
-        return;
-      }
-      // Replace the populated property with the populated model schema.
-      if (populatePathIsArray) {
-        modelSwagger.properties[populatePath] = {
-          type: "array",
-          items: {
-            type: "object",
-            properties: m2s(model.db.model(populateModel), m2sOptions).properties,
-          },
-        };
-      } else {
-        modelSwagger.properties[populatePath] = {
-          type: "object",
-          properties: m2s(model.db.model(populateModel), m2sOptions).properties,
-        };
-      }
-    });
-  }
-
-  // Add virtuals to the modelSwagger property
-  for (const virtual of Object.keys(model.schema.virtuals)) {
-    // This can be added using "omitMongooseInternals" in m2sOptions, so skip it here
-    if (virtual === "id" || virtual === "__v") {
-      continue;
-    }
-    modelSwagger.properties[virtual] = {
-      type: "any",
-    };
-  }
-
-  // Check subschemas for virtuals. One level deep should be sufficient.
-  if (model.schema.childSchemas.length > 0) {
-    for (const childSchema of model.schema.childSchemas) {
-      for (const virtual of Object.keys(childSchema.schema.virtuals)) {
-        if (virtual === "id" || virtual === "__v") {
-          continue;
-        }
-        modelSwagger.properties[childSchema.model.path].properties[virtual] = {
-          type: "any",
-        };
-      }
-    }
-  }
-
-  return {
-    properties: {...modelSwagger.properties, ...extraModelProperties},
-    required: modelSwagger.required ?? [],
-  };
-}
 
 // We repeat this constantly, so we make it a component so we only have to define it once.
 function createAPIErrorComponent(openApi: any) {
@@ -198,7 +124,7 @@ export function getOpenApiMiddleware<T>(model: Model<T>, options: Partial<FernsR
     return noop;
   }
 
-  const {properties, required} = convertModel(model, {
+  const {properties, required} = getOpenApiSpecForModel(model, {
     populatePaths: options.populatePaths,
     extraModelProperties: options.openApiExtraModelProperties,
   });
@@ -240,7 +166,6 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
   const modelSwagger = m2s(model, m2sOptions);
 
   // TODO: handle permissions
-  // TODO: handle whitelist/transform
 
   // Convert fernsRouter queryFields into OpenAPI parameters
   const defaultQueryParams = [
@@ -312,7 +237,7 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
       })
   );
 
-  const {properties, required} = convertModel(model, {
+  const {properties, required} = getOpenApiSpecForModel(model, {
     populatePaths: options.populatePaths,
     extraModelProperties: options.openApiExtraModelProperties,
   });
@@ -400,7 +325,7 @@ export function createOpenApiMiddleware<T>(
     return noop;
   }
 
-  const {properties, required} = convertModel(model, {
+  const {properties, required} = getOpenApiSpecForModel(model, {
     populatePaths: options.populatePaths,
     extraModelProperties: options.openApiExtraModelProperties,
   });
@@ -452,7 +377,7 @@ export function patchOpenApiMiddleware<T>(
     return noop;
   }
 
-  const {properties, required} = convertModel(model, {
+  const {properties, required} = getOpenApiSpecForModel(model, {
     populatePaths: options.populatePaths,
     extraModelProperties: options.openApiExtraModelProperties,
   });

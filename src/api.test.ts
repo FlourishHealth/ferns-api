@@ -450,7 +450,7 @@ describe("ferns-api", () => {
           sort: {created: "descending"},
           defaultQueryParams: {hidden: false},
           queryFields: ["hidden", "name", "calories", "created", "source.name", "tags", "eatenBy"],
-          populatePaths: ["ownerId"],
+          populatePaths: [{path: "ownerId"}],
         })
       );
       server = supertest(app);
@@ -830,12 +830,13 @@ describe("ferns-api", () => {
 
   describe("populate", function () {
     let admin: any;
+    let notAdmin: any;
     let agent: TestAgent;
 
     let spinach: Food;
 
     beforeEach(async function () {
-      [admin] = await setupDb();
+      [admin, notAdmin] = await setupDb();
 
       [spinach] = await Promise.all([
         FoodModel.create({
@@ -848,6 +849,16 @@ describe("ferns-api", () => {
             name: "Brand",
           },
         }),
+        FoodModel.create({
+          name: "Carrots",
+          calories: 1,
+          created: new Date("2022-12-03T00:00:20.000Z"),
+          ownerId: notAdmin._id,
+          hidden: false,
+          source: {
+            name: "User",
+          },
+        }),
       ]);
       app = getBaseServer();
       setupAuth(app, UserModel as any);
@@ -855,6 +866,7 @@ describe("ferns-api", () => {
       app.use(
         "/food",
         fernsRouter(FoodModel, {
+          sort: "-created",
           allowAnonymous: true,
           permissions: {
             list: [Permissions.IsAny],
@@ -863,16 +875,30 @@ describe("ferns-api", () => {
             update: [Permissions.IsAny],
             delete: [Permissions.IsAny],
           },
-          populatePaths: ["ownerId"],
+          populatePaths: [{path: "ownerId", fields: ["email"]}],
         })
       );
       server = supertest(app);
       agent = await authAsUser(app, "notAdmin");
     });
 
+    it("lists with populate", async function () {
+      const res = await agent.get(`/food`).expect(200);
+      assert.lengthOf(res.body.data, 2);
+      const [carrots, spin] = res.body.data;
+      assert.equal(carrots.ownerId._id, notAdmin._id);
+      assert.equal(carrots.ownerId.email, notAdmin.email);
+      assert.isUndefined(carrots.ownerId.name);
+      assert.equal(spin.ownerId._id, admin._id);
+      assert.equal(spin.ownerId.email, admin.email);
+      assert.isUndefined(spin.ownerId.name);
+    });
+
     it("reads with populate", async function () {
       const res = await agent.get(`/food/${spinach._id}`).expect(200);
       assert.equal(res.body.data.ownerId._id, admin._id);
+      assert.equal(res.body.data.ownerId.email, admin.email);
+      assert.isUndefined(res.body.data.ownerId.name);
     });
 
     it("creates with populate", async function () {
@@ -885,6 +911,8 @@ describe("ferns-api", () => {
         })
         .expect(201);
       assert.equal(res.body.data.ownerId._id, admin._id);
+      assert.equal(res.body.data.ownerId.email, admin.email);
+      assert.isUndefined(res.body.data.ownerId.name);
     });
 
     it("updates with populate", async function () {
@@ -895,73 +923,8 @@ describe("ferns-api", () => {
         })
         .expect(200);
       assert.equal(res.body.data.ownerId._id, admin._id);
-    });
-  });
-
-  describe("populate function", function () {
-    let admin: any;
-    let agent: TestAgent;
-
-    let spinach: Food;
-
-    beforeEach(async function () {
-      [admin] = await setupDb();
-
-      [spinach] = await Promise.all([
-        FoodModel.create({
-          name: "Spinach",
-          calories: 1,
-          created: new Date("2021-12-03T00:00:20.000Z"),
-          ownerId: admin._id,
-          hidden: false,
-          source: {
-            name: "Brand",
-          },
-        }),
-      ]);
-      app = getBaseServer();
-      setupAuth(app, UserModel as any);
-      addAuthRoutes(app, UserModel as any);
-      app.use(
-        "/food",
-        fernsRouter(FoodModel, {
-          allowAnonymous: true,
-          permissions: {
-            list: [Permissions.IsAny],
-            create: [Permissions.IsAny],
-            read: [Permissions.IsAny],
-            update: [Permissions.IsAny],
-            delete: [Permissions.IsAny],
-          },
-          populatePaths: (req: express.Request) => {
-            if (req.headers.populate) {
-              return ["ownerId"];
-            } else {
-              return [];
-            }
-          },
-        })
-      );
-      server = supertest(app);
-      agent = await authAsUser(app, "notAdmin");
-    });
-
-    it("reads with populate function", async function () {
-      // We populate the ownerId field because we set the header.
-      let res = await agent.get(`/food/${spinach._id}`).set({populate: "true"}).expect(200);
-      assert.equal(res.body.data.ownerId._id, admin._id);
-      // No header means we don't set the header.
-      res = await agent.get(`/food/${spinach._id}`).expect(200);
-      assert.equal(res.body.data.ownerId, admin._id);
-    });
-
-    it("list with populate function", async function () {
-      // We populate the ownerId field because we set the header.
-      let res = await agent.get(`/food`).set({populate: "true"}).expect(200);
-      assert.equal(res.body.data[0].ownerId._id, admin._id);
-      // No header means we don't set the header.
-      res = await agent.get(`/food`).expect(200);
-      assert.equal(res.body.data[0].ownerId, admin._id);
+      assert.equal(res.body.data.ownerId.email, admin.email);
+      assert.isUndefined(res.body.data.ownerId.name);
     });
   });
 
