@@ -213,6 +213,11 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
       return next();
     }
 
+    // Allow requests with a "Secret" prefix to pass through since this is a string value, not a jwt that needs to be decoded
+    if (req?.headers?.authorization?.split(" ")[0] === "Secret") {
+      return next();
+    }
+
     const token = customTokenExtractor(req);
 
     // For some reason, our app will happily put null into the authorization header when logging
