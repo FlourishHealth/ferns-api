@@ -27,6 +27,9 @@ updates:
       # Until we move to Express 5, we need to stick with the types for Express 4
       - dependency-name: "@types/express"
         versions: ["5.x"]
+      # ESM only in 5.x
+      - dependency-name: "chai"
+        versions: ["5.x"]
     # Group all dependencies into one PR for backend.
     # Note: security PRs will still be their own for visibility.
     groups:
