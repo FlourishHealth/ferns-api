@@ -464,11 +464,11 @@ export function fernsRouter<T>(
 
       // Special operators. NOTE: these request Mongo Atlas.
       if (req.query.$search) {
-        mongoose.connection.db.collection(model.collection.collectionName);
+        mongoose.connection.db?.collection(model.collection.collectionName);
       }
 
       if (req.query.$autocomplete) {
-        mongoose.connection.db.collection(model.collection.collectionName);
+        mongoose.connection.db?.collection(model.collection.collectionName);
       }
 
       // Check if any of the keys in the query are not allowed by options.queryFilter

@@ -1,5 +1,5 @@
 import * as Sentry from "@sentry/node";
-import {ProfilingIntegration} from "@sentry/profiling-node";
+import {nodeProfilingIntegration} from "@sentry/profiling-node";
 import openapi from "@wesleytodd/openapi";
 import axios from "axios";
 import cors from "cors";
@@ -32,12 +32,7 @@ export function setupErrorLogging(
     const defaultSentryOptions = {
       dsn,
       environment: process.env.SENTRY_ENVIRONMENT ?? "production",
-      integrations: [
-        // enable HTTP calls tracing
-        new Sentry.Integrations.Http({tracing: true}),
-        ...Sentry.autoDiscoverNodePerformanceMonitoringIntegrations(),
-        new ProfilingIntegration(),
-      ],
+      integrations: [nodeProfilingIntegration()],
       ignoreErrors: [/^.*ECONNRESET*$/, /^.*socket hang up*$/],
       tracesSampler: (samplingContext) => {
         const transactionName = samplingContext.transactionContext.name;
@@ -222,9 +217,6 @@ function initializeRoutes(
   // TODO: Log a warning when we hit the array limit.
   app.set("query parser", (str: string) => qs.parse(str, {arrayLimit: options.arrayLimit ?? 200}));
 
-  app.use(Sentry.Handlers.requestHandler());
-  app.use(Sentry.Handlers.tracingHandler());
-
   if (options.addMiddleware) {
     options.addMiddleware(app);
   }
@@ -274,8 +266,7 @@ function initializeRoutes(
   addMeRoutes(app, UserModel as any, options?.authOptions);
   addRoutes(app, {openApi: oapi});
 
-  // The error handler must be before any other error middleware and after all controllers
-  app.use(Sentry.Handlers.errorHandler());
+  Sentry.setupExpressErrorHandler(app);
 
   // Catch any thrown APIErrors and return them in an OpenAPI compatible format
   app.use(apiUnauthorizedMiddleware);
