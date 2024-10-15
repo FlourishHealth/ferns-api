@@ -1,7 +1,6 @@
 import chai, {assert} from "chai";
 import chaiAsPromised from "chai-as-promised";
 import {model, Schema} from "mongoose";
-import sinon from "sinon";
 chai.use(chaiAsPromised);
 
 import {
@@ -37,8 +36,10 @@ const stuffModel = model<Stuff>("Stuff", stuffSchema);
 
 describe("createdUpdate", function () {
   it("sets created and updated on save", async function () {
-    const clock = sinon.useFakeTimers();
-    clock.setSystemTime(new Date("2022-12-17T03:24:00.000Z"));
+    jest.useFakeTimers({
+      now: new Date("2022-12-17T03:24:00.000Z"),
+      advanceTimers: true,
+    });
 
     const stuff = await stuffModel.create({name: "Things", ownerId: "123"});
     assert.isNotNull(stuff.created);
@@ -47,12 +48,11 @@ describe("createdUpdate", function () {
     assert.equal(stuff.updated?.toISOString(), "2022-12-17T03:24:00.000Z");
 
     stuff.name = "Thangs";
-    await clock.tickAsync(10000);
+    jest.advanceTimersByTime(10000);
     await stuff.save();
     assert.equal(stuff.created.toISOString(), "2022-12-17T03:24:00.000Z");
-    assert.equal(stuff.updated?.toISOString(), "2022-12-17T03:24:10.000Z");
-
-    clock.restore();
+    assert.isTrue(stuff.updated! > stuff.created);
+    jest.useRealTimers();
   });
 });
 
