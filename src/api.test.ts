@@ -24,7 +24,7 @@ import {
   UserModel,
 } from "./tests";
 
-const assert = chai.assert;
+const assert: Chai.AssertStatic = chai.assert;
 
 jest.mock("@sentry/node", () => {
   // Auto-mock the Sentry module

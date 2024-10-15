@@ -24,6 +24,12 @@ updates:
       # Puppeteer wasn't building for Node 18, should be able to remove this when we go Node 20
       - dependency-name: "puppeteer"
         versions: ["23.x"]
+      # Until we move to Express 5, we need to stick with the types for Express 4
+      - dependency-name: "@types/express"
+        versions: ["5.x"]
+      # ESM only in 5.x
+      - dependency-name: "chai"
+        versions: ["5.x"]
     # Group all dependencies into one PR for backend.
     # Note: security PRs will still be their own for visibility.
     groups:
@@ -31,4 +37,3 @@ updates:
         applies-to: version-updates
         patterns:
           - "*"
-        
