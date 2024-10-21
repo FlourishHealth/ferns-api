@@ -42,7 +42,7 @@ export function authenticateMiddleware(anonymous = false) {
   }
   return passport.authenticate(strategies, {
     session: false,
-    failureMessage: true,
+    failureMessage: false, // this is just avoiding storing the message in the session
     failWithError: true,
   });
 }
@@ -144,16 +144,6 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   if (!userModel.createStrategy) {
     throw new Error("setupAuth userModel must have .createStrategy()");
   }
-  if (!userModel.serializeUser) {
-    throw new Error("setupAuth userModel must have .serializeUser()");
-  }
-  if (!userModel.deserializeUser) {
-    throw new Error("setupAuth userModel must have .deserializeUser()");
-  }
-
-  // use static serialize and deserialize of model for passport session support
-  passport.serializeUser(userModel.serializeUser());
-  passport.deserializeUser(userModel.deserializeUser());
 
   const customTokenExtractor: JwtFromRequestFunction = function (req) {
     let token: string | null = null;
@@ -263,7 +253,7 @@ export function addAuthRoutes(
 ): void {
   const router = express.Router();
   router.post("/login", async function (req, res, next) {
-    passport.authenticate("local", {session: true}, async (err: any, user: any, info: any) => {
+    passport.authenticate("local", {session: false}, async (err: any, user: any, info: any) => {
       if (err) {
         logger.error(`Error logging in: ${err}`);
         return next(err);
