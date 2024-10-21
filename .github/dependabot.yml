@@ -30,6 +30,9 @@ updates:
       # ESM only in 5.x
       - dependency-name: "chai"
         versions: ["5.x"]
+      # ESM only in 7.x
+      - dependency-name: "chai-as-promised"
+        versions: ["7.x"]
     # Group all dependencies into one PR for backend.
     # Note: security PRs will still be their own for visibility.
     groups:
