@@ -355,7 +355,7 @@ export async function sendToSlack(
     slackChannel,
     shouldThrow = false,
     env,
-  }: {slackChannel?: string; shouldThrow?: boolean; env?: string}
+  }: {slackChannel?: string; shouldThrow?: boolean; env?: string} = {}
 ) {
   // since Slack now requires a webhook for each channel, we need to store them in the environment
   // as an object, so we can look them up by channel name.
