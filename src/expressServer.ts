@@ -408,7 +408,7 @@ export interface WrapScriptOptions {
 export async function wrapScript(func: () => Promise<any>, options: WrapScriptOptions = {}) {
   const name = require.main?.filename.split("/").slice(-1)[0].replace(".ts", "");
   logger.info(`Running script ${name}`);
-  await sendToSlack(`Running script ${name}`, options.slackChannel);
+  await sendToSlack(`Running script ${name}`, {slackChannel: options.slackChannel});
 
   if (options.terminateTimeout !== 0) {
     const warnTime = ((options.terminateTimeout ?? 300) / 2) * 1000;
