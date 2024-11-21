@@ -349,7 +349,14 @@ export function cronjob(
 }
 
 // Convenience method to send data to a Slack webhook.
-export async function sendToSlack(text: string, slackChannel?: string, shouldThrow = false) {
+export async function sendToSlack(
+  text: string,
+  {
+    slackChannel,
+    shouldThrow = false,
+    env,
+  }: {slackChannel?: string; shouldThrow?: boolean; env?: string} = {}
+) {
   // since Slack now requires a webhook for each channel, we need to store them in the environment
   // as an object, so we can look them up by channel name.
   const slackWebhooksString = process.env.SLACK_WEBHOOKS;
@@ -369,6 +376,10 @@ export async function sendToSlack(text: string, slackChannel?: string, shouldThr
     );
     logger.debug(`No webhook url set in env for ${channel}.`);
     return;
+  }
+
+  if (env) {
+    text = `[${env.toUpperCase()}] ${text}`;
   }
 
   try {
@@ -397,7 +408,7 @@ export interface WrapScriptOptions {
 export async function wrapScript(func: () => Promise<any>, options: WrapScriptOptions = {}) {
   const name = require.main?.filename.split("/").slice(-1)[0].replace(".ts", "");
   logger.info(`Running script ${name}`);
-  await sendToSlack(`Running script ${name}`, options.slackChannel);
+  await sendToSlack(`Running script ${name}`, {slackChannel: options.slackChannel});
 
   if (options.terminateTimeout !== 0) {
     const warnTime = ((options.terminateTimeout ?? 300) / 2) * 1000;
