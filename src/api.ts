@@ -914,14 +914,35 @@ export function fernsRouter<T>(
     // Using .save here runs the risk of a versioning error if you try to make two simultaneous
     // updates. We won't wind up with corrupted data, just an API error.
     try {
-      Object.assign(doc, body);
       await doc.save();
     } catch (error: any) {
-      throw new APIError({
-        title: `PATCH Pre Update error on ${req.params.id}: ${error.message}`,
-        status: 400,
-        error,
-      });
+      if (error instanceof mongoose.Error.VersionError) {
+        logger.warn(`Version conflict detected for ID: ${req.params.id}. Retrying...`);
+        try {
+          const updatedDoc = await model.findById(req.params.id);
+          if (!updatedDoc) {
+            throw new APIError({
+              title: `Document not found during retry for ID: ${req.params.id}`,
+              status: 404,
+            });
+          }
+          Object.assign(updatedDoc, body);
+          await updatedDoc.save();
+          // eslint-disable-next-line ferns/error-naming
+        } catch (retryError: any) {
+          throw new APIError({
+            title: `Retry failed for VersionError on ID: ${req.params.id}: ${retryError.message}`,
+            status: 409,
+            error: retryError,
+          });
+        }
+      } else {
+        throw new APIError({
+          title: `PATCH Pre Update error on ${req.params.id}: ${error.message}`,
+          status: 400,
+          error,
+        });
+      }
     }
 
     if (options.postUpdate) {
