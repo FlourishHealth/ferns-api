@@ -226,7 +226,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
     } catch (error: any) {
       const userText = req.user?._id ? ` for user ${req.user._id} ` : "";
       const details = `[jwt] Error decoding token${userText}: ${error}, expired at ${error?.expiredAt}, current time: ${Date.now()}`;
-      logger.warn(details);
+      logger.debug(details);
       return res.status(401).json({message: error?.message, details});
     }
     if (decoded.id) {
