@@ -914,6 +914,7 @@ export function fernsRouter<T>(
     // Using .save here runs the risk of a versioning error if you try to make two simultaneous
     // updates. We won't wind up with corrupted data, just an API error.
     try {
+      Object.assign(doc, body);
       await doc.save();
     } catch (error: any) {
       if (error instanceof mongoose.Error.VersionError) {
