@@ -918,24 +918,43 @@ export function fernsRouter<T>(
     } catch (error: any) {
       if (error instanceof mongoose.Error.VersionError) {
         logger.warn(`Version conflict detected for ID: ${req.params.id}. Retrying...`);
-        try {
-          const updatedDoc = await model.findById(req.params.id);
-          if (!updatedDoc) {
-            throw new APIError({
-              title: `Document not found during retry for ID: ${req.params.id}`,
-              status: 404,
-            });
+        const maxRetries = 2;
+        const initialDelay = 100;
+
+        const retryWithBackoff = async (retries: number, delay: number): Promise<void> => {
+          try {
+            const updatedDoc = await model.findById(req.params.id);
+            if (!updatedDoc) {
+              throw new APIError({
+                title: `Document not found during retry for ID: ${req.params.id}`,
+                status: 404,
+              });
+            }
+            Object.assign(updatedDoc, body);
+            await updatedDoc.save();
+            // eslint-disable-next-line ferns/error-naming
+          } catch (retryError: any) {
+            if (retries > 0) {
+              const jitter = Math.random() * delay;
+              logger.warn(
+                `Retrying save for ID: ${req.params.id}, retries left: ${retries - 1}, next delay: ${Math.round(
+                  jitter
+                )}ms`
+              );
+              await new Promise((resolve) => setTimeout(resolve, jitter));
+              await retryWithBackoff(retries - 1, delay * 2);
+            } else {
+              throw new APIError({
+                title: `Retry failed for VersionError on ID: ${req.params.id}: ${retryError.message}`,
+                status: 409,
+                error: retryError,
+              });
+            }
           }
-          Object.assign(updatedDoc, body);
-          await updatedDoc.save();
-          // eslint-disable-next-line ferns/error-naming
-        } catch (retryError: any) {
-          throw new APIError({
-            title: `Retry failed for VersionError on ID: ${req.params.id}: ${retryError.message}`,
-            status: 409,
-            error: retryError,
-          });
-        }
+        };
+
+        // Start the retry process
+        await retryWithBackoff(maxRetries, initialDelay);
       } else {
         throw new APIError({
           title: `PATCH Pre Update error on ${req.params.id}: ${error.message}`,
