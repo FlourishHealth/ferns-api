@@ -956,7 +956,6 @@ export function fernsRouter<T>(
           }
         };
 
-        // Start the retry process
         await retryWithBackoff(maxRetries, initialDelay);
       } else {
         throw new APIError({
