@@ -915,6 +915,7 @@ export function fernsRouter<T>(
     // updates. We won't wind up with corrupted data, just an API error.
     try {
       Object.assign(doc, body);
+      doc.markModified(field);
       await doc.save();
     } catch (error: any) {
       if (error instanceof mongoose.Error.VersionError) {
@@ -932,6 +933,7 @@ export function fernsRouter<T>(
               });
             }
             Object.assign(updatedDoc, body);
+            doc.markModified(field);
             await updatedDoc.save();
             // eslint-disable-next-line ferns/error-naming
           } catch (retryError: any) {
