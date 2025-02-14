@@ -19,7 +19,7 @@ function formatWithInspect(val: any) {
 function printf(timestamp = false) {
   return (info: winston.Logform.TransformableInfo) => {
     const msg = formatWithInspect(info.message);
-    const splatArgs = info[Symbol.for("splat") as any] || [];
+    const splatArgs = info[Symbol.for("splat") as any] || ([] as any[]);
     const rest = splatArgs.map((data: any) => formatWithInspect(data)).join(" ");
     if (timestamp) {
       return `${info.timestamp} - ${info.level}: ${msg} ${rest}`;

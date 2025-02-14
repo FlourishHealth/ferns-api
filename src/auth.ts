@@ -94,7 +94,7 @@ const generateTokens = async (user: any, authOptions?: AuthOptions) => {
   if (authOptions?.generateTokenExpiration) {
     tokenOptions.expiresIn = authOptions.generateTokenExpiration(user);
   } else if (process.env.TOKEN_EXPIRES_IN) {
-    tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
+    tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN as jwt.SignOptions["expiresIn"];
   }
   if (process.env.TOKEN_ISSUER) {
     tokenOptions.issuer = process.env.TOKEN_ISSUER;
@@ -110,7 +110,8 @@ const generateTokens = async (user: any, authOptions?: AuthOptions) => {
     if (authOptions?.generateRefreshTokenExpiration) {
       refreshTokenOptions.expiresIn = authOptions.generateRefreshTokenExpiration(user);
     } else if (process.env.REFRESH_TOKEN_EXPIRES_IN) {
-      refreshTokenOptions.expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN;
+      refreshTokenOptions.expiresIn = process.env
+        .REFRESH_TOKEN_EXPIRES_IN as jwt.SignOptions["expiresIn"];
     }
     refreshToken = jwt.sign(payload, refreshTokenSecretOrKey, refreshTokenOptions);
   } else {
