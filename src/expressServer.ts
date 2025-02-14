@@ -29,15 +29,15 @@ export function setupErrorLogging(
     if (!dsn) {
       throw new Error("You must set SENTRY_DSN in the environment.");
     }
-    const defaultSentryOptions = {
+    const defaultSentryOptions: Sentry.NodeOptions = {
       dsn,
       environment: process.env.SENTRY_ENVIRONMENT ?? "production",
       integrations: [nodeProfilingIntegration()],
       ignoreErrors: [/^.*ECONNRESET*$/, /^.*socket hang up*$/],
       tracesSampler: (samplingContext) => {
-        const transactionName = samplingContext.transactionContext.name;
+        const transactionName = samplingContext.name.toLowerCase();
         // ignore any transactions that include a match from the ignoreTraces list
-        if (ignoreTraces.some((trace) => transactionName.includes(trace))) {
+        if (ignoreTraces.some((trace) => transactionName.includes(trace.toLowerCase()))) {
           return 0.0;
         }
         // otherwise just use the standard sample rate
