@@ -5,6 +5,7 @@ import axios from "axios";
 import cors from "cors";
 import cron from "cron";
 import express, {Router} from "express";
+import jwt from "jsonwebtoken";
 import cloneDeep from "lodash/cloneDeep";
 import merge from "lodash/merge";
 import onFinished from "on-finished";
@@ -177,8 +178,8 @@ export function createRouterWithAuth(
 
 export interface AuthOptions {
   generateJWTPayload?: (user: any) => Record<string, any>;
-  generateTokenExpiration?: (user: any) => string;
-  generateRefreshTokenExpiration?: (user: any) => string;
+  generateTokenExpiration?: (user: any) => number | jwt.SignOptions["expiresIn"];
+  generateRefreshTokenExpiration?: (user: any) => number | jwt.SignOptions["expiresIn"];
 }
 
 interface InitializeRoutesOptions {
