@@ -160,5 +160,7 @@ export function setupLogging(options?: LoggingOptions) {
     }
   }
 
-  logger.debug("Logger set up complete");
+  if (process.env.NODE_ENV !== "test") {
+    logger.debug("Logger set up complete");
+  }
 }

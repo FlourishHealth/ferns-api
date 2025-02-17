@@ -156,7 +156,9 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
   };
 
   if (process.env.TOKEN_SECRET) {
-    logger.debug("Setting up JWT Authentication");
+    if (process.env.NODE_ENV !== "test") {
+      logger.debug("Setting up JWT Authentication");
+    }
 
     const secretOrKey = process.env.TOKEN_SECRET;
     if (!secretOrKey) {
