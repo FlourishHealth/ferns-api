@@ -116,6 +116,7 @@ export class APIError extends Error {
     this.detail = detail;
     this.source = source;
     this.meta = meta ?? {};
+    this.disableExternalErrorTracking = data.disableExternalErrorTracking;
     if (fields) {
       this.meta.fields = fields;
     }

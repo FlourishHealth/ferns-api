@@ -274,7 +274,9 @@ function initializeRoutes(
 
   app.use(function onError(err: any, _req: any, res: any, _next: any) {
     logger.error(`Fallthrough error: ${err}${err?.stack ? `\n${err.stack}` : ""}}`);
-    Sentry.captureException(err);
+    if (!err.disableExternalErrorTracking) {
+      Sentry.captureException(err);
+    }
     res.statusCode = 500;
     res.end(`${res.sentry}\n`);
   });
