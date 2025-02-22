@@ -5,6 +5,8 @@ import {jest} from "@jest/globals";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
 
+import {APIError} from "./errors";
+
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
 import {permissionMiddleware, Permissions} from "./permissions";
@@ -249,7 +251,7 @@ describe("permissions", function () {
         },
       })(req, res, next);
 
-      const error = next.mock.calls[0][0];
+      const error = next.mock.calls[0][0] as APIError;
       assert.equal(error.status, 404);
       assert.equal(error.title, `Document ${doc._id} not found for model Test`);
       assert.deepEqual(error.meta, {deleted: "true"});
@@ -281,7 +283,7 @@ describe("permissions", function () {
         },
       })(req, res, next);
 
-      const error = next.mock.calls[0][0];
+      const error = next.mock.calls[0][0] as APIError;
       assert.equal(error.status, 404);
       assert.equal(error.title, `Document ${doc._id} not found for model Test`);
       assert.deepEqual(error.meta, {deleted: "true"});
@@ -307,7 +309,7 @@ describe("permissions", function () {
         },
       })(req, res, next);
 
-      const error = next.mock.calls[0][0];
+      const error = next.mock.calls[0][0] as APIError;
       assert.equal(error.status, 404);
       assert.equal(error.title, `Document ${nonExistentId} not found for model Test`);
       assert.isUndefined(error.meta);
