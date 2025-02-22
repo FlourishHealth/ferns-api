@@ -231,7 +231,12 @@ describe("permissions", function () {
         method: "GET",
         user: undefined,
       } as unknown as express.Request;
-      const res = {};
+      const res = {
+        status: jest.fn(),
+        sendStatus: jest.fn(),
+        links: jest.fn(),
+        send: jest.fn(),
+      } as unknown as express.Response;
       const next = jest.fn();
 
       await permissionMiddleware(TestModel, {
