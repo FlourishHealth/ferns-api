@@ -238,33 +238,6 @@ describe("permissions", function () {
         method: "GET",
         user: undefined,
       } as unknown as express.Request;
-      const res = {} as express.Response;
-      const next = jest.fn();
-
-      await permissionMiddleware(TestModel, {
-        permissions: {
-          create: [() => true],
-          list: [() => true],
-          read: [() => true],
-          update: [() => true],
-          delete: [() => true],
-        },
-      })(req, res, next);
-
-      const error = next.mock.calls[0][0] as APIError;
-      assert.equal(error.status, 404);
-      assert.equal(error.title, `Document ${doc._id} not found for model Test`);
-      assert.deepEqual(error.meta, {deleted: "true"});
-    });
-
-    it("returns 404 without meta for missing document", async () => {</old_str>
-<new_str>    it("returns 404 with context for hidden document", async () => {
-      const doc = await TestModel.create({name: "test", deleted: true});
-      const req = {
-        params: {id: doc._id},
-        method: "GET",
-        user: undefined,
-      } as unknown as express.Request;
       const res = {
         status: jest.fn(),
         sendStatus: jest.fn(),
