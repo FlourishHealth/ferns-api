@@ -183,11 +183,11 @@ export function permissionMiddleware<T>(
         }
 
         // Document exists but is hidden
-        const reason: {[key: string]: string} | null = hiddenDoc.deleted
+        const reason: {[key: string]: string} | null = (hiddenDoc as any).deleted
           ? {deleted: "true"}
-          : hiddenDoc.disabled
+          : (hiddenDoc as any).disabled
             ? {disabled: "true"}
-            : hiddenDoc.archived
+            : (hiddenDoc as any).archived
               ? {archived: "true"}
               : null;
 
