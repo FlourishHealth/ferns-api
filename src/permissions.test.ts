@@ -1,14 +1,13 @@
 import {assert} from "chai";
 import express from "express";
-import {model, Schema} from "mongoose";
 import {jest} from "@jest/globals";
+import {model, Schema} from "mongoose";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
 
-import {APIError} from "./errors";
-
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
+import {APIError} from "./errors";
 import {permissionMiddleware, Permissions} from "./permissions";
 import {isDeletedPlugin} from "./plugins";
 import {
