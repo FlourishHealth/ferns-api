@@ -161,7 +161,10 @@ export function permissionMiddleware<T>(
       }
       if (!data || (["update", "delete"].includes(method) && data?.__t && !req.body?.__t)) {
         // Check if document exists but is hidden
-        const hiddenDoc = await model.findById(req.params.id).select("deleted disabled archived").exec();
+        const hiddenDoc = await model
+          .findById(req.params.id)
+          .select("deleted disabled archived")
+          .exec();
         if (!hiddenDoc) {
           Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
           throw new APIError({
