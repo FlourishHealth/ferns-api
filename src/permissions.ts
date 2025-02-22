@@ -176,11 +176,11 @@ export function permissionMiddleware<T>(
           archived?: boolean;
         }
 
-        const hiddenDoc = await model
+        const hiddenDoc = (await model
           .findById(req.params.id)
           .select("deleted disabled archived")
           .lean()
-          .exec() as HiddenDoc | null;
+          .exec()) as HiddenDoc | null;
 
         if (!hiddenDoc) {
           Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
