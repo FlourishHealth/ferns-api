@@ -169,11 +169,19 @@ export function permissionMiddleware<T>(
         }
 
         // Check if document exists but is hidden
+        interface HiddenDoc {
+          _id: unknown;
+          deleted?: boolean;
+          disabled?: boolean;
+          archived?: boolean;
+        }
+
         const hiddenDoc = await model
           .findById(req.params.id)
           .select("deleted disabled archived")
           .lean()
-          .exec();
+          .exec() as HiddenDoc | null;
+
         if (!hiddenDoc) {
           Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
           throw new APIError({
@@ -183,11 +191,11 @@ export function permissionMiddleware<T>(
         }
 
         // Document exists but is hidden
-        const reason: {[key: string]: string} | null = (hiddenDoc as any).deleted
+        const reason: {[key: string]: string} | null = hiddenDoc.deleted
           ? {deleted: "true"}
-          : (hiddenDoc as any).disabled
+          : hiddenDoc.disabled
             ? {disabled: "true"}
-            : (hiddenDoc as any).archived
+            : hiddenDoc.archived
               ? {archived: "true"}
               : null;
 
