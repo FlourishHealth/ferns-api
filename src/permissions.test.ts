@@ -229,12 +229,19 @@ describe("permissions", function () {
       const req = {
         params: {id: doc._id},
         method: "GET",
-      };
+        user: undefined,
+      } as unknown as express.Request;
       const res = {};
       const next = jest.fn();
 
       await permissionMiddleware(TestModel, {
-        permissions: {read: [() => true]},
+        permissions: {
+          create: [() => true],
+          list: [() => true],
+          read: [() => true],
+          update: [() => true],
+          delete: [() => true],
+        },
       })(req, res, next);
 
       expect(next).toHaveBeenCalledWith(
