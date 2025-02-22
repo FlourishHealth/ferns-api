@@ -184,11 +184,12 @@ export function permissionMiddleware<T>(
 
         if (!hiddenDoc) {
           Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
-          throw new APIError({
+          const error = new APIError({
             status: 404,
             title: `Document ${req.params.id} not found for model ${model.modelName}`,
-            meta: undefined,
           });
+          delete error.meta;
+          throw error;
         }
 
         // Document exists but is hidden
@@ -203,11 +204,12 @@ export function permissionMiddleware<T>(
         // If no reason found, treat as not found
         if (!reason) {
           Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
-          throw new APIError({
+          const error = new APIError({
             status: 404,
             title: `Document ${req.params.id} not found for model ${model.modelName}`,
-            meta: undefined,
           });
+          delete error.meta;
+          throw error;
         }
 
         if (reason) {
