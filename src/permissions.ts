@@ -1,4 +1,5 @@
 // Defaults closed
+import * as Sentry from "@sentry/node";
 import express, {NextFunction} from "express";
 import {Model} from "mongoose";
 
@@ -159,10 +160,33 @@ export function permissionMiddleware<T>(
         });
       }
       if (!data || (["update", "delete"].includes(method) && data?.__t && !req.body?.__t)) {
-        throw new APIError({
-          status: 404,
-          title: `Document ${req.params.id} not found for model ${model.modelName}`,
-        });
+        // Check if document exists but is hidden
+        const hiddenDoc = await model.findById(req.params.id).select("deleted disabled").exec();
+        if (!hiddenDoc) {
+          Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
+          throw new APIError({
+            status: 404,
+            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+          });
+        }
+
+        // Document exists but is hidden
+        const reason = hiddenDoc.deleted
+          ? {deleted: "true"}
+          : hiddenDoc.disabled
+            ? {disabled: "true"}
+            : null;
+
+        if (reason) {
+          Sentry.captureMessage(
+            `Document ${req.params.id} not found, because ${JSON.stringify(reason)} for model ${model.modelName}`
+          );
+          throw new APIError({
+            status: 404,
+            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+            meta: reason,
+          });
+        }
       }
 
       if (!(await checkPermissions(method, options.permissions[method], req.user, data))) {

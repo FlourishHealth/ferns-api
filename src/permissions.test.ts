@@ -1,11 +1,13 @@
-import {assert} from "chai";
+import {expect, jest} from "@jest/globals";
 import express from "express";
+import {model, Schema} from "mongoose";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
-import {Permissions} from "./permissions";
+import {permissionMiddleware, Permissions} from "./permissions";
+import {isDeletedPlugin} from "./plugins";
 import {
   authAsUser,
   Food,
@@ -214,6 +216,33 @@ describe("permissions", function () {
           about: "Whoops forgot required",
         })
         .expect(400);
+    });
+  });
+
+  describe("permissionMiddleware", () => {
+    const testSchema = new Schema({name: String});
+    testSchema.plugin(isDeletedPlugin);
+    const TestModel = model("Test", testSchema);
+
+    it("returns 404 with context for hidden document", async () => {
+      const doc = await TestModel.create({name: "test", deleted: true});
+      const req = {
+        params: {id: doc._id},
+        method: "GET",
+      };
+      const res = {};
+      const next = jest.fn();
+
+      await permissionMiddleware(TestModel, {
+        permissions: {read: [() => true]},
+      })(req, res, next);
+
+      expect(next).toHaveBeenCalledWith(
+        expect.objectContaining({
+          status: 404,
+          meta: {deleted: "true"},
+        })
+      );
     });
   });
 });
