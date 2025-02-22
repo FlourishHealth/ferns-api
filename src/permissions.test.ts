@@ -1,6 +1,7 @@
-import {expect, jest} from "@jest/globals";
+import {assert} from "chai";
 import express from "express";
 import {model, Schema} from "mongoose";
+import {jest} from "@jest/globals";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
 
@@ -75,14 +76,14 @@ describe("permissions", function () {
   describe("anonymous food", function () {
     it("list", async function () {
       const res = await server.get("/food").expect(200);
-      expect(res.body.data).toHaveLength(2);
+      assert.lengthOf(res.body.data, 2);
     });
 
     it("get", async function () {
       const res = await server.get("/food").expect(200);
-      expect(res.body.data).toHaveLength(2);
+      assert.lengthOf(res.body.data, 2);
       const res2 = await server.get(`/food/${res.body.data[0]._id}`).expect(200);
-      expect(res.body.data[0]._id).toBe(res2.body.data._id);
+      assert.equal(res.body.data[0]._id, res2.body.data._id);
     });
 
     it("post", async function () {
@@ -90,7 +91,7 @@ describe("permissions", function () {
         name: "Broccoli",
         calories: 15,
       });
-      expect(res.status).toBe(405);
+      assert.equal(res.status, 405);
     });
 
     it("patch", async function () {
@@ -98,13 +99,13 @@ describe("permissions", function () {
       const res2 = await server.patch(`/food/${res.body.data[0]._id}`).send({
         name: "Broccoli",
       });
-      expect(res2.status).toBe(403);
+      assert.equal(res2.status, 403);
     });
 
     it("delete", async function () {
       const res = await server.get("/food");
       const res2 = await server.delete(`/food/${res.body.data[0]._id}`);
-      expect(res2.status).toBe(405);
+      assert.equal(res2.status, 405);
     });
   });
 
@@ -117,14 +118,14 @@ describe("permissions", function () {
 
     it("list", async function () {
       const res = await agent.get("/food").expect(200);
-      expect(res.body.data).toHaveLength(2);
+      assert.lengthOf(res.body.data, 2);
     });
 
     it("get", async function () {
       const res = await agent.get("/food").expect(200);
-      expect(res.body.data).toHaveLength(2);
+      assert.lengthOf(res.body.data, 2);
       const res2 = await server.get(`/food/${res.body.data[0]._id}`).expect(200);
-      expect(res.body.data[0]._id).toBe(res2.body.data._id);
+      assert.equal(res.body.data[0]._id, res2.body.data._id);
     });
 
     it("post", async function () {
@@ -146,7 +147,7 @@ describe("permissions", function () {
           name: "Broccoli",
         })
         .expect(200);
-      expect(res2.body.data.name).toBe("Broccoli");
+      assert.equal(res2.body.data.name, "Broccoli");
     });
 
     it("patch other item", async function () {
@@ -163,7 +164,7 @@ describe("permissions", function () {
     it("delete", async function () {
       const res = await agent.get("/food");
       const res2 = await agent.delete(`/food/${res.body.data[0]._id}`);
-      expect(res2.status).toBe(405);
+      assert.equal(res2.status, 405);
     });
   });
 
@@ -176,14 +177,14 @@ describe("permissions", function () {
 
     it("list", async function () {
       const res = await agent.get("/food");
-      expect(res.body.data).toHaveLength(2);
+      assert.lengthOf(res.body.data, 2);
     });
 
     it("get", async function () {
       const res = await agent.get("/food");
-      expect(res.body.data).toHaveLength(2);
+      assert.lengthOf(res.body.data, 2);
       const res2 = await agent.get(`/food/${res.body.data[0]._id}`);
-      expect(res.body.data[0]._id).toBe(res2.body.data._id);
+      assert.equal(res.body.data[0]._id, res2.body.data._id);
     });
 
     it("post", async function () {
@@ -191,7 +192,7 @@ describe("permissions", function () {
         name: "Broccoli",
         calories: 15,
       });
-      expect(res.status).toBe(201);
+      assert.equal(res.status, 201);
     });
 
     it("patch", async function () {
@@ -224,7 +225,38 @@ describe("permissions", function () {
     testSchema.plugin(isDeletedPlugin);
     const TestModel = model("Test", testSchema);
 
+    beforeEach(async () => {
+      await TestModel.deleteMany({});
+    });
+
     it("returns 404 with context for hidden document", async () => {
+      const doc = await TestModel.create({name: "test", deleted: true});
+      const req = {
+        params: {id: doc._id},
+        method: "GET",
+        user: undefined,
+      } as unknown as express.Request;
+      const res = {} as express.Response;
+      const next = jest.fn();
+
+      await permissionMiddleware(TestModel, {
+        permissions: {
+          create: [() => true],
+          list: [() => true],
+          read: [() => true],
+          update: [() => true],
+          delete: [() => true],
+        },
+      })(req, res, next);
+
+      const error = next.mock.calls[0][0];
+      assert.equal(error.status, 404);
+      assert.equal(error.title, `Document ${doc._id} not found for model Test`);
+      assert.deepEqual(error.meta, {deleted: "true"});
+    });
+
+    it("returns 404 without meta for missing document", async () => {</old_str>
+<new_str>    it("returns 404 with context for hidden document", async () => {
       const doc = await TestModel.create({name: "test", deleted: true});
       const req = {
         params: {id: doc._id},
@@ -249,12 +281,36 @@ describe("permissions", function () {
         },
       })(req, res, next);
 
-      expect(next).toHaveBeenCalledWith(
-        expect.objectContaining({
-          status: 404,
-          meta: {deleted: "true"},
-        })
-      );
+      const error = next.mock.calls[0][0];
+      assert.equal(error.status, 404);
+      assert.equal(error.title, `Document ${doc._id} not found for model Test`);
+      assert.deepEqual(error.meta, {deleted: "true"});
+    });
+
+    it("returns 404 without meta for missing document", async () => {
+      const nonExistentId = "507f1f77bcf86cd799439011";
+      const req = {
+        params: {id: nonExistentId},
+        method: "GET",
+        user: undefined,
+      } as unknown as express.Request;
+      const res = {} as express.Response;
+      const next = jest.fn();
+
+      await permissionMiddleware(TestModel, {
+        permissions: {
+          create: [() => true],
+          list: [() => true],
+          read: [() => true],
+          update: [() => true],
+          delete: [() => true],
+        },
+      })(req, res, next);
+
+      const error = next.mock.calls[0][0];
+      assert.equal(error.status, 404);
+      assert.equal(error.title, `Document ${nonExistentId} not found for model Test`);
+      assert.isUndefined(error.meta);
     });
   });
 });
