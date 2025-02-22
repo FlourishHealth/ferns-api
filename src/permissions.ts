@@ -160,6 +160,14 @@ export function permissionMiddleware<T>(
         });
       }
       if (!data || (["update", "delete"].includes(method) && data?.__t && !req.body?.__t)) {
+        // For discriminated models, return 404 without checking hidden state
+        if (["update", "delete"].includes(method) && data?.__t && !req.body?.__t) {
+          throw new APIError({
+            status: 404,
+            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+          });
+        }
+
         // Check if document exists but is hidden
         const hiddenDoc = await model
           .findById(req.params.id)
