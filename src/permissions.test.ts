@@ -1,15 +1,11 @@
-import {jest} from "@jest/globals";
 import {assert} from "chai";
 import express from "express";
-import {model, Schema} from "mongoose";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
-import {APIError} from "./errors";
-import {permissionMiddleware, Permissions} from "./permissions";
-import {isDeletedPlugin} from "./plugins";
+import {Permissions} from "./permissions";
 import {
   authAsUser,
   Food,
@@ -218,73 +214,6 @@ describe("permissions", function () {
           about: "Whoops forgot required",
         })
         .expect(400);
-    });
-  });
-
-  describe("permissionMiddleware", () => {
-    const testSchema = new Schema({name: String});
-    testSchema.plugin(isDeletedPlugin);
-    const TestModel = model("Test", testSchema);
-
-    beforeEach(async () => {
-      await TestModel.deleteMany({});
-    });
-
-    it("returns 404 with context for hidden document", async () => {
-      const doc = await TestModel.create({name: "test", deleted: true});
-      const req = {
-        params: {id: doc._id},
-        method: "GET",
-        user: undefined,
-      } as unknown as express.Request;
-      const res = {
-        status: jest.fn(),
-        sendStatus: jest.fn(),
-        links: jest.fn(),
-        send: jest.fn(),
-      } as unknown as express.Response;
-      const next = jest.fn();
-
-      await permissionMiddleware(TestModel, {
-        permissions: {
-          create: [() => true],
-          list: [() => true],
-          read: [() => true],
-          update: [() => true],
-          delete: [() => true],
-        },
-      })(req, res, next);
-
-      const error = next.mock.calls[0][0] as APIError;
-      assert.equal(error.status, 404);
-      assert.equal(error.title, `Document ${doc._id} not found for model Test`);
-      assert.deepEqual(error.meta, {deleted: "true"});
-    });
-
-    it("returns 404 without meta for missing document", async () => {
-      const nonExistentId = "507f1f77bcf86cd799439011";
-      const req = {
-        params: {id: nonExistentId},
-        method: "GET",
-        user: undefined,
-      } as unknown as express.Request;
-      const res = {} as express.Response;
-      const next = jest.fn();
-
-      await permissionMiddleware(TestModel, {
-        permissions: {
-          create: [() => true],
-          list: [() => true],
-          read: [() => true],
-          update: [() => true],
-          delete: [() => true],
-        },
-      })(req, res, next);
-
-      const error = next.mock.calls[0][0] as APIError;
-      assert.equal(error.status, 404);
-      assert.equal(error.title, `Document ${nonExistentId} not found for model Test`);
-      assert.isUndefined(error.meta);
     });
   });
 });

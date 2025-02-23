@@ -1,7 +1,7 @@
 // Defaults closed
 import * as Sentry from "@sentry/node";
 import express, {NextFunction} from "express";
-import {Model} from "mongoose";
+import mongoose, {Model} from "mongoose";
 
 import {addPopulateToQuery, FernsRouterOptions, getModel, RESTMethod} from "./api";
 import {User} from "./auth";
@@ -148,7 +148,6 @@ export function permissionMiddleware<T>(
 
       const builtQuery = model.findById(req.params.id);
       const populatedQuery = addPopulateToQuery(builtQuery as any, options.populatePaths);
-
       let data;
       try {
         data = await populatedQuery.exec();
@@ -168,19 +167,10 @@ export function permissionMiddleware<T>(
           });
         }
 
-        // Check if document exists but is hidden
-        interface HiddenDoc {
-          _id: unknown;
-          deleted?: boolean;
-          disabled?: boolean;
-          archived?: boolean;
-        }
-
-        const hiddenDoc = (await model
-          .findById(req.params.id)
-          .select("deleted disabled archived")
-          .lean()
-          .exec()) as HiddenDoc | null;
+        // Check if document exists but is hidden. Completely skip plugins.
+        const hiddenDoc = await model.collection.findOne({
+          _id: new mongoose.Types.ObjectId(req.params.id),
+        });
 
         if (!hiddenDoc) {
           Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
@@ -210,9 +200,7 @@ export function permissionMiddleware<T>(
           });
           delete error.meta;
           throw error;
-        }
-
-        if (reason) {
+        } else {
           Sentry.captureMessage(
             `Document ${req.params.id} not found, because ${JSON.stringify(reason)} for model ${model.modelName}`
           );
