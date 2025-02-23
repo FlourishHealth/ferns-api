@@ -1,6 +1,7 @@
 // Defaults closed
+import * as Sentry from "@sentry/node";
 import express, {NextFunction} from "express";
-import {Model} from "mongoose";
+import mongoose, {Model} from "mongoose";
 
 import {addPopulateToQuery, FernsRouterOptions, getModel, RESTMethod} from "./api";
 import {User} from "./auth";
@@ -147,7 +148,6 @@ export function permissionMiddleware<T>(
 
       const builtQuery = model.findById(req.params.id);
       const populatedQuery = addPopulateToQuery(builtQuery as any, options.populatePaths);
-
       let data;
       try {
         data = await populatedQuery.exec();
@@ -159,10 +159,57 @@ export function permissionMiddleware<T>(
         });
       }
       if (!data || (["update", "delete"].includes(method) && data?.__t && !req.body?.__t)) {
-        throw new APIError({
-          status: 404,
-          title: `Document ${req.params.id} not found for model ${model.modelName}`,
+        // For discriminated models, return 404 without checking hidden state
+        if (["update", "delete"].includes(method) && data?.__t && !req.body?.__t) {
+          throw new APIError({
+            status: 404,
+            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+          });
+        }
+
+        // Check if document exists but is hidden. Completely skip plugins.
+        const hiddenDoc = await model.collection.findOne({
+          _id: new mongoose.Types.ObjectId(req.params.id),
         });
+
+        if (!hiddenDoc) {
+          Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
+          const error = new APIError({
+            status: 404,
+            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+          });
+          delete error.meta;
+          throw error;
+        }
+
+        // Document exists but is hidden
+        const reason: {[key: string]: string} | null = hiddenDoc.deleted
+          ? {deleted: "true"}
+          : hiddenDoc.disabled
+            ? {disabled: "true"}
+            : hiddenDoc.archived
+              ? {archived: "true"}
+              : null;
+
+        // If no reason found, treat as not found
+        if (!reason) {
+          Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
+          const error = new APIError({
+            status: 404,
+            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+          });
+          delete error.meta;
+          throw error;
+        } else {
+          Sentry.captureMessage(
+            `Document ${req.params.id} not found, because ${JSON.stringify(reason)} for model ${model.modelName}`
+          );
+          throw new APIError({
+            status: 404,
+            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+            meta: reason,
+          });
+        }
       }
 
       if (!(await checkPermissions(method, options.permissions[method], req.user, data))) {
