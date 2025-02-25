@@ -1,6 +1,7 @@
 import express from "express";
 import jwt, {JwtPayload} from "jsonwebtoken";
 import {Model, ObjectId} from "mongoose";
+import ms, {StringValue} from "ms";
 import passport from "passport";
 import {Strategy as AnonymousStrategy} from "passport-anonymous";
 import {JwtFromRequestFunction, Strategy as JwtStrategy, StrategyOptions} from "passport-jwt";
@@ -94,7 +95,15 @@ const generateTokens = async (user: any, authOptions?: AuthOptions) => {
   if (authOptions?.generateTokenExpiration) {
     tokenOptions.expiresIn = authOptions.generateTokenExpiration(user);
   } else if (process.env.TOKEN_EXPIRES_IN) {
-    tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN;
+    try {
+      // this call to ms is purely for validation of the env variable. If it is invalid,
+      // we want to be able to log the error and use the default.
+      ms(process.env.TOKEN_EXPIRES_IN as StringValue);
+      tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN as StringValue;
+    } catch (error) {
+      // This error will result in using the default value above of 15m.
+      console.error(error);
+    }
   }
   if (process.env.TOKEN_ISSUER) {
     tokenOptions.issuer = process.env.TOKEN_ISSUER;
@@ -110,7 +119,15 @@ const generateTokens = async (user: any, authOptions?: AuthOptions) => {
     if (authOptions?.generateRefreshTokenExpiration) {
       refreshTokenOptions.expiresIn = authOptions.generateRefreshTokenExpiration(user);
     } else if (process.env.REFRESH_TOKEN_EXPIRES_IN) {
-      refreshTokenOptions.expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN;
+      try {
+        // this call to ms is purely for validation of the env variable. If it is invalid,
+        // we want to be able to log the error and use the default.
+        ms(process.env.REFRESH_TOKEN_EXPIRES_IN as StringValue);
+        refreshTokenOptions.expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN as StringValue;
+      } catch (error) {
+        // This error will result in using the default value above of 30d.
+        console.error(error);
+      }
     }
     refreshToken = jwt.sign(payload, refreshTokenSecretOrKey, refreshTokenOptions);
   } else {
