@@ -163,7 +163,16 @@ export function isAPIError(error: Error): error is APIError {
 // There is almost certainly a more elegant solution to this.
 export function getAPIErrorBody(error: APIError): {[id: string]: any} {
   const errorData = {status: error.status, title: error.title};
-  for (const key of ["id", "links", "status", "code", "detail", "source", "meta"]) {
+  for (const key of [
+    "id",
+    "links",
+    "status",
+    "code",
+    "detail",
+    "source",
+    "meta",
+    "disableExternalErrorTracking",
+  ]) {
     if (error[key]) {
       errorData[key] = error[key];
     }
