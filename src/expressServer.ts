@@ -5,6 +5,7 @@ import axios from "axios";
 import cors from "cors";
 import cron from "cron";
 import express, {Router} from "express";
+import jwt from "jsonwebtoken";
 import cloneDeep from "lodash/cloneDeep";
 import merge from "lodash/merge";
 import onFinished from "on-finished";
@@ -29,15 +30,15 @@ export function setupErrorLogging(
     if (!dsn) {
       throw new Error("You must set SENTRY_DSN in the environment.");
     }
-    const defaultSentryOptions = {
+    const defaultSentryOptions: Sentry.NodeOptions = {
       dsn,
       environment: process.env.SENTRY_ENVIRONMENT ?? "production",
       integrations: [nodeProfilingIntegration()],
       ignoreErrors: [/^.*ECONNRESET*$/, /^.*socket hang up*$/],
       tracesSampler: (samplingContext) => {
-        const transactionName = samplingContext.transactionContext.name;
+        const transactionName = samplingContext.name.toLowerCase();
         // ignore any transactions that include a match from the ignoreTraces list
-        if (ignoreTraces.some((trace) => transactionName.includes(trace))) {
+        if (ignoreTraces.some((trace) => transactionName.includes(trace.toLowerCase()))) {
           return 0.0;
         }
         // otherwise just use the standard sample rate
@@ -177,8 +178,8 @@ export function createRouterWithAuth(
 
 export interface AuthOptions {
   generateJWTPayload?: (user: any) => Record<string, any>;
-  generateTokenExpiration?: (user: any) => string;
-  generateRefreshTokenExpiration?: (user: any) => string;
+  generateTokenExpiration?: (user: any) => number | jwt.SignOptions["expiresIn"];
+  generateRefreshTokenExpiration?: (user: any) => number | jwt.SignOptions["expiresIn"];
 }
 
 interface InitializeRoutesOptions {
@@ -274,9 +275,7 @@ function initializeRoutes(
 
   app.use(function onError(err: any, _req: any, res: any, _next: any) {
     logger.error(`Fallthrough error: ${err}${err?.stack ? `\n${err.stack}` : ""}}`);
-    if (!err.disableExternalErrorTracking) {
-      Sentry.captureException(err);
-    }
+    Sentry.captureException(err);
     res.statusCode = 500;
     res.end(`${res.sentry}\n`);
   });
