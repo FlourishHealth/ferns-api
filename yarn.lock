@@ -1460,10 +1460,10 @@
     "@types/connect" "*"
     "@types/node" "*"
 
-"@types/chai-as-promised@^7.1.2":
-  version "7.1.8"
-  resolved "https://registry.yarnpkg.com/@types/chai-as-promised/-/chai-as-promised-7.1.8.tgz#f2b3d82d53c59626b5d6bbc087667ccb4b677fe9"
-  integrity sha512-ThlRVIJhr69FLlh6IctTXFkmhtP3NpMZ2QGq69StYLyKZFp/HOp1VdKZj7RvfNWYYcJ1xlbLGLLWj1UvP5u/Gw==
+"@types/chai-as-promised@^8.0.1":
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/@types/chai-as-promised/-/chai-as-promised-8.0.1.tgz#afd958500955a79053ef6531d677b4edd5c25925"
+  integrity sha512-dAlDhLjJlABwAVYObo9TPWYTRg9NaQM5CXeaeJYcYAkvzUf0JRLIiog88ao2Wqy/20WUnhbbUZcgvngEbJ3YXQ==
   dependencies:
     "@types/chai" "*"
 
@@ -2313,9 +2313,9 @@ available-typed-arrays@^1.0.7:
     possible-typed-array-names "^1.0.0"
 
 axios@^1.7.9:
-  version "1.7.9"
-  resolved "https://registry.yarnpkg.com/axios/-/axios-1.7.9.tgz#d7d071380c132a24accda1b2cfc1535b79ec650a"
-  integrity sha512-LhLcE7Hbiryz8oMDdDptSrWowmB4Bl6RCt6sIJKpRB4XtVf0iEgewX3au/pJqm+Py1kCASkb/FFKjxQaLtxJvw==
+  version "1.8.1"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.8.1.tgz#7c118d2146e9ebac512b7d1128771cdd738d11e3"
+  integrity sha512-NN+fvwH/kV01dYUQ3PTOZns4LWtWhOFCAhQ/pHb88WQ1hNe5V/dvFwc4VJcDL11LT9xSX0QtsR8sWUuyOuOq7g==
   dependencies:
     follow-redirects "^1.15.6"
     form-data "^4.0.0"
@@ -2451,12 +2451,7 @@ bser@2.1.1:
   dependencies:
     node-int64 "^0.4.0"
 
-bson@^6.10.1:
-  version "6.10.2"
-  resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.2.tgz#092ba1d2abee7e126320003f88d6883c3b1897df"
-  integrity sha512-5afhLTjqDSA3akH56E+/2J6kTDuSIlBxyXPdQslj9hcIgOUE378xdOfZvC/9q3LifJNI6KR/juZ+d0NRNYBwXg==
-
-bson@^6.10.3:
+bson@^6.10.1, bson@^6.10.3:
   version "6.10.3"
   resolved "https://registry.yarnpkg.com/bson/-/bson-6.10.3.tgz#5f9a463af6b83e264bedd08b236d1356a30eda47"
   integrity sha512-MTxGsqgYTwfshYWTRdmZRC+M7FnG1b4y7RO7p2k3X24Wq0yv1m77Wsj0BzlPzd/IowgESfsruQCUToa7vbOpPQ==
@@ -2555,12 +2550,12 @@ caniuse-lite@^1.0.30001332:
   resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001341.tgz#59590c8ffa8b5939cf4161f00827b8873ad72498"
   integrity sha512-2SodVrFFtvGENGCv0ChVJIDQ0KPaS1cg7/qtfMaICgeMolDdo/Z2OD32F0Aq9yl6F4YFwGPBS5AaPqNYiW4PoA==
 
-chai-as-promised@^7.1.2:
-  version "7.1.2"
-  resolved "https://registry.yarnpkg.com/chai-as-promised/-/chai-as-promised-7.1.2.tgz#70cd73b74afd519754161386421fb71832c6d041"
-  integrity sha512-aBDHZxRzYnUYuIAIPBH2s511DjlKPzXNlXSGFC8CwmroWQLfrW0LtE1nK3MAwwNhJPa9raEjNCmRoFpG0Hurdw==
+chai-as-promised@^8.0.1:
+  version "8.0.1"
+  resolved "https://registry.yarnpkg.com/chai-as-promised/-/chai-as-promised-8.0.1.tgz#8913b2fd685b3f5637d25f627518e3ac9614d8e1"
+  integrity sha512-OIEJtOL8xxJSH8JJWbIoRjybbzR52iFuDHuF8eb+nTPD6tgXLjRqsgnUGqQfFODxYvq5QdirT0pN9dZ0+Gz6rA==
   dependencies:
-    check-error "^1.0.2"
+    check-error "^2.0.0"
 
 chai@^4.5.0:
   version "4.5.0"
@@ -2597,12 +2592,17 @@ char-regex@^1.0.2:
   resolved "https://registry.yarnpkg.com/char-regex/-/char-regex-1.0.2.tgz#d744358226217f981ed58f479b1d6bcc29545dcf"
   integrity sha512-kWWXztvZ5SBQV+eRgKFeh8q5sLuZY2+8WUIzlxWVTg+oGwY14qylx1KbKzHd8P6ZYkAg0xyIDU9JMHhyJMZ1jw==
 
-check-error@^1.0.2, check-error@^1.0.3:
+check-error@^1.0.3:
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/check-error/-/check-error-1.0.3.tgz#a6502e4312a7ee969f646e83bb3ddd56281bd694"
   integrity sha512-iKEoDYaRmd1mxM90a2OEfWhjsjPpYPuQ+lMYsoxB126+t8fw7ySEO48nmDg5COTjxDI65/Y2OWpeEHk3ZOe8zg==
   dependencies:
     get-func-name "^2.0.2"
+
+check-error@^2.0.0:
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/check-error/-/check-error-2.1.1.tgz#87eb876ae71ee388fa0471fe423f494be1d96ccc"
+  integrity sha512-OAlb+T7V4Op9OwdkjmguYRqncdlx5JiofwOAUkmTF+jNdHwzTaTs4sRAGpzLF3oOz5xAyDGrPgeIDFQmDOTiJw==
 
 ci-info@^3.2.0:
   version "3.3.2"
@@ -3360,10 +3360,10 @@ escape-string-regexp@^4.0.0:
   resolved "https://registry.yarnpkg.com/escape-string-regexp/-/escape-string-regexp-4.0.0.tgz#14ba83a5d373e3d311e5afca29cf5bfad965bf34"
   integrity sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==
 
-eslint-config-prettier@^9.1.0:
-  version "9.1.0"
-  resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-9.1.0.tgz#31af3d94578645966c082fcb71a5846d3c94867f"
-  integrity sha512-NSWl5BFQWEPi1j4TjVNItzYV7dZXZ+wP6I6ZhrBGpChQhZRUaElihE9uRRkcbRnNb76UMKDF3r+WTmNcGPKsqw==
+eslint-config-prettier@^10.0.2:
+  version "10.0.2"
+  resolved "https://registry.yarnpkg.com/eslint-config-prettier/-/eslint-config-prettier-10.0.2.tgz#47444de8aa104ce82c2f91ad2a5e96b62c01e20d"
+  integrity sha512-1105/17ZIMjmCOJOPNfVdbXafLCLj3hPmkmB7dLgt7XsQ/zkxSuDerE/xgO3RxoHysR1N1whmquY0lSn2O0VLg==
 
 eslint-import-resolver-node@^0.3.9:
   version "0.3.9"
@@ -5562,9 +5562,9 @@ mongoose-to-swagger@^1.4.0:
   integrity sha512-gwEr0NhA+DyGswtgypIoV/iR0RGX4jY/SE9zmYYk6qpG2C83urcQfYJWzm7PsDPo3snMm8XjBYiAtLyYAqirXA==
 
 mongoose@^8.10.1:
-  version "8.10.1"
-  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-8.10.1.tgz#ed7e666753203fe7b7a7d4bad415273c47853dde"
-  integrity sha512-5beTeBZnJNndRXU9rxPol0JmTWZMAtgkPbooROkGilswvrZALDERY4cJrGZmgGwDS9dl0mxiB7si+Mv9Yms2fg==
+  version "8.10.2"
+  resolved "https://registry.yarnpkg.com/mongoose/-/mongoose-8.10.2.tgz#45c5e45c148adfc5c82bd771fedeba4579e6a7f4"
+  integrity sha512-DvqfK1s/JLwP39ogXULC8ygNDdmDber5ZbxZzELYtkzl9VGJ3K5T2MCLdpTs9I9J6DnkDyIHJwt7IOyMxh/Adw==
   dependencies:
     bson "^6.10.1"
     kareem "2.6.3"
@@ -7207,10 +7207,10 @@ typedoc@~0.27.9:
     minimatch "^9.0.5"
     yaml "^2.6.1"
 
-typescript@5.6.3:
-  version "5.6.3"
-  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.6.3.tgz#5f3449e31c9d94febb17de03cc081dd56d81db5b"
-  integrity sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==
+typescript@5.7.3:
+  version "5.7.3"
+  resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.7.3.tgz#919b44a7dbb8583a9b856d162be24a54bf80073e"
+  integrity sha512-84MVSjMEHP+FQRPy3pX9sTVV/INIex71s9TL2Gm5FG/WG1SqXeKyZ0k7/blY/4FdOzI12CBy1vGc4og/eus0fw==
 
 uc.micro@^2.0.0, uc.micro@^2.1.0:
   version "2.1.0"
