@@ -297,7 +297,7 @@ describe("ferns-api", () => {
         .send({name: "Good Seller", show: false})
         .expect(400);
       assert.equal(
-        res.body.title,
+        res.body.name,
         "Malformed body, array operations should have a single, top level key, got: name,show"
       );
 
@@ -320,7 +320,7 @@ describe("ferns-api", () => {
         .patch(`/food/${apple._id}/categories/xyz`)
         .send({categories: {name: "Good Seller", show: false}})
         .expect(404);
-      assert.equal(res.body.title, "Could not find categories/xyz");
+      assert.equal(res.body.name, "Could not find categories/xyz");
       res = await agent
         .patch(`/food/${apple._id}/categories/${apple.categories[1]._id}`)
         .send({categories: {name: "Good Seller", show: false}})
@@ -331,7 +331,7 @@ describe("ferns-api", () => {
 
     it("delete array sub-schema item", async function () {
       let res = await agent.delete(`/food/${apple._id}/categories/xyz`).expect(404);
-      assert.equal(res.body.title, "Could not find categories/xyz");
+      assert.equal(res.body.name, "Could not find categories/xyz");
       res = await agent
         .delete(`/food/${apple._id}/categories/${apple.categories[0]._id}`)
         .expect(200);
@@ -353,7 +353,7 @@ describe("ferns-api", () => {
         .patch(`/food/${apple._id}/tags/xyz`)
         .send({tags: "unhealthy"})
         .expect(404);
-      assert.equal(res.body.title, "Could not find tags/xyz");
+      assert.equal(res.body.name, "Could not find tags/xyz");
       res = await agent
         .patch(`/food/${apple._id}/tags/healthy`)
         .send({tags: "unhealthy"})
@@ -363,7 +363,7 @@ describe("ferns-api", () => {
 
     it("delete array item", async function () {
       let res = await agent.delete(`/food/${apple._id}/tags/xyz`).expect(404);
-      assert.equal(res.body.title, "Could not find tags/xyz");
+      assert.equal(res.body.name, "Could not find tags/xyz");
       res = await agent.delete(`/food/${apple._id}/tags/healthy`).expect(200);
       assert.deepEqual(res.body.data.tags, ["cheap"]);
     });
@@ -523,12 +523,12 @@ describe("ferns-api", () => {
 
     it("list page 0 ", async function () {
       const res = await agent.get("/food?limit=1&page=0").expect(400);
-      assert.equal(res.body.title, "Invalid page: 0");
+      assert.equal(res.body.name, "Invalid page: 0");
     });
 
     it("list page with garbage ", async function () {
       const res = await agent.get("/food?limit=1&page=abc").expect(400);
-      assert.equal(res.body.title, "Invalid page: abc");
+      assert.equal(res.body.name, "Invalid page: abc");
     });
 
     it("list page over", async function () {
@@ -551,7 +551,7 @@ describe("ferns-api", () => {
     it("list query params not in list", async function () {
       // Should skip to carrots since apples are hidden
       const res = await agent.get(`/food?ownerId=${admin._id}`).expect(400);
-      assert.equal(res.body.title, "ownerId is not allowed as a query param.");
+      assert.equal(res.body.name, "ownerId is not allowed as a query param.");
     });
 
     it("list query by nested param", async function () {
@@ -764,17 +764,17 @@ describe("ferns-api", () => {
       let res = await agent
         .get(`/food?${qs.stringify({$and: [{ownerId: "healthy"}, {tags: "cheap"}]})}`)
         .expect(400);
-      assert.equal(res.body.title, "ownerId is not allowed as a query param.");
+      assert.equal(res.body.name, "ownerId is not allowed as a query param.");
       // Check in the other order
       res = await agent
         .get(`/food?${qs.stringify({$and: [{tags: "cheap"}, {ownerId: "healthy"}]})}`)
         .expect(400);
-      assert.equal(res.body.title, "ownerId is not allowed as a query param.");
+      assert.equal(res.body.name, "ownerId is not allowed as a query param.");
 
       res = await agent
         .get(`/food?${qs.stringify({$or: [{tags: "cheap"}, {ownerId: "healthy"}]})}`)
         .expect(400);
-      assert.equal(res.body.title, "ownerId is not allowed as a query param.");
+      assert.equal(res.body.name, "ownerId is not allowed as a query param.");
     });
 
     it("update", async function () {

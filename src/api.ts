@@ -291,7 +291,8 @@ function checkQueryParamAllowed(
   if (!queryFields.includes(queryParam)) {
     throw new APIError({
       status: 400,
-      title: `${queryParam} is not allowed as a query param.`,
+      name: "Query parameter error",
+      message: `Query parameter ${queryParam} is not allowed`,
     });
   }
 }
@@ -349,9 +350,9 @@ export function fernsRouter<T>(
         body = transform<T>(options, req.body, "create", req.user);
       } catch (error: any) {
         throw new APIError({
+          ...error,
           status: 400,
-          title: error.message,
-          error,
+          name: "createError",
         });
       }
       if (options.preCreate) {
@@ -362,22 +363,23 @@ export function fernsRouter<T>(
             throw error;
           } else {
             throw new APIError({
-              title: `preCreate hook error: ${error.message}`,
-              error,
+              ...error,
+              status: 500,
+              name: "preCreate hook error",
             });
           }
         }
         if (body === undefined) {
           throw new APIError({
             status: 403,
-            title: "Create not allowed",
-            detail: "A body must be returned from preCreate",
+            name: "Create not allowed",
+            message: "A body must be returned from preCreate",
           });
         } else if (body === null) {
           throw new APIError({
             status: 403,
-            title: "Create not allowed",
-            detail: "preCreate hook returned null",
+            name: "Create not allowed",
+            message: `preCreate hook returned null`,
           });
         }
       }
@@ -386,9 +388,9 @@ export function fernsRouter<T>(
         data = await model.create(body);
       } catch (error: any) {
         throw new APIError({
+          ...error,
           status: 400,
-          title: error.message,
-          error,
+          name: "Create error",
         });
       }
 
@@ -399,9 +401,9 @@ export function fernsRouter<T>(
           data = await populateQuery.exec();
         } catch (error: any) {
           throw new APIError({
+            ...error,
             status: 400,
-            title: `Populate error: ${error.message}`,
-            error,
+            name: "Populate error",
           });
         }
       }
@@ -411,9 +413,9 @@ export function fernsRouter<T>(
           await options.postCreate(data, req);
         } catch (error: any) {
           throw new APIError({
-            status: 400,
-            title: `postCreate hook error: ${error.message}`,
-            error,
+            ...error,
+            status: 500,
+            name: "postCreate hook error",
           });
         }
       }
@@ -422,8 +424,9 @@ export function fernsRouter<T>(
         return res.status(201).json({data: serialized});
       } catch (error: any) {
         throw new APIError({
-          title: `responseHandler error: ${error.message}`,
-          error,
+          ...error,
+          status: 500,
+          name: "responseHandler error",
         });
       }
     })
@@ -479,8 +482,8 @@ export function fernsRouter<T>(
         } catch (error: any) {
           throw new APIError({
             status: 400,
-            title: `Query filter error: ${error}`,
-            error,
+            name: "Query filter error",
+            message: "Query filter error",
           });
         }
 
@@ -509,7 +512,8 @@ export function fernsRouter<T>(
         if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
           throw new APIError({
             status: 400,
-            title: `Invalid page: ${req.query.page}`,
+            name: "Invalid page",
+            message: `Invalid page: ${req.query.page}`,
           });
         }
         builtQuery = builtQuery.skip((Number(req.query.page) - 1) * limit);
@@ -529,8 +533,9 @@ export function fernsRouter<T>(
         data = await populatedQuery.exec();
       } catch (error: any) {
         throw new APIError({
-          title: `List error: ${error.stack}`,
-          error,
+          ...error,
+          status: 400,
+          name: "List error",
         });
       }
 
@@ -540,8 +545,9 @@ export function fernsRouter<T>(
         serialized = await responseHandler(data, "list", req, options);
       } catch (error: any) {
         throw new APIError({
-          title: `responseHandler error: ${error.message}`,
-          error,
+          ...error,
+          status: 500,
+          name: "responseHandler error",
         });
       }
 
@@ -578,8 +584,9 @@ export function fernsRouter<T>(
         }
       } catch (error: any) {
         throw new APIError({
-          title: `Serialization error: ${error.message}`,
-          error,
+          ...error,
+          status: 500,
+          name: "Serialization error",
         });
       }
     })
@@ -600,8 +607,9 @@ export function fernsRouter<T>(
         return res.json({data: serialized});
       } catch (error: any) {
         throw new APIError({
-          title: `responseHandler error: ${error.message}`,
-          error,
+          ...error,
+          status: 500,
+          name: "responseHandler error",
         });
       }
     })
@@ -613,7 +621,9 @@ export function fernsRouter<T>(
     asyncHandler(async (_req: Request, _res: Response) => {
       // Patch is what we want 90% of the time
       throw new APIError({
-        title: `PUT is not supported.`,
+        status: 405,
+        name: "PUT is not supported",
+        message: "Use PATCH instead",
       });
     })
   );
@@ -636,9 +646,10 @@ export function fernsRouter<T>(
         body = transform<T>(options, req.body, "update", req.user);
       } catch (error: any) {
         throw new APIError({
-          status: 403,
-          title: `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${error.message}`,
-          error,
+          ...error,
+          status: 400,
+          name: "PATCH failed",
+          detail: `PATCH failed on ${req.params.id} for user ${req.user?.id}`,
         });
       }
 
@@ -654,22 +665,23 @@ export function fernsRouter<T>(
             throw error;
           } else {
             throw new APIError({
-              title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
-              error,
+              ...error,
+              status: 500,
+              name: "preUpdate hook error",
             });
           }
         }
         if (body === undefined) {
           throw new APIError({
             status: 403,
-            title: "Update not allowed",
-            detail: "A body must be returned from preUpdate",
+            name: "Update not allowed",
+            message: "A body must be returned from preUpdate",
           });
         } else if (body === null) {
           throw new APIError({
             status: 403,
-            title: "Update not allowed",
-            detail: `preUpdate hook on ${req.params.id} returned null`,
+            name: "Update not allowed",
+            message: `preUpdate hook on ${req.params.id} returned null`,
           });
         }
       }
@@ -684,9 +696,9 @@ export function fernsRouter<T>(
         await doc.save();
       } catch (error: any) {
         throw new APIError({
+          ...error,
           status: 400,
-          title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
-          error,
+          name: "preUpdate hook error on ${req.params.id}",
         });
       }
 
@@ -701,9 +713,9 @@ export function fernsRouter<T>(
           await options.postUpdate(doc, body, req, prevDoc);
         } catch (error: any) {
           throw new APIError({
-            status: 400,
-            title: `postUpdate hook error on ${req.params.id}: ${error.message}`,
-            error,
+            ...error,
+            status: 500,
+            name: "postUpdate hook error on ${req.params.id}",
           });
         }
       }
@@ -713,8 +725,9 @@ export function fernsRouter<T>(
         return res.json({data: serialized});
       } catch (error: any) {
         throw new APIError({
-          title: `responseHandler error: ${error.message}`,
-          error,
+          ...error,
+          status: 500,
+          name: "responseHandler error",
         });
       }
     })
@@ -741,23 +754,24 @@ export function fernsRouter<T>(
             throw error;
           } else {
             throw new APIError({
-              status: 403,
-              title: `preDelete hook error on ${req.params.id}: ${error.message}`,
-              error,
+              ...error,
+              status: 500,
+              name: "preDeleteHookError",
+              detail: "preDelete hook error on ${req.params.id}",
             });
           }
         }
         if (body === undefined) {
           throw new APIError({
             status: 403,
-            title: "Delete not allowed",
-            detail: "A body must be returned from preDelete",
+            name: "Delete not allowed",
+            message: "A body must be returned from preDelete",
           });
         } else if (body === null) {
           throw new APIError({
             status: 403,
-            title: "Delete not allowed",
-            detail: `preDelete hook for ${req.params.id} returned null`,
+            name: "Delete not allowed",
+            message: `preDelete hook for ${req.params.id} returned null`,
           });
         }
       }
@@ -775,9 +789,8 @@ export function fernsRouter<T>(
           await doc.deleteOne();
         } catch (error: any) {
           throw new APIError({
+            ...error,
             status: 400,
-            title: error.message,
-            error,
           });
         }
       }
@@ -787,9 +800,9 @@ export function fernsRouter<T>(
           await options.postDelete(req, doc);
         } catch (error: any) {
           throw new APIError({
-            status: 400,
-            title: `postDelete hook error: ${error.message}`,
-            error,
+            ...error,
+            status: 500,
+            name: "postDelete hook error",
           });
         }
       }
@@ -808,8 +821,9 @@ export function fernsRouter<T>(
 
     if (!(await checkPermissions("update", options.permissions.update, req.user))) {
       throw new APIError({
-        title: `Access to PATCH on ${model.modelName} denied for ${req.user?.id}`,
         status: 405,
+        name: "Access to PATCH on ${model.modelName} denied for ${req.user?.id}",
+        message: "Access to PATCH on ${model.modelName} denied for ${req.user?.id}",
       });
     }
 
@@ -818,15 +832,17 @@ export function fernsRouter<T>(
     // hooks.
     if (!doc || (doc.__t && !req.body.__t)) {
       throw new APIError({
-        title: `Could not find document to PATCH: ${req.params.id}`,
         status: 404,
+        name: "Could not find document to PATCH: ${req.params.id}",
+        message: "Could not find document to PATCH: ${req.params.id}",
       });
     }
 
     if (!(await checkPermissions("update", options.permissions.update, req.user, doc))) {
       throw new APIError({
-        title: `Patch not allowed for user ${req.user?.id} on doc ${doc._id}`,
         status: 403,
+        name: "Patch not allowed for user ${req.user?.id} on doc ${doc._id}",
+        message: "Patch not allowed for user ${req.user?.id} on doc ${doc._id}",
       });
     }
 
@@ -834,10 +850,9 @@ export function fernsRouter<T>(
     // be like PATCHing the field and replacing the whole thing.
     if (operation !== "DELETE" && req.body[req.params.field] === undefined) {
       throw new APIError({
-        title: `Malformed body, array operations should have a single, top level key, got: ${Object.keys(
-          req.body
-        ).join(",")}`,
         status: 400,
+        name: "malformedBodyError",
+        message: `Malformed body, array operations should have a single, top level key, got: ${Object.keys(req.body).join(",")}`,
       });
     }
 
@@ -856,8 +871,9 @@ export function fernsRouter<T>(
       }
       if (index === -1) {
         throw new APIError({
-          title: `Could not find ${field}/${req.params.itemId}`,
           status: 404,
+          name: "Could not find ${field}/${req.params.itemId}",
+          message: "Could not find ${field}/${req.params.itemId}",
         });
       }
       if (operation === "PATCH") {
@@ -867,8 +883,9 @@ export function fernsRouter<T>(
       }
     } else {
       throw new APIError({
-        title: `Invalid array operation: ${operation}`,
         status: 400,
+        name: "Invalid array operation: ${operation}",
+        message: "Invalid array operation: ${operation}",
       });
     }
     let body: Partial<T> | null = {[field]: array} as unknown as Partial<T>;
@@ -877,9 +894,8 @@ export function fernsRouter<T>(
       body = transform<T>(options, body, "update", req.user) as Partial<T>;
     } catch (error: any) {
       throw new APIError({
-        title: error.message,
-        status: 403,
-        error,
+        ...error,
+        status: 400,
       });
     }
 
@@ -888,22 +904,23 @@ export function fernsRouter<T>(
         body = await options.preUpdate(body, req);
       } catch (error: any) {
         throw new APIError({
-          title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
-          status: 400,
-          error,
+          ...error,
+          status: 500,
+          name: "preUpdate hook error",
+          detail: "preUpdate hook error on ${req.params.id}",
         });
       }
       if (body === undefined) {
         throw new APIError({
           status: 403,
-          title: "Update not allowed",
-          detail: "A body must be returned from preUpdate",
+          name: "Update not allowed",
+          message: "A body must be returned from preUpdate",
         });
       } else if (body === null) {
         throw new APIError({
-          title: "Update not allowed",
-          detail: `preUpdate hook on ${req.params.id} returned null`,
           status: 403,
+          name: "Update not allowed",
+          message: `preUpdate hook on ${req.params.id} returned null`,
         });
       }
     }
@@ -918,9 +935,10 @@ export function fernsRouter<T>(
       await doc.save();
     } catch (error: any) {
       throw new APIError({
-        title: `PATCH Pre Update error on ${req.params.id}: ${error.message}`,
+        ...error,
         status: 400,
-        error,
+        name: "patchPreUpdateError",
+        detail: "PATCH Pre Update error on ${req.params.id}",
       });
     }
 
@@ -929,9 +947,10 @@ export function fernsRouter<T>(
         await options.postUpdate(doc, body, req, prevDoc);
       } catch (error: any) {
         throw new APIError({
-          title: `PATCH Post Update error on ${req.params.id}: ${error.message}`,
-          status: 400,
-          error,
+          ...error,
+          status: 500,
+          name: "postUpdateError",
+          detail: "PATCH Post Update error on ${req.params.id}",
         });
       }
     }

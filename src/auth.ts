@@ -72,7 +72,7 @@ export async function signupUser(
     await user.save();
     return user;
   } catch (error: any) {
-    throw new APIError({title: error.message});
+    throw new APIError({...error});
   }
 }
 
@@ -253,7 +253,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         req.user = await userModel.findById(decoded.id);
         if (req.user?.disabled) {
           logger.warn(`[jwt] User ${req.user.id} is disabled`);
-          return res.status(401).json({status: 401, title: "User is disabled"});
+          return res.status(401).json({status: 401, name: "User is disabled"});
         }
       } catch (error) {
         logger.warn(`[jwt] Error finding user from id: ${error}`);

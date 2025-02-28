@@ -113,8 +113,8 @@ export function findOneOrThrow<T>(schema: Schema<any, any, any, any>) {
     } else if (results.length > 1) {
       throw new APIError({
         status: 500,
-        title: `${this.modelName}.findOne query returned multiple documents`,
-        detail: `query: ${JSON.stringify(query)}`,
+        name: `${this.modelName}.findOne query returned multiple documents`,
+        message: `query: ${JSON.stringify(query)}`,
         ...errorArgs,
       });
     } else {
@@ -140,15 +140,15 @@ export function findExactlyOne<T>(schema: Schema<any, any, any, any>) {
     if (results.length === 0) {
       throw new APIError({
         status: 404,
-        title: `${this.modelName}.findExactlyOne query returned no documents`,
-        detail: `query: ${JSON.stringify(query)}`,
+        name: `${this.modelName}.findExactlyOne query returned no documents`,
+        message: `query: ${JSON.stringify(query)}`,
         ...errorArgs,
       });
     } else if (results.length > 1) {
       throw new APIError({
         status: 500,
-        title: `${this.modelName}.findExactlyOne query returned multiple documents`,
-        detail: `query: ${JSON.stringify(query)}`,
+        name: `${this.modelName}.findExactlyOne query returned multiple documents`,
+        message: `query: ${JSON.stringify(query)}`,
         ...errorArgs,
       });
     } else {

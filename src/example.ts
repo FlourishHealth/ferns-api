@@ -4,6 +4,7 @@ import passportLocalMongoose from "passport-local-mongoose";
 
 import {fernsRouter, FernsRouterOptions} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
+import {APIError} from "./errors";
 import {setupServer} from "./expressServer";
 import {logger} from "./logger";
 import {Permissions} from "./permissions";
@@ -86,6 +87,18 @@ function getBaseServer() {
         },
       })
     );
+
+    // use this to test generating an APIError
+    router.use("/error", function () {
+      // const error = new Error("example test error contents");
+      console.debug("does this show up in sentry?");
+      throw new APIError({
+        name: "Test Error",
+        status: 500,
+        code: "test-error",
+        message: "This is a test error",
+      });
+    });
   }
 
   return setupServer({

@@ -5,11 +5,7 @@ import {Schema} from "mongoose";
 
 import {logger} from "./logger";
 
-export interface APIErrorConstructor {
-  // Required. A short, human-readable summary of the problem that SHOULD NOT change from
-  // occurrence to occurrence of the problem, except for purposes of localization.
-  title: string;
-
+export interface APIErrorConstructor extends Error {
   // error messages to be displayed by a field in a form. this isn't in the JSONAPI spec.
   // It will be folded into `meta` as `meta.fields` in the actual error payload.
   // This is helpful to add it to the TS interface for ApiError.
@@ -25,14 +21,14 @@ export interface APIErrorConstructor {
   code?: string;
 
   // A human-readable explanation specific to this occurrence of the problem. Like title,
-  // this field’s value can be localized.
+  // this field's value can be localized.
   detail?: string;
   // An object containing references to the source of the error,
   // optionally including any of the following members:
   source?: {
     // pointer: a JSON Pointer [RFC6901] to the value in the request document that caused the error
     // [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific
-    // attribute]. This MUST point to a value in the request document that exists; if it doesn’t,
+    // attribute]. This MUST point to a value in the request document that exists; if it doesn't,
     // the client SHOULD simply ignore the pointer.
     pointer?: string;
     // a string indicating which URI query parameter caused the error.
@@ -42,7 +38,6 @@ export interface APIErrorConstructor {
   };
   // A meta object containing non-standard meta-information about the error.
   meta?: {[id: string]: string};
-  error?: Error;
   // If true, this error will not be sent to external error reporting tools like Sentry.
   disableExternalErrorTracking?: boolean;
 }
@@ -54,15 +49,16 @@ export interface APIErrorConstructor {
  *
  * ```ts
  *  throw new APIError({
- *    title: "Only an admin can update that!",
+ *    name: "AdminRequiredError",
+ *    message: "Only an admin can update that!"
  *    status: 403,
  *    code: "update-admin-error",
- *    detail: "You must be an admin to change that field"
+ *    message: "You must be an admin to change that field"
  *  });
  * ```
  */
 export class APIError extends Error {
-  title: string;
+  readonly isAPIError = true;
 
   id: string | undefined;
 
@@ -90,15 +86,13 @@ export class APIError extends Error {
 
   constructor(data: APIErrorConstructor) {
     // Include details in when the error is printed to the console or sent to Sentry.
-    super(
-      `${data.title}${data.detail ? `: ${data.detail}` : ""}${
-        data.error ? `\n${data.error.stack}` : ""
-      }`
-    );
-    this.name = "APIError";
+    super(`${data.name}${data.detail ? `: ${data.detail}` : ""}`);
+
+    // Preserve the actual stack trace
+    Error.captureStackTrace(this, APIError);
 
     // eslint-disable-next-line prefer-const
-    let {title, id, links, status, code, detail, source, meta, fields, error} = data;
+    let {name, message, id, links, status, code, detail, source, meta, fields} = data;
 
     if (!status) {
       status = 500;
@@ -108,7 +102,8 @@ export class APIError extends Error {
     }
     this.status = status;
 
-    this.title = title;
+    this.name = name;
+    this.message = message;
     this.id = id;
     this.links = links;
 
@@ -120,18 +115,15 @@ export class APIError extends Error {
     if (fields) {
       this.meta.fields = fields;
     }
-    this.error = error;
     logger.error(
-      `APIError(${status}): ${title} ${detail ? detail : ""}${
-        data.error?.stack ? `\n${data.error?.stack}` : ""
-      }`
+      `APIError(${status}): ${name} ${detail ? detail : ""}${data.stack ? `\n${data.stack}` : ""}`
     );
   }
 }
 
 // This can be attached to any schema to store errors compatible with the JSONAPI spec.
 export const ErrorSchema = new Schema({
-  title: {type: String, required: true},
+  name: {type: String, required: true},
   id: String,
   links: {
     about: String,
@@ -139,7 +131,7 @@ export const ErrorSchema = new Schema({
   },
   status: Number,
   code: String,
-  detail: String,
+  message: String,
   source: {
     pointer: String,
     parameter: String,
@@ -154,30 +146,26 @@ export function errorsPlugin(schema: Schema): void {
   schema.add({apiErrors: [ErrorSchema]});
 }
 
-export function isAPIError(error: Error): error is APIError {
-  return error.name === "APIError";
+export function isAPIError(error: unknown): error is APIError {
+  return error instanceof APIError || (error as APIError)?.isAPIError === true;
 }
 
 // Creates an APIError body to send to clients as JSON. Errors don't have a toJSON defined,
 // and we want to strip out things like message, name, and stack for the client.
 // There is almost certainly a more elegant solution to this.
-export function getAPIErrorBody(error: APIError): {[id: string]: any} {
-  const errorData = {status: error.status, title: error.title};
-  for (const key of [
-    "id",
-    "links",
-    "status",
-    "code",
-    "detail",
-    "source",
-    "meta",
-    "disableExternalErrorTracking",
-  ]) {
-    if (error[key]) {
-      errorData[key] = error[key];
-    }
-  }
-  return errorData;
+export function getAPIErrorBody(error: APIError): Record<string, any> {
+  const {id, links, status, code, detail, source, meta, disableExternalErrorTracking} = error;
+
+  return {
+    id,
+    links,
+    status,
+    code,
+    detail,
+    source,
+    meta,
+    disableExternalErrorTracking,
+  };
 }
 
 export function apiUnauthorizedMiddleware(
@@ -188,15 +176,20 @@ export function apiUnauthorizedMiddleware(
 ) {
   if (err.message === "Unauthorized") {
     // not using the actual APIError class here because we don't want to log it as an error.
-    res.status(401).json({status: 401, title: "Unauthorized"}).send();
+    res.status(401).json({status: 401, name: "Unauthorized"}).send();
   } else {
     next(err);
   }
 }
 
-export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
+export function apiErrorMiddleware(
+  err: Error | APIError,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
   if (isAPIError(err)) {
-    if (!err.disableExternalErrorTracking) {
+    if (!err.disableExternalErrorTracking && err.status >= 500) {
       Sentry.captureException(err);
     }
     res.status(err.status).json(getAPIErrorBody(err)).send();

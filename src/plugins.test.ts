@@ -136,15 +136,15 @@ describe("findOneOrThrow", function () {
 
   it("throws custom error with two matches.", async function () {
     const fn = () =>
-      (StuffModel as any).findOneOrThrow({ownerId: "123"}, {status: 400, title: "Oh no!"});
+      (StuffModel as any).findOneOrThrow({ownerId: "123"}, {status: 400, name: "Oh no!"});
 
     try {
       await fn();
       // If the promise doesn't reject, the test should fail
       assert.fail("Expected promise to reject");
     } catch (error: any) {
-      // Check if the error has title and status properties
-      assert.equal(error.title, "Oh no!");
+      // Check if the error has name and status properties
+      assert.equal(error.name, "Oh no!");
       assert.equal(error.status, 400);
       assert.equal(error.detail, 'query: {"ownerId":"123"}');
     }
@@ -187,15 +187,15 @@ describe("findExactlyOne", function () {
 
   it("throws custom error with two matches.", async function () {
     const fn = () =>
-      (StuffModel as any).findExactlyOne({ownerId: "123"}, {status: 400, title: "Oh no!"});
+      (StuffModel as any).findExactlyOne({ownerId: "123"}, {status: 400, name: "Oh no!"});
 
     try {
       await fn();
       // If the promise doesn't reject, the test should fail
       assert.fail("Expected promise to reject");
     } catch (error: any) {
-      // Check if the error has title and status properties
-      assert.equal(error.title, "Oh no!");
+      // Check if the error has name and status properties
+      assert.equal(error.name, "Oh no!");
       assert.equal(error.status, 400);
       assert.equal(error.detail, 'query: {"ownerId":"123"}');
     }
@@ -267,14 +267,14 @@ describe("DateOnly", function () {
     it("returns 404 with context for hidden document", async () => {
       const doc = await StuffModel.create({name: "test", deleted: true});
       const res = await agent.get(`/stuff/${doc._id}`).expect(404);
-      assert.equal(res.body.title, `Document ${doc._id} not found for model Stuff`);
+      assert.equal(res.body.name, `Document ${doc._id} not found for model Stuff`);
       assert.deepEqual(res.body.meta, {deleted: "true"});
     });
 
     it("returns 404 without meta for missing document", async () => {
       const nonExistentId = "507f1f77bcf86cd799439011";
       const res = await agent.get(`/stuff/${nonExistentId}`).expect(404);
-      assert.equal(res.body.title, `Document ${nonExistentId} not found for model Stuff`);
+      assert.equal(res.body.name, `Document ${nonExistentId} not found for model Stuff`);
       assert.isUndefined(res.body.meta);
     });
   });
