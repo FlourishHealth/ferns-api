@@ -1,7 +1,12 @@
-import * as Sentry from "@sentry/node";
 import axios from "axios";
 import {assert} from "chai";
 import sinon from "sinon";
+
+// Mock Sentry
+jest.mock("@sentry/node", () => ({
+  captureException: jest.fn(),
+}));
+import * as Sentry from "@sentry/node";
 
 import {sendToSlack} from "./expressServer";
 import {logger} from "./logger";
@@ -12,8 +17,6 @@ describe("expressServer", function () {
     let axiosPostStub: sinon.SinonStub;
     let loggerDebugStub: sinon.SinonStub;
     let loggerErrorStub: sinon.SinonStub;
-    let sentryCaptureExceptionSpy: sinon.SinonSpy;
-
     beforeEach(function () {
       originalEnv = process.env;
       process.env = {...originalEnv};
@@ -21,7 +24,9 @@ describe("expressServer", function () {
       axiosPostStub = sinon.stub(axios, "post").resolves();
       loggerDebugStub = sinon.stub(logger, "debug");
       loggerErrorStub = sinon.stub(logger, "error");
-      sentryCaptureExceptionSpy = sinon.spy(Sentry, "captureException");
+      
+      // Reset mock before each test
+      jest.clearAllMocks();
     });
 
     afterEach(function () {
@@ -29,7 +34,6 @@ describe("expressServer", function () {
       axiosPostStub.restore();
       loggerDebugStub.restore();
       loggerErrorStub.restore();
-      sentryCaptureExceptionSpy.restore();
     });
 
     it("should send a message to the specified channel", async function () {
@@ -89,7 +93,7 @@ describe("expressServer", function () {
       await sendToSlack("Test message", {slackChannel: "test"});
 
       assert.isTrue(loggerErrorStub.calledOnce);
-      assert.isTrue(sentryCaptureExceptionSpy.calledOnce);
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
       assert.isFalse(axiosPostStub.called);
     });
 
@@ -115,7 +119,7 @@ describe("expressServer", function () {
       await sendToSlack("Test message", {slackChannel: "nonexistent"});
 
       // No warning is sent because there's no default channel
-      assert.isTrue(sentryCaptureExceptionSpy.calledOnce);
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
       assert.isTrue(loggerDebugStub.calledOnce);
       assert.isFalse(axiosPostStub.called);
     });
@@ -151,7 +155,7 @@ describe("expressServer", function () {
       }
 
       assert.isTrue(loggerErrorStub.calledOnce);
-      assert.isTrue(sentryCaptureExceptionSpy.calledOnce);
+      expect(Sentry.captureException).toHaveBeenCalledTimes(1);
     });
   });
 });
