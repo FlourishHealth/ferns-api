@@ -365,25 +365,41 @@ export async function sendToSlack(
     logger.debug("You must set SLACK_WEBHOOKS in the environment to use sendToSlack.");
     return;
   }
-  const slackWebhooks = JSON.parse(slackWebhooksString ?? "{}");
-
-  const channel = slackChannel ?? "default";
-
-  const slackWebhookUrl = slackWebhooks[channel] ?? slackWebhooks.default;
-
-  if (!slackWebhookUrl) {
-    Sentry.captureException(
-      new Error(`No webhook url set in env for ${channel}. Slack message not sent`)
-    );
-    logger.debug(`No webhook url set in env for ${channel}.`);
-    return;
-  }
-
-  if (env) {
-    text = `[${env.toUpperCase()}] ${text}`;
-  }
 
   try {
+    const slackWebhooks = JSON.parse(slackWebhooksString ?? "{}");
+
+    const channel = slackChannel ?? "default";
+
+    // Check if the specified channel exists in the SLACK_WEBHOOKS environment variable
+    if (
+      slackChannel &&
+      slackChannel !== "default" &&
+      !slackWebhooks[slackChannel] &&
+      slackWebhooks.default
+    ) {
+      // If the channel doesn't exist and it's not the default channel itself,
+      // send an alert to the default channel
+      await sendToSlack(
+        `Warning: Attempted to send a Slack message to non-existent channel "${slackChannel}". Message: ${text}`,
+        {slackChannel: "default", env}
+      );
+    }
+
+    const slackWebhookUrl = slackWebhooks[channel] ?? slackWebhooks.default;
+
+    if (!slackWebhookUrl) {
+      Sentry.captureException(
+        new Error(`No webhook url set in env for ${channel}. Slack message not sent`)
+      );
+      logger.debug(`No webhook url set in env for ${channel}.`);
+      return;
+    }
+
+    if (env) {
+      text = `[${env.toUpperCase()}] ${text}`;
+    }
+
     await axios.post(slackWebhookUrl, {
       text,
     });
