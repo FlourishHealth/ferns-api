@@ -12,7 +12,7 @@ describe("expressServer", function () {
     let axiosPostStub: sinon.SinonStub;
     let loggerDebugStub: sinon.SinonStub;
     let loggerErrorStub: sinon.SinonStub;
-    let sentryCaptureExceptionStub: sinon.SinonStub;
+    let sentryCaptureExceptionSpy: sinon.SinonSpy;
 
     beforeEach(function () {
       originalEnv = process.env;
@@ -21,7 +21,7 @@ describe("expressServer", function () {
       axiosPostStub = sinon.stub(axios, "post").resolves();
       loggerDebugStub = sinon.stub(logger, "debug");
       loggerErrorStub = sinon.stub(logger, "error");
-      sentryCaptureExceptionStub = sinon.stub(Sentry, "captureException");
+      sentryCaptureExceptionSpy = sinon.spy(Sentry, "captureException");
     });
 
     afterEach(function () {
@@ -29,7 +29,7 @@ describe("expressServer", function () {
       axiosPostStub.restore();
       loggerDebugStub.restore();
       loggerErrorStub.restore();
-      sentryCaptureExceptionStub.restore();
+      sentryCaptureExceptionSpy.restore();
     });
 
     it("should send a message to the specified channel", async function () {
@@ -89,7 +89,7 @@ describe("expressServer", function () {
       await sendToSlack("Test message", {slackChannel: "test"});
 
       assert.isTrue(loggerErrorStub.calledOnce);
-      assert.isTrue(sentryCaptureExceptionStub.calledOnce);
+      assert.isTrue(sentryCaptureExceptionSpy.calledOnce);
       assert.isFalse(axiosPostStub.called);
     });
 
@@ -115,7 +115,7 @@ describe("expressServer", function () {
       await sendToSlack("Test message", {slackChannel: "nonexistent"});
 
       // No warning is sent because there's no default channel
-      assert.isTrue(sentryCaptureExceptionStub.calledOnce);
+      assert.isTrue(sentryCaptureExceptionSpy.calledOnce);
       assert.isTrue(loggerDebugStub.calledOnce);
       assert.isFalse(axiosPostStub.called);
     });
@@ -151,7 +151,7 @@ describe("expressServer", function () {
       }
 
       assert.isTrue(loggerErrorStub.calledOnce);
-      assert.isTrue(sentryCaptureExceptionStub.calledOnce);
+      assert.isTrue(sentryCaptureExceptionSpy.calledOnce);
     });
   });
 });
