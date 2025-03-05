@@ -94,7 +94,7 @@ describe("expressServer", function () {
     });
 
     it("should handle missing SLACK_WEBHOOKS", async function () {
-      delete process.env.SLACK_WEBHOOKS;
+      process.env.SLACK_WEBHOOKS = undefined as any;
 
       await sendToSlack("Test message", {slackChannel: "test"});
 
