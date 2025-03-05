@@ -1,6 +1,6 @@
 import axios from "axios";
 import {assert} from "chai";
-import sinon from "sinon";
+import * as sinon from "sinon";
 
 // Mock Sentry
 jest.mock("@sentry/node", () => ({
