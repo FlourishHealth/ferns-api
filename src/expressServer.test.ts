@@ -24,7 +24,7 @@ describe("expressServer", function () {
       axiosPostStub = sinon.stub(axios, "post").resolves();
       loggerDebugStub = sinon.stub(logger, "debug");
       loggerErrorStub = sinon.stub(logger, "error");
-      
+
       // Reset mock before each test
       jest.clearAllMocks();
     });
