@@ -229,7 +229,7 @@ export class DateOnly extends SchemaType {
   }
 
   get(val: any): this {
-    return val instanceof Date ? DateTime.fromJSDate(val).startOf("day").toJSDate() : val;
+    return (val instanceof Date ? DateTime.fromJSDate(val).startOf("day").toJSDate() : val) as any;
   }
 }
 
