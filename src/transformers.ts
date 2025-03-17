@@ -164,9 +164,10 @@ export async function defaultResponseHandler<T>(
     return serialize(request, options, doc);
   } catch (error: any) {
     throw new APIError({
+      ...error,
       status: 400,
-      title: `Error serializing ${method} response: ${error.message}`,
-      error,
+      name: "SerializationError",
+      detail: `Error serializing ${method} response`,
     });
   }
 }
