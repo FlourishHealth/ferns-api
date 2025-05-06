@@ -80,7 +80,7 @@ function createAPIErrorComponent(openApi: any) {
         type: "string",
         description: "An application-specific error code, expressed as a string value.",
       },
-      detail: {
+      message: {
         type: "string",
         description:
           "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
