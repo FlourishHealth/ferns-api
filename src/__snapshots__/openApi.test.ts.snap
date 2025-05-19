@@ -133,11 +133,19 @@ exports[`openApi gets the openapi.json 1`] = `
                                 "_id": {
                                   "type": "string",
                                 },
+                                "created": {
+                                  "format": "date-time",
+                                  "type": "string",
+                                },
                                 "name": {
                                   "type": "string",
                                 },
                                 "show": {
                                   "type": "boolean",
+                                },
+                                "updated": {
+                                  "format": "date-time",
+                                  "type": "string",
                                 },
                               },
                               "required": [],
@@ -416,11 +424,19 @@ exports[`openApi gets the openapi.json 1`] = `
                         "_id": {
                           "type": "string",
                         },
+                        "created": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
                         "show": {
                           "type": "boolean",
+                        },
+                        "updated": {
+                          "format": "date-time",
+                          "type": "string",
                         },
                       },
                       "required": [],
@@ -628,11 +644,19 @@ exports[`openApi gets the openapi.json 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
@@ -970,11 +994,19 @@ exports[`openApi gets the openapi.json 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
@@ -1246,11 +1278,19 @@ exports[`openApi gets the openapi.json 1`] = `
                         "_id": {
                           "type": "string",
                         },
+                        "created": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
                         "show": {
                           "type": "boolean",
+                        },
+                        "updated": {
+                          "format": "date-time",
+                          "type": "string",
                         },
                       },
                       "required": [],
@@ -1458,11 +1498,19 @@ exports[`openApi gets the openapi.json 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
@@ -1844,11 +1892,19 @@ exports[`openApi gets the openapi.json with custom endpoint 1`] = `
                                 "_id": {
                                   "type": "string",
                                 },
+                                "created": {
+                                  "format": "date-time",
+                                  "type": "string",
+                                },
                                 "name": {
                                   "type": "string",
                                 },
                                 "show": {
                                   "type": "boolean",
+                                },
+                                "updated": {
+                                  "format": "date-time",
+                                  "type": "string",
                                 },
                               },
                               "required": [],
@@ -2127,11 +2183,19 @@ exports[`openApi gets the openapi.json with custom endpoint 1`] = `
                         "_id": {
                           "type": "string",
                         },
+                        "created": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
                         "show": {
                           "type": "boolean",
+                        },
+                        "updated": {
+                          "format": "date-time",
+                          "type": "string",
                         },
                       },
                       "required": [],
@@ -2339,11 +2403,19 @@ exports[`openApi gets the openapi.json with custom endpoint 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
@@ -2681,11 +2753,19 @@ exports[`openApi gets the openapi.json with custom endpoint 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
@@ -2957,11 +3037,19 @@ exports[`openApi gets the openapi.json with custom endpoint 1`] = `
                         "_id": {
                           "type": "string",
                         },
+                        "created": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
                         "show": {
                           "type": "boolean",
+                        },
+                        "updated": {
+                          "format": "date-time",
+                          "type": "string",
                         },
                       },
                       "required": [],
@@ -3169,11 +3257,19 @@ exports[`openApi gets the openapi.json with custom endpoint 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
@@ -3568,11 +3664,19 @@ exports[`openApi populate gets the openapi.json with populate 1`] = `
                                 "_id": {
                                   "type": "string",
                                 },
+                                "created": {
+                                  "format": "date-time",
+                                  "type": "string",
+                                },
                                 "name": {
                                   "type": "string",
                                 },
                                 "show": {
                                   "type": "boolean",
+                                },
+                                "updated": {
+                                  "format": "date-time",
+                                  "type": "string",
                                 },
                               },
                               "required": [],
@@ -3757,11 +3861,19 @@ exports[`openApi populate gets the openapi.json with populate 1`] = `
                         "_id": {
                           "type": "string",
                         },
+                        "created": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
                         "show": {
                           "type": "boolean",
+                        },
+                        "updated": {
+                          "format": "date-time",
+                          "type": "string",
                         },
                       },
                       "required": [],
@@ -3875,11 +3987,19 @@ exports[`openApi populate gets the openapi.json with populate 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
@@ -4123,11 +4243,19 @@ exports[`openApi populate gets the openapi.json with populate 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
@@ -4305,11 +4433,19 @@ exports[`openApi populate gets the openapi.json with populate 1`] = `
                         "_id": {
                           "type": "string",
                         },
+                        "created": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
                         "name": {
                           "type": "string",
                         },
                         "show": {
                           "type": "boolean",
+                        },
+                        "updated": {
+                          "format": "date-time",
+                          "type": "string",
                         },
                       },
                       "required": [],
@@ -4423,11 +4559,19 @@ exports[`openApi populate gets the openapi.json with populate 1`] = `
                           "_id": {
                             "type": "string",
                           },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
                           "name": {
                             "type": "string",
                           },
                           "show": {
                             "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
                           },
                         },
                         "required": [],
