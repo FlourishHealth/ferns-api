@@ -860,7 +860,12 @@ export function fernsRouter<T>(
           status: 404,
         });
       }
-      if (operation === "PATCH") {
+      // For PATCHing an item by ID, we need to merge the objects so we don't override the _id or
+      // other parts of the subdocument.
+      if (operation === "PATCH" && isValidObjectId(req.params.itemId)) {
+        Object.assign(array[index], req.body[field]);
+      } else if (operation === "PATCH") {
+        // For PATCHing a string array, we can replace the whole object.
         array[index] = req.body[field];
       } else {
         array.splice(index, 1);

@@ -28,6 +28,8 @@ export interface FoodCategory {
   _id?: string;
   name: string;
   show: boolean;
+  created: Date;
+  updated: Date;
 }
 
 export interface Food {
@@ -87,10 +89,13 @@ const staffUserSchema = new Schema<StaffUser>({
 });
 export const StaffUserModel = UserModel.discriminator("Staff", staffUserSchema);
 
-const foodCategorySchema = new Schema<FoodCategory>({
-  name: String,
-  show: Boolean,
-});
+const foodCategorySchema = new Schema<FoodCategory>(
+  {
+    name: String,
+    show: Boolean,
+  },
+  {timestamps: {updatedAt: "updated", createdAt: "created"}}
+);
 
 const likesSchema = new Schema<any>({
   userId: {type: "ObjectId", ref: "User"},

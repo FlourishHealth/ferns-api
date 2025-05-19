@@ -367,6 +367,61 @@ describe("ferns-api", () => {
       res = await agent.delete(`/food/${apple._id}/tags/healthy`).expect(200);
       assert.deepEqual(res.body.data.tags, ["cheap"]);
     });
+
+    it("updates timestamps on array subdocuments", async function () {
+      // Create a food with categories that have timestamps
+      const foodWithTimestamps = await FoodModel.create({
+        name: "Food with Timestamps",
+        calories: 100,
+        created: new Date(),
+        ownerId: admin._id,
+        categories: [
+          {
+            name: "Category 1",
+            show: true,
+            updated: new Date("2024-01-01T00:00:00.000Z"),
+          },
+          {
+            name: "Category 2",
+            show: true,
+            updated: new Date("2024-01-01T00:00:00.000Z"),
+          },
+        ],
+      });
+
+      const firstCategoryId = foodWithTimestamps.categories?.[0]?._id?.toString();
+      const secondCategoryId = foodWithTimestamps.categories?.[1]?._id?.toString();
+
+      if (!firstCategoryId || !secondCategoryId) {
+        throw new Error("Failed to create food with categories");
+      }
+
+      // Wait a moment to ensure timestamp difference
+      await new Promise((resolve) => setTimeout(resolve, 100));
+
+      // Update one of the categories
+      const res = await agent
+        .patch(`/food/${foodWithTimestamps._id}/categories/${firstCategoryId}`)
+        .send({categories: {name: "Updated Category"}})
+        .expect(200);
+
+      // Verify the updated category has a newer timestamp
+      const updatedCategory = res.body.data.categories.find((c: any) => c._id === firstCategoryId);
+      const unchangedCategory = res.body.data.categories.find(
+        (c: any) => c._id === secondCategoryId
+      );
+
+      if (!updatedCategory || !unchangedCategory) {
+        throw new Error("Failed to find categories in response");
+      }
+
+      assert.notEqual(updatedCategory.updated, updatedCategory.created);
+      assert.equal(unchangedCategory.updated, unchangedCategory.created);
+      assert.equal(updatedCategory.name, "Updated Category");
+      // Unchanged.
+      assert.isTrue(updatedCategory.show);
+      assert.isTrue(unchangedCategory.show);
+    });
   });
 
   describe("standard methods", function () {
