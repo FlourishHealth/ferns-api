@@ -108,7 +108,7 @@ export function setupLogging(options?: LoggingOptions) {
   if (!options?.disableFileLogging) {
     const logDirectory = options?.logDirectory ?? "./log";
     if (!fs.existsSync(logDirectory)) {
-      fs.mkdirSync(logDirectory);
+      fs.mkdirSync(logDirectory, {recursive: true});
     }
 
     const FILE_LOG_DEFAULTS = {
