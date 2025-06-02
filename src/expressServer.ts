@@ -1,5 +1,4 @@
 import * as Sentry from "@sentry/node";
-import {nodeProfilingIntegration} from "@sentry/profiling-node";
 import openapi from "@wesleytodd/openapi";
 import axios from "axios";
 import cors from "cors";
@@ -7,7 +6,6 @@ import cron from "cron";
 import express, {Router} from "express";
 import jwt from "jsonwebtoken";
 import cloneDeep from "lodash/cloneDeep";
-import merge from "lodash/merge";
 import onFinished from "on-finished";
 import passport from "passport";
 import qs from "qs";
@@ -19,41 +17,6 @@ import {logger, LoggingOptions, setupLogging} from "./logger";
 
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
-
-export function setupErrorLogging(
-  app: express.Application,
-  ignoreTraces: string[] = [],
-  sentryOptions?: Sentry.NodeOptions
-) {
-  const dsn = process.env.SENTRY_DSN;
-  if (process.env.NODE_ENV === "production") {
-    if (!dsn) {
-      throw new Error("You must set SENTRY_DSN in the environment.");
-    }
-    const defaultSentryOptions: Sentry.NodeOptions = {
-      dsn,
-      environment: process.env.SENTRY_ENVIRONMENT ?? "production",
-      integrations: [nodeProfilingIntegration()],
-      ignoreErrors: [/^.*ECONNRESET*$/, /^.*socket hang up*$/],
-      tracesSampler: (samplingContext) => {
-        const transactionName = samplingContext.name.toLowerCase();
-        // ignore any transactions that include a match from the ignoreTraces list
-        if (ignoreTraces.some((trace) => transactionName.includes(trace.toLowerCase()))) {
-          return 0.0;
-        }
-        // otherwise just use the standard sample rate
-        return process.env.SENTRY_TRACES_SAMPLE_RATE
-          ? parseFloat(process.env.SENTRY_TRACES_SAMPLE_RATE)
-          : 0.1;
-      },
-      profilesSampleRate: process.env.SENTRY_PROFILES_SAMPLE_RATE
-        ? parseFloat(process.env.SENTRY_PROFILES_SAMPLE_RATE)
-        : 0.1,
-    };
-    Sentry.init(merge({}, defaultSentryOptions, sentryOptions));
-    logger.debug(`Initialized Sentry with DSN ${dsn}`);
-  }
-}
 
 export function setupEnvironment(): void {
   if (!process.env.TOKEN_ISSUER) {
@@ -190,11 +153,8 @@ interface InitializeRoutesOptions {
   // Whether requests should be logged. In production, you may want to disable this if using another
   // logger (e.g. Google Cloud).
   logRequests?: boolean;
-  ignoreTraces?: string[];
   loggingOptions?: LoggingOptions;
   authOptions?: AuthOptions;
-  // Options merged with the default Sentry init options.
-  sentryOptions?: Sentry.NodeOptions;
 }
 
 function initializeRoutes(
@@ -203,8 +163,6 @@ function initializeRoutes(
   options: InitializeRoutesOptions = {}
 ) {
   const app = express();
-
-  setupErrorLogging(app, options.ignoreTraces, options.sentryOptions);
 
   const oapi = openapi({
     openapi: "3.0.0",
@@ -307,9 +265,7 @@ export function setupServer(options: SetupServerOptions) {
     app = initializeRoutes(UserModel, addRoutes, {
       corsOrigin: options.corsOrigin,
       addMiddleware: options.addMiddleware,
-      ignoreTraces: options.ignoreTraces,
       authOptions: options.authOptions,
-      sentryOptions: options.sentryOptions,
     });
   } catch (error: any) {
     logger.error(`Error initializing routes: ${error.stack}`);

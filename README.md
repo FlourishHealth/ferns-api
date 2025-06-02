@@ -73,6 +73,51 @@ Now we can perform operations on the Food model in a standard REST way. We've al
 
 You can create your own permissions functions. Check permissions.ts for some examples of how to write them.
 
+## Sentry
+To enable Sentry, create a "src/sentryInstrumment.ts" file in your project.
+
+```
+// Include dotenv here at the start if you're including configuration from dot files.
+import "dotenv/config";
+
+import * as Sentry from "@sentry/node";
+import {nodeProfilingIntegration} from "@sentry/profiling-node";
+
+if (process.env.NODE_ENV === "production" && !process.env.SENTRY_DSN) {
+  throw new Error("SENTRY_DSN must be set");
+}
+
+// Skip some traces we don't care about.
+const IGNORE_TRACES = ["health", "fitbit_process_update"];
+
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    // Only profile integration needs to be added, the rest are defaults and are already added,
+    // including Express, mongoose, HTTP, etc.
+    nodeProfilingIntegration() as any,
+  ],
+  // Debug can be helpful for figuruing out why something isn't working.
+  // debug: true,
+  environment: process.env.SENTRY_ENVIRONMENT ?? "production",
+  // Skip some errors if needed.
+  ignoreErrors: [
+    /^.*ECONNRESET*$/,
+    /^.*socket hang up*$/,
+  ],
+  // Set to 1.0 when testing the integration. Lower these to something like 0.1 or 0.2 in production. You can also use tracesSampler as a function to filter out ones
+  // you don't care about.
+  tracesSampleRate: 1.0,
+  profileSessionSampleRate: 1.0
+});
+```
+
+Then at the top of your src/index.ts file, before express is imported anywhere:
+
+```
+import "./sentryInstrument";
+```
+
 ## Example
 
 To test out how the API works, you can look at and run [example.ts] by running `yarn build` then running `node dist/example.js` in /ferns-api; while running, you can use a mongoDB client such as Compass to view collections.
