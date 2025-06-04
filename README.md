@@ -87,9 +87,6 @@ if (process.env.NODE_ENV === "production" && !process.env.SENTRY_DSN) {
   throw new Error("SENTRY_DSN must be set");
 }
 
-// Skip some traces we don't care about.
-const IGNORE_TRACES = ["health", "fitbit_process_update"];
-
 Sentry.init({
   dsn: process.env.SENTRY_DSN,
   integrations: [
