@@ -126,7 +126,8 @@ export function permissionMiddleware<T>(
       } else {
         throw new APIError({
           status: 405,
-          title: `Method ${req.method} not allowed`,
+          name: "methodNotAllowedError",
+          message: `Method ${req.method} not allowed`,
         });
       }
 
@@ -136,7 +137,8 @@ export function permissionMiddleware<T>(
       if (!(await checkPermissions(method, options.permissions[method], req.user))) {
         throw new APIError({
           status: 405,
-          title:
+          name: "accessDeniedError",
+          message:
             `Access to ${method.toUpperCase()} on ${model.modelName} ` +
             `denied for ${req.user?.id}`,
         });
@@ -153,9 +155,9 @@ export function permissionMiddleware<T>(
         data = await populatedQuery.exec();
       } catch (error: any) {
         throw new APIError({
+          ...error,
           status: 500,
-          title: `GET failed on ${req.params.id}`,
-          error,
+          detail: `GET failed on ${req.params.id}`,
         });
       }
       if (!data || (["update", "delete"].includes(method) && data?.__t && !req.body?.__t)) {
@@ -163,7 +165,8 @@ export function permissionMiddleware<T>(
         if (["update", "delete"].includes(method) && data?.__t && !req.body?.__t) {
           throw new APIError({
             status: 404,
-            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+            name: "documentNotFoundError",
+            message: `Document ${req.params.id} not found for model ${model.modelName}`,
           });
         }
 
@@ -176,7 +179,8 @@ export function permissionMiddleware<T>(
           Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
           const error = new APIError({
             status: 404,
-            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+            name: "documentNotFoundError",
+            message: `Document ${req.params.id} not found for model ${model.modelName}`,
           });
           delete error.meta;
           throw error;
@@ -196,7 +200,8 @@ export function permissionMiddleware<T>(
           Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
           const error = new APIError({
             status: 404,
-            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+            name: "documentNotFoundError",
+            message: `Document ${req.params.id} not found for model ${model.modelName}`,
           });
           delete error.meta;
           throw error;
@@ -206,7 +211,8 @@ export function permissionMiddleware<T>(
           );
           throw new APIError({
             status: 404,
-            title: `Document ${req.params.id} not found for model ${model.modelName}`,
+            name: "documentNotFoundError",
+            message: `Document ${req.params.id} not found for model ${model.modelName}`,
             meta: reason,
           });
         }
@@ -215,7 +221,8 @@ export function permissionMiddleware<T>(
       if (!(await checkPermissions(method, options.permissions[method], req.user, data))) {
         throw new APIError({
           status: 403,
-          title: `Access to GET on ${model.modelName}:${req.params.id} denied for ${req.user?.id}`,
+          name: "accessDeniedError",
+          message: `Access to GET on ${model.modelName}:${req.params.id} denied for ${req.user?.id}`,
         });
       }
 

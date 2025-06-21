@@ -215,7 +215,11 @@ export function getOpenApiSpecForModel(
 // that the populatePath was added, we remove the population and just return the _id.
 export function unpopulate<T>(doc: Document<T>, path: string): Document<T> {
   if (!path) {
-    throw new APIError({status: 500, title: "path is required for unpopulate"});
+    throw new APIError({
+      status: 500,
+      name: "unpopulateError",
+      message: "path is required for unpopulate",
+    });
   }
   const pathParts = path.split(".");
 

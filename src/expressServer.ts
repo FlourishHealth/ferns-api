@@ -349,7 +349,8 @@ export async function sendToSlack(
     if (shouldThrow) {
       throw new APIError({
         status: 500,
-        title: `Error posting to slack: ${error.text ?? error.message}`,
+        name: "slackError",
+        message: `Error posting to slack`,
       });
     }
   }

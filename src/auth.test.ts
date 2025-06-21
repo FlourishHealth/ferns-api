@@ -347,7 +347,7 @@ describe("auth tests", function () {
     await admin.save();
 
     const failRes = await agent.get("/auth/me").expect(401);
-    assert.deepEqual(failRes.body, {title: "User is disabled", status: 401});
+    assert.deepEqual(failRes.body, {name: "User is disabled", status: 401});
   });
 
   it("signup user with email that is already registered", async function () {
@@ -362,7 +362,7 @@ describe("auth tests", function () {
       .expect(500);
 
     await timeout(1000);
-    assert.equal(res2.body.title, "A user with the given username is already registered");
+    assert.equal(res2.body.name, "A user with the given username is already registered");
   });
 });
 

@@ -139,7 +139,7 @@ describe("query and transform", function () {
       .send({ownerId: notAdmin.id})
       .expect(403);
     assert.isTrue(
-      spinachRes.body.title.includes("User of type owner cannot write fields: ownerId")
+      spinachRes.body.name.includes("User of type owner cannot write fields: ownerId")
     );
   });
 
@@ -182,7 +182,7 @@ describe("query and transform", function () {
       .patch(`/food/${carrots.id}`)
       .send({created: "2020-01-01T00:00:00Z"})
       .expect(403);
-    assert.isTrue(writeRes.body.title.includes("User of type auth cannot write fields: created"));
+    assert.isTrue(writeRes.body.name.includes("User of type auth cannot write fields: created"));
   });
 
   it("anon read transform", async function () {
