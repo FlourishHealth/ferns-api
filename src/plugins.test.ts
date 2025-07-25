@@ -15,8 +15,8 @@ import {addAuthRoutes, setupAuth} from "./auth";
 import {
   createdUpdatedPlugin,
   DateOnly,
-  findAtMostOne,
   findExactlyOne,
+  findOneOrNone,
   isDeletedPlugin,
 } from "./plugins";
 import {authAsUser, getBaseServer, setupDb, UserModel} from "./tests";
@@ -37,7 +37,7 @@ const stuffSchema = new Schema<Stuff>({
 });
 
 stuffSchema.plugin(isDeletedPlugin);
-stuffSchema.plugin(findAtMostOne);
+stuffSchema.plugin(findOneOrNone);
 stuffSchema.plugin(findExactlyOne);
 stuffSchema.plugin(createdUpdatedPlugin);
 
@@ -100,7 +100,7 @@ describe("isDeleted", function () {
   });
 });
 
-describe("findAtMostOne", function () {
+describe("findOneOrNone", function () {
   let things: any;
 
   beforeEach(async function () {
@@ -120,23 +120,23 @@ describe("findAtMostOne", function () {
   });
 
   it("returns null with no matches.", async function () {
-    const result = await (StuffModel as any).findAtMostOne({name: "OtherStuff"});
+    const result = await (StuffModel as any).findOneOrNone({name: "OtherStuff"});
     assert.isNull(result);
   });
 
   it("returns a single match", async function () {
-    const result = await (StuffModel as any).findAtMostOne({name: "Things"});
+    const result = await (StuffModel as any).findOneOrNone({name: "Things"});
     assert.equal(result._id.toString(), things._id.toString());
   });
 
   it("throws error with two matches.", async function () {
-    const fn = () => (StuffModel as any).findAtMostOne({ownerId: "123"});
+    const fn = () => (StuffModel as any).findOneOrNone({ownerId: "123"});
     await assert.isRejected(fn(), /Stuff\.findOne query returned multiple documents/);
   });
 
   it("throws custom error with two matches.", async function () {
     const fn = () =>
-      (StuffModel as any).findAtMostOne({ownerId: "123"}, {status: 400, title: "Oh no!"});
+      (StuffModel as any).findOneOrNone({ownerId: "123"}, {status: 400, title: "Oh no!"});
 
     try {
       await fn();

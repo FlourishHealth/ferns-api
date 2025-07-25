@@ -96,14 +96,14 @@ export function firebaseJWTPlugin(schema: Schema) {
 }
 
 /**
- * This adds a static method `Model.findAtMostOne` to the schema. This should replace `Model.findOne` in most instances.
+ * This adds a static method `Model.findOneOrNone` to the schema. This should replace `Model.findOne` in most instances.
  * `Model.findOne` should only be used with a unique index, but that's not apparent from the docs. Otherwise you can wind
  * up with a random document that matches the query. The returns either null if no document matches, the actual
  * document, or throws an exception if multiple are found.
  * @param schema Mongoose Schema
  */
-export function findAtMostOne<T>(schema: Schema<any, any, any, any>) {
-  schema.statics.findAtMostOne = async function (
+export function findOneOrNone<T>(schema: Schema<any, any, any, any>) {
+  schema.statics.findOneOrNone = async function (
     query: FilterQuery<T>,
     errorArgs?: Partial<APIErrorConstructor>
   ): Promise<T | null> {
@@ -124,7 +124,7 @@ export function findAtMostOne<T>(schema: Schema<any, any, any, any>) {
 }
 
 /**
- * This adds a static method `Model.findExactlyOne` to the schema. This or findAtMostOne should replace `Model.findOne`
+ * This adds a static method `Model.findExactlyOne` to the schema. This or findOneOrNone should replace `Model.findOne`
  * in most instances.
  * `Model.findOne` should only be used with a unique index, but that's not apparent from the docs. Otherwise you can wind
  * up with a random document that matches the query. The returns the one matching document, or throws an exception if
