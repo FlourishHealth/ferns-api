@@ -55,6 +55,7 @@ function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): 
         update: [Permissions.IsAny],
         delete: [Permissions.IsAny],
       },
+      queryFields: ["calories"],
       openApiExtraModelProperties: {
         foo: {
           type: "string",
@@ -105,6 +106,29 @@ describe("openApi", function () {
     server = supertest(app);
     const res = await server.get("/openapi.json").expect(200);
     expect(res.body).toMatchSnapshot();
+  });
+
+  it("gets the openapi.json and has correct Number query fields", async function () {
+    server = supertest(app);
+    const res = await server.get("/openapi.json").expect(200);
+    const foodQuery = res.body.paths["/food/"].get.parameters.find((p) => p.name === "calories");
+
+    // Ensure that a Number query field supports gt/gte/lt/lte and just a Number
+    assert.deepEqual(foodQuery.schema, {
+      oneOf: [
+        {type: "number"},
+        {
+          type: "object",
+          properties: {
+            $gt: {type: "number"},
+            $gte: {type: "number"},
+            $lt: {type: "number"},
+            $lte: {type: "number"},
+          },
+        },
+      ],
+    });
+    expect(foodQuery).toMatchSnapshot();
   });
 });
 

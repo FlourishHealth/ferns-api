@@ -201,13 +201,18 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
             name: field,
             in: "query",
             schema: {
-              type: "object",
-              properties: {
-                $gte: modelSwagger.properties[field],
-                $gt: modelSwagger.properties[field],
-                $lte: modelSwagger.properties[field],
-                $lt: modelSwagger.properties[field],
-              },
+              oneOf: [
+                modelSwagger.properties[field],
+                {
+                  type: "object",
+                  properties: {
+                    $gte: modelSwagger.properties[field],
+                    $gt: modelSwagger.properties[field],
+                    $lte: modelSwagger.properties[field],
+                    $lt: modelSwagger.properties[field],
+                  },
+                },
+              ],
             },
           });
         } else {

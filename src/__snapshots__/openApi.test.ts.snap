@@ -92,6 +92,34 @@ exports[`openApi gets the openapi.json 1`] = `
           },
           {
             "in": "query",
+            "name": "calories",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "number",
+                },
+                {
+                  "properties": {
+                    "$gt": {
+                      "type": "number",
+                    },
+                    "$gte": {
+                      "type": "number",
+                    },
+                    "$lt": {
+                      "type": "number",
+                    },
+                    "$lte": {
+                      "type": "number",
+                    },
+                  },
+                  "type": "object",
+                },
+              ],
+            },
+          },
+          {
+            "in": "query",
             "name": "page",
             "schema": {
               "type": "number",
@@ -1759,6 +1787,37 @@ exports[`openApi gets the openapi.json 1`] = `
 }
 `;
 
+exports[`openApi gets the openapi.json and has correct Number query fields 1`] = `
+{
+  "in": "query",
+  "name": "calories",
+  "schema": {
+    "oneOf": [
+      {
+        "type": "number",
+      },
+      {
+        "properties": {
+          "$gt": {
+            "type": "number",
+          },
+          "$gte": {
+            "type": "number",
+          },
+          "$lt": {
+            "type": "number",
+          },
+          "$lte": {
+            "type": "number",
+          },
+        },
+        "type": "object",
+      },
+    ],
+  },
+}
+`;
+
 exports[`openApi gets the openapi.json with custom endpoint 1`] = `
 {
   "components": {
@@ -1847,6 +1906,34 @@ exports[`openApi gets the openapi.json with custom endpoint 1`] = `
                 },
               },
               "type": "object",
+            },
+          },
+          {
+            "in": "query",
+            "name": "calories",
+            "schema": {
+              "oneOf": [
+                {
+                  "type": "number",
+                },
+                {
+                  "properties": {
+                    "$gt": {
+                      "type": "number",
+                    },
+                    "$gte": {
+                      "type": "number",
+                    },
+                    "$lt": {
+                      "type": "number",
+                    },
+                    "$lte": {
+                      "type": "number",
+                    },
+                  },
+                  "type": "object",
+                },
+              ],
             },
           },
           {
