@@ -832,6 +832,12 @@ describe("ferns-api", () => {
       assert.equal(res.body.title, "ownerId is not allowed as a query param.");
     });
 
+    it("query with a number", async function () {
+      const res = await agent.get(`/food?calories=100`).expect(200);
+      assert.lengthOf(res.body.data, 1);
+      assert.equal(res.body.data[0].id, carrots!._id);
+    });
+
     it("update", async function () {
       let res = await agent.patch(`/food/${spinach._id}`).send({name: "Kale"}).expect(200);
       assert.equal(res.body.data.name, "Kale");
