@@ -3,6 +3,7 @@ import {
   Document,
   Error as MongooseError,
   FilterQuery,
+  Model,
   Query,
   Schema,
   SchemaType,
@@ -199,6 +200,29 @@ export interface HasUpsert<T> {
   upsert(conditions: Record<string, any>, update: Record<string, any>): Promise<T>;
 }
 
+export interface FindOneOrNonePlugin<T> {
+  findOneOrNone(
+    query: FilterQuery<T>,
+    errorArgs?: Partial<APIErrorConstructor>
+  ): Promise<(Document & T) | null>;
+}
+
+export interface FindExactlyOnePlugin<T> {
+  findExactlyOne(
+    query: FilterQuery<T>,
+    errorArgs?: Partial<APIErrorConstructor>
+  ): Promise<Document & T>;
+}
+
+export interface BasePlugins<T> extends Model<T>, FindOneOrNonePlugin<T>, FindExactlyOnePlugin<T> {
+  admin?: boolean;
+  email?: string;
+  deleted?: boolean;
+  disabled?: boolean;
+  created?: Date;
+  updated?: Date;
+  firebaseId?: string;
+}
 export class DateOnly extends SchemaType {
   constructor(key: string, options: SchemaTypeOptions<any>) {
     super(key, options, "DateOnly");
