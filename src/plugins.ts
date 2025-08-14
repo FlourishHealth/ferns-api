@@ -1,5 +1,6 @@
 import {DateTime} from "luxon";
 import {
+  Document,
   Error as MongooseError,
   FilterQuery,
   Query,
@@ -102,11 +103,11 @@ export function firebaseJWTPlugin(schema: Schema) {
  * document, or throws an exception if multiple are found.
  * @param schema Mongoose Schema
  */
-export function findOneOrNone<T>(schema: Schema<any, any, any, any>) {
+export function findOneOrNone<T>(schema: Schema<T>) {
   schema.statics.findOneOrNone = async function (
     query: FilterQuery<T>,
     errorArgs?: Partial<APIErrorConstructor>
-  ): Promise<T | null> {
+  ): Promise<(Document & T) | null> {
     const results = await this.find(query);
     if (results.length === 0) {
       return null;
@@ -131,11 +132,11 @@ export function findOneOrNone<T>(schema: Schema<any, any, any, any>) {
  * multiple or none are found.
  * @param schema Mongoose Schema
  */
-export function findExactlyOne<T>(schema: Schema<any, any, any, any>) {
+export function findExactlyOne<T>(schema: Schema<T>) {
   schema.statics.findExactlyOne = async function (
     query: FilterQuery<T>,
     errorArgs?: Partial<APIErrorConstructor>
-  ): Promise<T | null> {
+  ): Promise<Document & T> {
     const results = await this.find(query);
     if (results.length === 0) {
       throw new APIError({

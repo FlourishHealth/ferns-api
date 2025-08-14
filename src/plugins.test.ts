@@ -1,8 +1,9 @@
 import chai, {assert} from "chai";
 import chaiAsPromised from "chai-as-promised";
 import express from "express";
-import {model, Schema} from "mongoose";
+import {Document, FilterQuery, Model, model, Schema} from "mongoose";
 
+import {APIErrorConstructor} from "./errors";
 import {Permissions} from "./permissions";
 
 chai.use(chaiAsPromised);
@@ -31,6 +32,17 @@ interface Stuff {
   updated?: Date;
 }
 
+interface StuffModelType extends Model<Stuff> {
+  findOneOrNone(
+    query: FilterQuery<Stuff>,
+    errorArgs?: Partial<APIErrorConstructor>
+  ): Promise<(Document & Stuff) | null>;
+  findExactlyOne(
+    query: FilterQuery<Stuff>,
+    errorArgs?: Partial<APIErrorConstructor>
+  ): Promise<Document & Stuff>;
+}
+
 const stuffSchema = new Schema<Stuff>({
   name: String,
   ownerId: String,
@@ -43,7 +55,7 @@ stuffSchema.plugin(findExactlyOne);
 stuffSchema.plugin(upsertPlugin);
 stuffSchema.plugin(createdUpdatedPlugin);
 
-const StuffModel = model<Stuff>("Stuff", stuffSchema);
+const StuffModel = model<Stuff>("Stuff", stuffSchema) as unknown as StuffModelType;
 
 describe("createdUpdate", function () {
   it("sets created and updated on save", async function () {
@@ -122,23 +134,23 @@ describe("findOneOrNone", function () {
   });
 
   it("returns null with no matches.", async function () {
-    const result = await (StuffModel as any).findOneOrNone({name: "OtherStuff"});
+    const result = await StuffModel.findOneOrNone({name: "OtherStuff"});
     assert.isNull(result);
   });
 
   it("returns a single match", async function () {
-    const result = await (StuffModel as any).findOneOrNone({name: "Things"});
-    assert.equal(result._id.toString(), things._id.toString());
+    const result = await StuffModel.findOneOrNone({name: "Things"});
+    assert.isNotNull(result);
+    assert.equal(result!._id.toString(), things._id.toString());
   });
 
   it("throws error with two matches.", async function () {
-    const fn = () => (StuffModel as any).findOneOrNone({ownerId: "123"});
+    const fn = () => StuffModel.findOneOrNone({ownerId: "123"});
     await assert.isRejected(fn(), /Stuff\.findOne query returned multiple documents/);
   });
 
   it("throws custom error with two matches.", async function () {
-    const fn = () =>
-      (StuffModel as any).findOneOrNone({ownerId: "123"}, {status: 400, title: "Oh no!"});
+    const fn = () => StuffModel.findOneOrNone({ownerId: "123"}, {status: 400, title: "Oh no!"});
 
     try {
       await fn();
@@ -173,23 +185,22 @@ describe("findExactlyOne", function () {
   });
 
   it("throws error with no matches.", async function () {
-    const fn = () => (StuffModel as any).findExactlyOne({name: "OtherStuff"});
+    const fn = () => StuffModel.findExactlyOne({name: "OtherStuff"});
     await assert.isRejected(fn(), /Stuff\.findExactlyOne query returned no documents/);
   });
 
   it("returns a single match", async function () {
-    const result = await (StuffModel as any).findExactlyOne({name: "Things"});
+    const result = await StuffModel.findExactlyOne({name: "Things"});
     assert.equal(result._id.toString(), things._id.toString());
   });
 
   it("throws error with two matches.", async function () {
-    const fn = () => (StuffModel as any).findExactlyOne({ownerId: "123"});
+    const fn = () => StuffModel.findExactlyOne({ownerId: "123"});
     await assert.isRejected(fn(), /Stuff\.findExactlyOne query returned multiple documents/);
   });
 
   it("throws custom error with two matches.", async function () {
-    const fn = () =>
-      (StuffModel as any).findExactlyOne({ownerId: "123"}, {status: 400, title: "Oh no!"});
+    const fn = () => StuffModel.findExactlyOne({ownerId: "123"}, {status: 400, title: "Oh no!"});
 
     try {
       await fn();
@@ -254,6 +265,49 @@ describe("upsertPlugin", function () {
   });
 });
 
+describe("TypeScript return types", function () {
+  let _things: any;
+
+  beforeEach(async function () {
+    await StuffModel.deleteMany({});
+    await setupDb();
+
+    [_things] = await Promise.all([
+      StuffModel.create({
+        name: "Things",
+        ownerId: "123",
+        date: new Date("2023-01-01"),
+      }),
+      StuffModel.create({
+        name: "StuffNThings",
+        ownerId: "123",
+        date: new Date("2023-01-02"),
+      }),
+    ]);
+  });
+
+  it("findOneOrNone returns properly typed document or null", async function () {
+    const result = await StuffModel.findOneOrNone({name: "Things"});
+
+    if (result) {
+      assert.isString(result._id.toString());
+      assert.isString(result.name);
+      assert.isString(result.ownerId);
+      assert.instanceOf(result.date, Date);
+    } else {
+      assert.isNull(result);
+    }
+  });
+
+  it("findExactlyOne returns properly typed document", async function () {
+    const result = await StuffModel.findExactlyOne({name: "Things"});
+
+    assert.isString(result._id.toString());
+    assert.isString(result.name);
+    assert.isString(result.ownerId);
+    assert.instanceOf(result.date, Date);
+  });
+});
 describe("DateOnly", function () {
   it("throws error with invalid date", async function () {
     try {
