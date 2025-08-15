@@ -18,6 +18,7 @@ import {
   findExactlyOne,
   findOneOrNone,
   isDeletedPlugin,
+  upsertPlugin,
 } from "./plugins";
 import {authAsUser, getBaseServer, setupDb, UserModel} from "./tests";
 
@@ -39,6 +40,7 @@ const stuffSchema = new Schema<Stuff>({
 stuffSchema.plugin(isDeletedPlugin);
 stuffSchema.plugin(findOneOrNone);
 stuffSchema.plugin(findExactlyOne);
+stuffSchema.plugin(upsertPlugin);
 stuffSchema.plugin(createdUpdatedPlugin);
 
 const StuffModel = model<Stuff>("Stuff", stuffSchema);
@@ -199,6 +201,59 @@ describe("findExactlyOne", function () {
       assert.equal(error.status, 400);
       assert.equal(error.detail, 'query: {"ownerId":"123"}');
     }
+  });
+});
+
+describe("upsertPlugin", function () {
+  beforeEach(async function () {
+    await StuffModel.deleteMany({});
+    await setupDb();
+  });
+
+  it("creates a new document when none exists", async function () {
+    const result = await (StuffModel as any).upsert({name: "NewThing"}, {ownerId: "456"});
+    assert.equal(result.name, "NewThing");
+    assert.equal(result.ownerId, "456");
+
+    const found = await StuffModel.findOne({name: "NewThing"});
+    assert.isNotNull(found);
+    assert.equal(found!.ownerId, "456");
+  });
+
+  it("updates existing document when one exists", async function () {
+    const initial = await StuffModel.create({
+      name: "ExistingThing",
+      ownerId: "123",
+    });
+
+    const result = await (StuffModel as any).upsert({name: "ExistingThing"}, {ownerId: "789"});
+
+    assert.equal(result._id.toString(), initial._id.toString());
+    assert.equal(result.ownerId, "789");
+
+    const allDocs = await StuffModel.find({name: "ExistingThing"});
+    assert.lengthOf(allDocs, 1);
+    assert.equal(allDocs[0].ownerId, "789");
+  });
+
+  it("throws error when multiple documents match conditions", async function () {
+    await Promise.all([
+      StuffModel.create({name: "Thing1", ownerId: "123"}),
+      StuffModel.create({name: "Thing2", ownerId: "123"}),
+    ]);
+
+    const fn = () => (StuffModel as any).upsert({ownerId: "123"}, {name: "Updated"});
+    await assert.isRejected(fn(), /Stuff\.upsert find query returned multiple documents/);
+  });
+
+  it("combines conditions and update data for new documents", async function () {
+    const result = await (StuffModel as any).upsert(
+      {name: "TestCondition"},
+      {ownerId: "999"}
+    );
+
+    assert.equal(result.name, "TestCondition");
+    assert.equal(result.ownerId, "999");
   });
 });
 

@@ -157,6 +157,47 @@ export function findExactlyOne<T>(schema: Schema<any, any, any, any>) {
   };
 }
 
+/**
+ * This adds a static method `Model.upsert` to the schema. This method will either update an existing document
+ * that matches the conditions or create a new document if none exists. It throws an error if multiple documents
+ * match the conditions to prevent ambiguous updates.
+ * @param schema Mongoose Schema
+ */
+export function upsertPlugin<T>(schema: Schema<any, any, any, any>) {
+  schema.statics.upsert = async function (
+    conditions: Record<string, any>,
+    update: Record<string, any>
+  ): Promise<T> {
+    // Try to find the document with the given conditions.
+    const docs = await this.find(conditions);
+    if (docs.length > 1) {
+      throw new APIError({
+        status: 500,
+        title: `${this.modelName}.upsert find query returned multiple documents`,
+        detail: `query: ${JSON.stringify(conditions)}`,
+      });
+    }
+    const doc = docs[0];
+
+    if (doc) {
+      // If the document exists, update it with the provided update values.
+      Object.assign(doc, update);
+      return doc.save();
+    } else {
+      // If the document doesn't exist, create a new one with the combined conditions and update
+      // values.
+      const combinedData = {...conditions, ...update};
+      const newDoc = new this(combinedData);
+      return newDoc.save();
+    }
+  };
+}
+
+/** For models with the upsertPlugin, extend this interface to add the upsert static method. */
+export interface HasUpsert<T> {
+  upsert(conditions: Record<string, any>, update: Record<string, any>): Promise<T>;
+}
+
 export class DateOnly extends SchemaType {
   constructor(key: string, options: SchemaTypeOptions<any>) {
     super(key, options, "DateOnly");
