@@ -247,10 +247,7 @@ describe("upsertPlugin", function () {
   });
 
   it("combines conditions and update data for new documents", async function () {
-    const result = await (StuffModel as any).upsert(
-      {name: "TestCondition"},
-      {ownerId: "999"}
-    );
+    const result = await (StuffModel as any).upsert({name: "TestCondition"}, {ownerId: "999"});
 
     assert.equal(result.name, "TestCondition");
     assert.equal(result.ownerId, "999");
