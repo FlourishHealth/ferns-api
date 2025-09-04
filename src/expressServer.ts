@@ -146,7 +146,18 @@ export interface AuthOptions {
 }
 
 interface InitializeRoutesOptions {
-  corsOrigin?: string;
+  corsOrigin?:
+    | string
+    | boolean
+    | RegExp
+    | Array<boolean | string | RegExp>
+    | ((
+        requestOrigin: string | undefined,
+        callback: (
+          err: Error | null,
+          origin?: boolean | string | RegExp | Array<boolean | string | RegExp>
+        ) => void
+      ) => void);
   addMiddleware?: AddRoutes;
   // The maximum number of array elements to parse in a query string. Defaults to 200.
   arrayLimit?: number;
@@ -247,7 +258,18 @@ export interface SetupServerOptions {
   loggingOptions?: LoggingOptions;
   authOptions?: AuthOptions;
   skipListen?: boolean;
-  corsOrigin?: string;
+  corsOrigin?:
+    | string
+    | boolean
+    | RegExp
+    | Array<boolean | string | RegExp>
+    | ((
+        requestOrigin: string | undefined,
+        callback: (
+          err: Error | null,
+          origin?: boolean | string | RegExp | Array<boolean | string | RegExp>
+        ) => void
+      ) => void);
   addMiddleware?: AddRoutes;
   ignoreTraces?: string[];
   sentryOptions?: Sentry.NodeOptions;
