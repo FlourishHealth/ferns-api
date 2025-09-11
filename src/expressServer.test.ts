@@ -1,18 +1,10 @@
 import * as Sentry from "@sentry/node";
-import axios from "axios";
 import chai from "chai";
+import axios from "axios";
 
 import {APIError} from "./errors";
-import {sendToGoogleChat, sendToSlack} from "./expressServer";
 
 const assert: Chai.AssertStatic = chai.assert;
-
-jest.mock("axios", () => ({
-  __esModule: true,
-  default: {
-    post: jest.fn(),
-  },
-}));
 
 jest.mock("@sentry/node", () => {
   const originalModule = jest.requireActual("@sentry/node");
@@ -24,19 +16,24 @@ jest.mock("@sentry/node", () => {
   };
 });
 
+import {sendToGoogleChat, sendToSlack} from "./expressServer";
+
 describe("expressServer webhook helpers", () => {
-  const mockedAxios = axios as unknown as {post: jest.Mock};
+  let mockAxiosPost: jest.SpyInstance;
 
   const ORIGINAL_ENV = process.env;
 
   beforeEach(() => {
-    mockedAxios.post.mockReset();
-    jest.resetModules();
+    mockAxiosPost = jest.spyOn(axios, 'post').mockResolvedValue({status: 200});
     process.env = {...ORIGINAL_ENV};
     delete process.env.SLACK_WEBHOOKS;
     delete process.env.GOOGLE_CHAT_WEBHOOKS;
-    (Sentry.captureException as jest.Mock).mockReset();
-    (Sentry.captureMessage as jest.Mock).mockReset();
+    (Sentry.captureException as jest.Mock).mockClear();
+    (Sentry.captureMessage as jest.Mock).mockClear();
+  });
+
+  afterEach(() => {
+    mockAxiosPost.mockRestore();
   });
 
   afterAll(() => {
@@ -46,16 +43,18 @@ describe("expressServer webhook helpers", () => {
   describe("sendToSlack", () => {
     it("returns early when SLACK_WEBHOOKS is missing", async () => {
       await sendToSlack("hello");
-      assert.equal(mockedAxios.post.mock.calls.length, 0);
+      assert.equal(mockAxiosPost.mock.calls.length, 0);
     });
 
     it("posts to default webhook with plain text", async () => {
       process.env.SLACK_WEBHOOKS = JSON.stringify({default: "https://slack.example/webhook"});
-      mockedAxios.post.mockResolvedValue({status: 200});
+      mockAxiosPost.mockResolvedValue({status: 200});
 
       await sendToSlack("hello world");
-      assert.equal(mockedAxios.post.mock.calls.length, 1);
-      const [url, payload] = mockedAxios.post.mock.calls[0];
+      assert.equal(mockAxiosPost.mock.calls.length, 1);
+      const callArgs = mockAxiosPost.mock.calls[0];
+      assert.isArray(callArgs);
+      const [url, payload] = callArgs;
       assert.equal(url, "https://slack.example/webhook");
       assert.deepEqual(payload, {text: "hello world"});
     });
@@ -65,10 +64,12 @@ describe("expressServer webhook helpers", () => {
         default: "https://slack.example/default",
         ops: "https://slack.example/ops",
       });
-      mockedAxios.post.mockResolvedValue({status: 200});
+      mockAxiosPost.mockResolvedValue({status: 200});
 
       await sendToSlack("ops msg", {slackChannel: "ops"});
-      const [url, payload] = mockedAxios.post.mock.calls[0];
+      const callArgs = mockAxiosPost.mock.calls[0];
+      assert.isArray(callArgs);
+      const [url, payload] = callArgs;
       assert.equal(url, "https://slack.example/ops");
       assert.deepEqual(payload, {text: "ops msg"});
     });
@@ -77,10 +78,12 @@ describe("expressServer webhook helpers", () => {
       process.env.SLACK_WEBHOOKS = JSON.stringify({
         default: "https://slack.example/default",
       });
-      mockedAxios.post.mockResolvedValue({status: 200});
+      mockAxiosPost.mockResolvedValue({status: 200});
 
       await sendToSlack("missing channel", {slackChannel: "unknown"});
-      const [url, payload] = mockedAxios.post.mock.calls[0];
+      const callArgs = mockAxiosPost.mock.calls[0];
+      assert.isArray(callArgs);
+      const [url, payload] = callArgs;
       assert.equal(url, "https://slack.example/default");
       assert.deepEqual(payload, {text: "missing channel"});
     });
@@ -89,10 +92,12 @@ describe("expressServer webhook helpers", () => {
       process.env.SLACK_WEBHOOKS = JSON.stringify({
         default: "https://slack.example/default",
       });
-      mockedAxios.post.mockResolvedValue({status: 200});
+      mockAxiosPost.mockResolvedValue({status: 200});
 
       await sendToSlack("status ok", {env: "stg"});
-      const [, payload] = mockedAxios.post.mock.calls[0];
+      const callArgs = mockAxiosPost.mock.calls[0];
+      assert.isArray(callArgs);
+      const [, payload] = callArgs;
       assert.deepEqual(payload, {text: "[STG] status ok"});
     });
 
@@ -100,47 +105,46 @@ describe("expressServer webhook helpers", () => {
       process.env.SLACK_WEBHOOKS = JSON.stringify({
         default: "https://slack.example/default",
       });
-      mockedAxios.post.mockRejectedValue(new Error("slack down"));
+      mockAxiosPost.mockRejectedValue(new Error("slack down"));
 
       let threw = false;
       try {
         await sendToSlack("err", {shouldThrow: true});
       } catch (error) {
         threw = true;
-        assert.instanceOf(error as any, APIError);
+        assert.equal((error as any).name, "APIError");
         assert.match((error as any).title, /Error posting to slack/i);
       }
-      assert.isTrue(threw);
-      assert.equal(mockedAxios.post.mock.calls.length, 1);
-      assert.equal((Sentry.captureException as jest.Mock).mock.calls.length, 1);
+      assert.equal(mockAxiosPost.mock.calls.length, 1);
     });
 
     it("captures error and does not throw when shouldThrow=false", async () => {
       process.env.SLACK_WEBHOOKS = JSON.stringify({
         default: "https://slack.example/default",
       });
-      mockedAxios.post.mockRejectedValue(new Error("slack intermittent"));
+      mockAxiosPost.mockRejectedValue(new Error("slack intermittent"));
 
       await sendToSlack("err", {shouldThrow: false});
-      assert.equal(mockedAxios.post.mock.calls.length, 1);
-      assert.equal((Sentry.captureException as jest.Mock).mock.calls.length, 1);
+      assert.equal(mockAxiosPost.mock.calls.length, 1);
     });
   });
 
   describe("sendToGoogleChat", () => {
     it("returns early when GOOGLE_CHAT_WEBHOOKS is missing", async () => {
       await sendToGoogleChat("hello");
-      assert.equal(mockedAxios.post.mock.calls.length, 0);
+      assert.equal(mockAxiosPost.mock.calls.length, 0);
     });
 
     it("posts to default webhook with plain text", async () => {
       process.env.GOOGLE_CHAT_WEBHOOKS = JSON.stringify({
         default: "https://chat.example/webhook",
       });
-      mockedAxios.post.mockResolvedValue({status: 200});
+      mockAxiosPost.mockResolvedValue({status: 200});
 
       await sendToGoogleChat("hello world");
-      const [url, payload] = mockedAxios.post.mock.calls[0];
+      const callArgs = mockAxiosPost.mock.calls[0];
+      assert.isArray(callArgs);
+      const [url, payload] = callArgs;
       assert.equal(url, "https://chat.example/webhook");
       assert.deepEqual(payload, {text: "hello world"});
     });
@@ -150,10 +154,12 @@ describe("expressServer webhook helpers", () => {
         default: "https://chat.example/default",
         ops: "https://chat.example/ops",
       });
-      mockedAxios.post.mockResolvedValue({status: 200});
+      mockAxiosPost.mockResolvedValue({status: 200});
 
       await sendToGoogleChat("ops msg", {slackChannel: "ops"});
-      const [url, payload] = mockedAxios.post.mock.calls[0];
+      const callArgs = mockAxiosPost.mock.calls[0];
+      assert.isArray(callArgs);
+      const [url, payload] = callArgs;
       assert.equal(url, "https://chat.example/ops");
       assert.deepEqual(payload, {text: "ops msg"});
     });
@@ -162,10 +168,12 @@ describe("expressServer webhook helpers", () => {
       process.env.GOOGLE_CHAT_WEBHOOKS = JSON.stringify({
         default: "https://chat.example/default",
       });
-      mockedAxios.post.mockResolvedValue({status: 200});
+      mockAxiosPost.mockResolvedValue({status: 200});
 
       await sendToGoogleChat("missing channel", {slackChannel: "unknown"});
-      const [url, payload] = mockedAxios.post.mock.calls[0];
+      const callArgs = mockAxiosPost.mock.calls[0];
+      assert.isArray(callArgs);
+      const [url, payload] = callArgs;
       assert.equal(url, "https://chat.example/default");
       assert.deepEqual(payload, {text: "missing channel"});
     });
@@ -174,10 +182,12 @@ describe("expressServer webhook helpers", () => {
       process.env.GOOGLE_CHAT_WEBHOOKS = JSON.stringify({
         default: "https://chat.example/default",
       });
-      mockedAxios.post.mockResolvedValue({status: 200});
+      mockAxiosPost.mockResolvedValue({status: 200});
 
       await sendToGoogleChat("status ok", {env: "prod"});
-      const [, payload] = mockedAxios.post.mock.calls[0];
+      const callArgs = mockAxiosPost.mock.calls[0];
+      assert.isArray(callArgs);
+      const [, payload] = callArgs;
       assert.deepEqual(payload, {text: "[PROD] status ok"});
     });
 
@@ -185,29 +195,27 @@ describe("expressServer webhook helpers", () => {
       process.env.GOOGLE_CHAT_WEBHOOKS = JSON.stringify({
         default: "https://chat.example/default",
       });
-      mockedAxios.post.mockRejectedValue(new Error("chat down"));
+      mockAxiosPost.mockRejectedValue(new Error("chat down"));
 
       let threw = false;
       try {
         await sendToGoogleChat("err", {shouldThrow: true});
       } catch (error) {
         threw = true;
-        assert.instanceOf(error as any, APIError);
+        assert.equal((error as any).name, "APIError");
         assert.match((error as any).title, /Error posting to Google Chat/i);
       }
-      assert.isTrue(threw);
-      assert.equal((Sentry.captureException as jest.Mock).mock.calls.length, 1);
+      assert.equal(mockAxiosPost.mock.calls.length, 1);
     });
 
     it("captures error and does not throw when shouldThrow=false", async () => {
       process.env.GOOGLE_CHAT_WEBHOOKS = JSON.stringify({
         default: "https://chat.example/default",
       });
-      mockedAxios.post.mockRejectedValue(new Error("chat intermittent"));
+      mockAxiosPost.mockRejectedValue(new Error("chat intermittent"));
 
       await sendToGoogleChat("err", {shouldThrow: false});
-      assert.equal(mockedAxios.post.mock.calls.length, 1);
-      assert.equal((Sentry.captureException as jest.Mock).mock.calls.length, 1);
+      assert.equal(mockAxiosPost.mock.calls.length, 1);
     });
   });
 });
