@@ -74,6 +74,7 @@ describe("openApi", function () {
 
   beforeEach(async function () {
     process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
+    process.env.ENABLE_SWAGGER = "true";
 
     app = setupServer({addRoutes, userModel: UserModel as any, skipListen: true});
     setupAuth(app, UserModel as any);
@@ -180,6 +181,25 @@ function addRoutesPopulate(router: Router, options?: Partial<FernsRouterOptions<
     })
   );
 }
+
+describe("openApi without swagger", function () {
+  let server: TestAgent;
+  let app: express.Application;
+
+  beforeEach(async function () {
+    process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
+    process.env.ENABLE_SWAGGER = "false";
+
+    app = setupServer({addRoutes, userModel: UserModel as any, skipListen: true});
+    setupAuth(app, UserModel as any);
+    addAuthRoutes(app, UserModel as any);
+  });
+
+  it("does not have the swagger ui", async function () {
+    server = supertest(app);
+    await server.get("/swagger/").expect(404);
+  });
+});
 
 describe("openApi populate", function () {
   let server: TestAgent;
