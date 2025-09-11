@@ -1,8 +1,6 @@
 import * as Sentry from "@sentry/node";
-import chai from "chai";
 import axios from "axios";
-
-import {APIError} from "./errors";
+import chai from "chai";
 
 const assert: Chai.AssertStatic = chai.assert;
 
@@ -24,7 +22,7 @@ describe("expressServer webhook helpers", () => {
   const ORIGINAL_ENV = process.env;
 
   beforeEach(() => {
-    mockAxiosPost = jest.spyOn(axios, 'post').mockResolvedValue({status: 200});
+    mockAxiosPost = jest.spyOn(axios, "post").mockResolvedValue({status: 200});
     process.env = {...ORIGINAL_ENV};
     delete process.env.SLACK_WEBHOOKS;
     delete process.env.GOOGLE_CHAT_WEBHOOKS;
@@ -107,11 +105,10 @@ describe("expressServer webhook helpers", () => {
       });
       mockAxiosPost.mockRejectedValue(new Error("slack down"));
 
-      let threw = false;
       try {
         await sendToSlack("err", {shouldThrow: true});
+        assert.fail("Expected sendToSlack to throw APIError");
       } catch (error) {
-        threw = true;
         assert.equal((error as any).name, "APIError");
         assert.match((error as any).title, /Error posting to slack/i);
       }
@@ -197,11 +194,10 @@ describe("expressServer webhook helpers", () => {
       });
       mockAxiosPost.mockRejectedValue(new Error("chat down"));
 
-      let threw = false;
       try {
         await sendToGoogleChat("err", {shouldThrow: true});
+        assert.fail("Expected sendToGoogleChat to throw APIError");
       } catch (error) {
-        threw = true;
         assert.equal((error as any).name, "APIError");
         assert.match((error as any).title, /Error posting to Google Chat/i);
       }
