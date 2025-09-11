@@ -175,27 +175,18 @@ function initializeRoutes(
 ) {
   const app = express();
 
-  const oapi = openapi({
-    openapi: "3.0.0",
-    info: {
-      title: "Express Application",
-      description: "Generated docs from an Express api",
-      version: "1.0.0",
-    },
-  });
-
   // TODO: Log a warning when we hit the array limit.
   app.set("query parser", (str: string) => qs.parse(str, {arrayLimit: options.arrayLimit ?? 200}));
-
-  if (options.addMiddleware) {
-    options.addMiddleware(app);
-  }
 
   app.use(
     cors({
       origin: options.corsOrigin ?? "*",
     })
   );
+
+  if (options.addMiddleware) {
+    options.addMiddleware(app);
+  }
 
   app.use(express.json());
 
@@ -230,8 +221,19 @@ function initializeRoutes(
     next();
   });
 
+  const oapi = openapi({
+    openapi: "3.0.0",
+    info: {
+      title: "Express Application",
+      description: "Generated docs from an Express api",
+      version: "1.0.0",
+    },
+  });
   app.use(oapi);
-  app.use("/swagger", oapi.swaggerui());
+
+  if (process.env.ENABLE_SWAGGER === "true") {
+    app.use("/swagger", oapi.swaggerui());
+  }
 
   addMeRoutes(app, UserModel as any, options?.authOptions);
   addRoutes(app, {openApi: oapi});
