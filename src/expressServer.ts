@@ -14,6 +14,7 @@ import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, addMeRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
 import {APIError, apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
+import {openApiEtagMiddleware} from "./openApiEtag";
 
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
@@ -220,6 +221,9 @@ function initializeRoutes(
     }
     next();
   });
+
+  // Add ETag middleware for OpenAPI JSON endpoint before the openapi middleware
+  app.use(openApiEtagMiddleware);
 
   const oapi = openapi({
     openapi: "3.0.0",

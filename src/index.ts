@@ -3,6 +3,7 @@ export * from "./auth";
 export * from "./errors";
 export * from "./expressServer";
 export * from "./logger";
+export * from "./openApiEtag";
 export * from "./permissions";
 export * from "./plugins";
 export * from "./populate";
