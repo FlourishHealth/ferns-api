@@ -87,6 +87,42 @@ describe("openApi", function () {
     expect(res.body).toMatchSnapshot();
   });
 
+  it("gets the openapi.json with ETag header", async function () {
+    server = supertest(app);
+    const res = await server.get("/openapi.json").expect(200);
+    expect(res.headers.etag).toBeDefined();
+    expect(res.headers.etag).toMatch(/^"[a-f0-9]{16}"$/);
+  });
+
+  it("returns 304 when If-None-Match matches ETag", async function () {
+    server = supertest(app);
+
+    // First request to get the ETag
+    const firstRes = await server.get("/openapi.json").expect(200);
+    const etag = firstRes.headers.etag;
+    expect(etag).toBeDefined();
+
+    // Second request with If-None-Match header
+    const secondRes = await server.get("/openapi.json").set("If-None-Match", etag).expect(304);
+
+    expect(secondRes.body).toEqual({});
+    expect(secondRes.headers.etag).toBe(etag);
+  });
+
+  it("returns 200 when If-None-Match does not match ETag", async function () {
+    server = supertest(app);
+
+    // Request with a different ETag
+    const res = await server
+      .get("/openapi.json")
+      .set("If-None-Match", '"different-etag"')
+      .expect(200);
+
+    expect(res.body).toBeDefined();
+    expect(res.headers.etag).toBeDefined();
+    expect(res.headers.etag).not.toBe('"different-etag"');
+  });
+
   it("gets the swagger ui", async function () {
     server = supertest(app);
     await server.get("/swagger/").expect(200);
