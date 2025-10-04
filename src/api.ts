@@ -814,6 +814,8 @@ export function fernsRouter<T>(
     }
 
     const doc = await model.findById(req.params.id);
+    // Make a copy for passing pre-saved values to hooks.
+    const prevDoc = cloneDeep(doc);
     // We fail here because we might fetch the document without the __t but we'd be missing all the
     // hooks.
     if (!doc || (doc.__t && !req.body.__t)) {
@@ -912,9 +914,6 @@ export function fernsRouter<T>(
         });
       }
     }
-
-    // Make a copy for passing pre-saved values to hooks.
-    const prevDoc = cloneDeep(doc);
 
     // Using .save here runs the risk of a versioning error if you try to make two simultaneous
     // updates. We won't wind up with corrupted data, just an API error.
