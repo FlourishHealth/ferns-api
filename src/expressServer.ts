@@ -14,7 +14,6 @@ import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, addMeRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
 import {APIError, apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
-import {openApiEtagMiddleware} from "./openApiEtag";
 
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
@@ -176,18 +175,27 @@ function initializeRoutes(
 ) {
   const app = express();
 
+  const oapi = openapi({
+    openapi: "3.0.0",
+    info: {
+      title: "Express Application",
+      description: "Generated docs from an Express api",
+      version: "1.0.0",
+    },
+  });
+
   // TODO: Log a warning when we hit the array limit.
   app.set("query parser", (str: string) => qs.parse(str, {arrayLimit: options.arrayLimit ?? 200}));
+
+  if (options.addMiddleware) {
+    options.addMiddleware(app);
+  }
 
   app.use(
     cors({
       origin: options.corsOrigin ?? "*",
     })
   );
-
-  if (options.addMiddleware) {
-    options.addMiddleware(app);
-  }
 
   app.use(express.json());
 
@@ -222,22 +230,8 @@ function initializeRoutes(
     next();
   });
 
-  // Add ETag middleware for OpenAPI JSON endpoint before the openapi middleware
-  app.use(openApiEtagMiddleware);
-
-  const oapi = openapi({
-    openapi: "3.0.0",
-    info: {
-      title: "Express Application",
-      description: "Generated docs from an Express api",
-      version: "1.0.0",
-    },
-  });
   app.use(oapi);
-
-  if (process.env.ENABLE_SWAGGER === "true") {
-    app.use("/swagger", oapi.swaggerui());
-  }
+  app.use("/swagger", oapi.swaggerui());
 
   addMeRoutes(app, UserModel as any, options?.authOptions);
   addRoutes(app, {openApi: oapi});
@@ -378,6 +372,47 @@ export async function sendToSlack(
       throw new APIError({
         status: 500,
         title: `Error posting to slack: ${error.text ?? error.message}`,
+      });
+    }
+  }
+}
+
+export async function sendToGoogleChat(
+  messageText: string,
+  {channel, shouldThrow = false, env}: {channel?: string; shouldThrow?: boolean; env?: string} = {}
+) {
+  const chatWebhooksString = process.env.GOOGLE_CHAT_WEBHOOKS;
+  if (!chatWebhooksString) {
+    const msg = `GOOGLE_CHAT_WEBHOOKS not set. Google Chat message not sent`;
+    Sentry.captureException(new Error(msg));
+    logger.error(msg);
+    return;
+  }
+  const chatWebhooks = JSON.parse(chatWebhooksString ?? "{}");
+
+  const chatChannel = channel ?? "default";
+  const chatWebhookUrl = chatWebhooks[chatChannel] ?? chatWebhooks.default;
+
+  if (!chatWebhookUrl) {
+    const msg = `No webhook url set in env for ${chatChannel}. Google Chat message not sent`;
+    Sentry.captureException(new Error(msg));
+    logger.error(msg);
+    return;
+  }
+
+  if (env) {
+    messageText = `[${env.toUpperCase()}] ${messageText}`;
+  }
+
+  try {
+    await axios.post(chatWebhookUrl, {text: messageText});
+  } catch (error: any) {
+    logger.error(`Error posting to Google Chat: ${error.text ?? error.message}`);
+    Sentry.captureException(error);
+    if (shouldThrow) {
+      throw new APIError({
+        status: 500,
+        title: `Error posting to Google Chat: ${error.text ?? error.message}`,
       });
     }
   }
