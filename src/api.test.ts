@@ -422,6 +422,234 @@ describe("ferns-api", () => {
       assert.isTrue(updatedCategory.show);
       assert.isTrue(unchangedCategory.show);
     });
+
+    it("array operations call postUpdate with different copy of document", async function () {
+      let postUpdateDoc: any;
+      let postUpdatePrevDoc: any;
+      let postUpdateCalled = false;
+
+      app = getBaseServer();
+      setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAdmin],
+            create: [Permissions.IsAdmin],
+            read: [Permissions.IsAdmin],
+            update: [Permissions.IsAdmin],
+            delete: [Permissions.IsAdmin],
+          },
+          postUpdate: async (doc: any, cleanedBody: any, request: any, prevValue: any) => {
+            postUpdateDoc = doc;
+            postUpdatePrevDoc = prevValue;
+            postUpdateCalled = true;
+          },
+        })
+      );
+      server = supertest(app);
+      agent = await authAsUser(app, "admin");
+
+      // Test POST operation (add to array)
+      await agent
+        .post(`/food/${apple._id}/categories`)
+        .send({categories: {name: "New Category", show: true}})
+        .expect(200);
+
+      assert.isTrue(postUpdateCalled, "postUpdate should be called for array POST");
+      assert.isDefined(postUpdateDoc, "postUpdate should receive updated document");
+      assert.isDefined(postUpdatePrevDoc, "postUpdate should receive previous document");
+
+      // Verify they are different object references
+      assert.notStrictEqual(
+        postUpdateDoc,
+        postUpdatePrevDoc,
+        "Document and prevValue should be different object references"
+      );
+
+      // Verify the content is different (new category added)
+      assert.lengthOf(postUpdateDoc.categories, 3, "Updated document should have 3 categories");
+      assert.lengthOf(
+        postUpdatePrevDoc.categories,
+        2,
+        "Previous document should have 2 categories"
+      );
+
+      // Reset for next test
+      postUpdateCalled = false;
+      postUpdateDoc = undefined;
+      postUpdatePrevDoc = undefined;
+
+      // Test PATCH operation (update array item)
+      const categoryId = apple.categories[0]._id;
+      if (!categoryId) {
+        throw new Error("Category ID is undefined");
+      }
+      await agent
+        .patch(`/food/${apple._id}/categories/${categoryId}`)
+        .send({categories: {name: "Updated Category", show: false}})
+        .expect(200);
+
+      assert.isTrue(postUpdateCalled, "postUpdate should be called for array PATCH");
+      assert.isDefined(postUpdateDoc, "postUpdate should receive updated document");
+      assert.isDefined(postUpdatePrevDoc, "postUpdate should receive previous document");
+
+      // Verify they are different object references
+      assert.notStrictEqual(
+        postUpdateDoc,
+        postUpdatePrevDoc,
+        "Document and prevValue should be different object references"
+      );
+
+      // Verify the content is different (category updated)
+      const updatedCategory = postUpdateDoc.categories.find(
+        (c: any) => c._id.toString() === categoryId.toString()
+      );
+      const prevCategory = postUpdatePrevDoc.categories.find(
+        (c: any) => c._id.toString() === categoryId.toString()
+      );
+
+      assert.equal(
+        updatedCategory.name,
+        "Updated Category",
+        "Updated document should have new category name"
+      );
+      assert.equal(
+        prevCategory.name,
+        "Fruit",
+        "Previous document should have original category name"
+      );
+
+      // Reset for next test
+      postUpdateCalled = false;
+      postUpdateDoc = undefined;
+      postUpdatePrevDoc = undefined;
+
+      // Test DELETE operation (remove from array)
+      await agent.delete(`/food/${apple._id}/categories/${categoryId}`).expect(200);
+
+      assert.isTrue(postUpdateCalled, "postUpdate should be called for array DELETE");
+      assert.isDefined(postUpdateDoc, "postUpdate should receive updated document");
+      assert.isDefined(postUpdatePrevDoc, "postUpdate should receive previous document");
+
+      // Verify they are different object references
+      assert.notStrictEqual(
+        postUpdateDoc,
+        postUpdatePrevDoc,
+        "Document and prevValue should be different object references"
+      );
+
+      // Verify the content is different (category removed)
+      const remainingCategories = postUpdateDoc.categories.filter(
+        (c: any) => c._id.toString() === categoryId.toString()
+      );
+      const prevCategories = postUpdatePrevDoc.categories.filter(
+        (c: any) => c._id.toString() === categoryId.toString()
+      );
+
+      assert.lengthOf(
+        remainingCategories,
+        0,
+        "Updated document should not have the deleted category"
+      );
+      assert.lengthOf(prevCategories, 1, "Previous document should still have the category");
+    });
+
+    it("array operations with string arrays call postUpdate with different copy", async function () {
+      let postUpdateDoc: any;
+      let postUpdatePrevDoc: any;
+      let postUpdateCalled = false;
+
+      app = getBaseServer();
+      setupAuth(app, UserModel as any);
+      addAuthRoutes(app, UserModel as any);
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAdmin],
+            create: [Permissions.IsAdmin],
+            read: [Permissions.IsAdmin],
+            update: [Permissions.IsAdmin],
+            delete: [Permissions.IsAdmin],
+          },
+          postUpdate: async (doc: any, cleanedBody: any, request: any, prevValue: any) => {
+            postUpdateDoc = doc;
+            postUpdatePrevDoc = prevValue;
+            postUpdateCalled = true;
+          },
+        })
+      );
+      server = supertest(app);
+      agent = await authAsUser(app, "admin");
+
+      // Test POST operation with string array (add tag)
+      await agent.post(`/food/${apple._id}/tags`).send({tags: "organic"}).expect(200);
+
+      assert.isTrue(postUpdateCalled, "postUpdate should be called for string array POST");
+      assert.isDefined(postUpdateDoc, "postUpdate should receive updated document");
+      assert.isDefined(postUpdatePrevDoc, "postUpdate should receive previous document");
+
+      // Verify they are different object references
+      assert.notStrictEqual(
+        postUpdateDoc,
+        postUpdatePrevDoc,
+        "Document and prevValue should be different object references"
+      );
+
+      // Verify the content is different (new tag added)
+      assert.lengthOf(postUpdateDoc.tags, 3, "Updated document should have 3 tags");
+      assert.lengthOf(postUpdatePrevDoc.tags, 2, "Previous document should have 2 tags");
+      assert.include(postUpdateDoc.tags, "organic", "Updated document should include new tag");
+      assert.notInclude(
+        postUpdatePrevDoc.tags,
+        "organic",
+        "Previous document should not include new tag"
+      );
+
+      // Reset for next test
+      postUpdateCalled = false;
+      postUpdateDoc = undefined;
+      postUpdatePrevDoc = undefined;
+
+      // Test PATCH operation with string array (update tag)
+      await agent
+        .patch(`/food/${apple._id}/tags/healthy`)
+        .send({tags: "super-healthy"})
+        .expect(200);
+
+      assert.isTrue(postUpdateCalled, "postUpdate should be called for string array PATCH");
+      assert.notStrictEqual(
+        postUpdateDoc,
+        postUpdatePrevDoc,
+        "Document and prevValue should be different object references"
+      );
+
+      // Verify the content is different (tag updated)
+      assert.include(
+        postUpdateDoc.tags,
+        "super-healthy",
+        "Updated document should have updated tag"
+      );
+      assert.include(
+        postUpdatePrevDoc.tags,
+        "healthy",
+        "Previous document should have original tag"
+      );
+      assert.notInclude(
+        postUpdateDoc.tags,
+        "healthy",
+        "Updated document should not have original tag"
+      );
+      assert.notInclude(
+        postUpdatePrevDoc.tags,
+        "super-healthy",
+        "Previous document should not have updated tag"
+      );
+    });
   });
 
   describe("standard methods", function () {
