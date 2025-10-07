@@ -74,6 +74,7 @@ export const Severity = {
 // Transaction and tracing mocks
 export const startTransaction = jest.fn(() => mockTransaction);
 export const getCurrentScope = jest.fn(() => mockScope);
+export const setupExpressErrorHandler = jest.fn();
 
 const mockTransaction = {
   setTag: jest.fn(),
@@ -125,6 +126,7 @@ const Sentry = {
   Severity,
   startTransaction,
   getCurrentScope,
+  setupExpressErrorHandler,
   Handlers,
 };
 
