@@ -26,17 +26,7 @@ import {
 
 const assert: Chai.AssertStatic = chai.assert;
 
-jest.mock("@sentry/node", () => {
-  // Auto-mock the Sentry module
-  const originalModule = jest.requireActual("@sentry/node");
-
-  return {
-    ...originalModule, // Use the original module's implementations
-    captureMessage: jest.fn(),
-    captureException: jest.fn(),
-    isInitialized: jest.fn(() => true), // Override isInitialized
-  };
-});
+jest.mock("@sentry/node");
 
 describe("ferns-api", () => {
   let server: TestAgent;
