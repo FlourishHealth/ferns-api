@@ -20,6 +20,7 @@ export const getCurrentHub = jest.fn(() => mockHub);
 export const getClient = jest.fn(() => mockClient);
 export const flush = jest.fn(() => Promise.resolve(true));
 export const close = jest.fn(() => Promise.resolve(true));
+export const isInitialized = jest.fn(() => true);
 
 // Mock Scope
 const mockScope = {
@@ -123,6 +124,7 @@ const Sentry = {
   getClient,
   flush,
   close,
+  isInitialized,
   Severity,
   startTransaction,
   getCurrentScope,
