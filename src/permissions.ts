@@ -223,7 +223,7 @@ export function permissionMiddleware<T>(
 
       return next();
     } catch (error) {
-      console.error(`Permissions error: ${error}`);
+      console.error(`Permissions error: ${error instanceof Error ? error.message : error}`);
       return next(error);
     }
   };
