@@ -424,6 +424,74 @@ export async function sendToGoogleChat(
   }
 }
 
+export async function sendToZoom(
+  messageText: string,
+  {channel, shouldThrow = false, env}: {channel?: string; shouldThrow?: boolean; env?: string} = {}
+) {
+  const zoomWebhooksString = process.env.ZOOM_WEBHOOKS;
+  if (!zoomWebhooksString) {
+    const msg = `ZOOM_WEBHOOKS not set. Zoom message not sent`;
+    Sentry.captureException(new Error(msg));
+    logger.error(msg);
+    return;
+  }
+  const zoomWebhooks = JSON.parse(zoomWebhooksString ?? "{}");
+
+  const zoomChannel = channel ?? "default";
+  const zoomWebhookUrl = zoomWebhooks[zoomChannel] ?? zoomWebhooks.default;
+
+  if (!zoomWebhookUrl) {
+    const msg = `No webhook url set in env for ${zoomChannel}. Zoom message not sent`;
+    Sentry.captureException(new Error(msg));
+    logger.error(msg);
+    return;
+  }
+
+  const zoomTokenString = process.env.ZOOM_WEBHOOK_TOKENS;
+  if (!zoomTokenString) {
+    const msg = `ZOOM_WEBHOOK_TOKENS not set. Zoom message not sent`;
+    Sentry.captureException(new Error(msg));
+    logger.error(msg);
+    return;
+  }
+  const zoomTokens = JSON.parse(zoomTokenString ?? "{}");
+  const zoomToken = zoomTokens[zoomChannel] ?? zoomTokens.default;
+
+  if (!zoomToken) {
+    const msg = `No token set in env for ${zoomChannel}. Zoom message not sent`;
+    Sentry.captureException(new Error(msg));
+    logger.error(msg);
+    return;
+  }
+
+  if (env) {
+    messageText = `[${env.toUpperCase()}] ${messageText}`;
+  }
+
+  try {
+    const authHeader = `Basic ${Buffer.from(zoomToken).toString("base64")}`;
+    await axios.post(
+      zoomWebhookUrl,
+      {text: messageText},
+      {
+        headers: {
+          Authorization: authHeader,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+  } catch (error: any) {
+    logger.error(`Error posting to Zoom: ${error.text ?? error.message}`);
+    Sentry.captureException(error);
+    if (shouldThrow) {
+      throw new APIError({
+        status: 500,
+        title: `Error posting to Zoom: ${error.text ?? error.message}`,
+      });
+    }
+  }
+}
+
 export interface WrapScriptOptions {
   onFinish?: (result?: any) => void | Promise<void>;
   terminateTimeout?: number; // in seconds, defaults to 300. Set to 0 to have no termination timeout.
