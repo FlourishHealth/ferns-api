@@ -6,6 +6,7 @@ import mongoose, {Model} from "mongoose";
 import {addPopulateToQuery, FernsRouterOptions, getModel, RESTMethod} from "./api";
 import {User} from "./auth";
 import {APIError} from "./errors";
+import {logger} from "./logger";
 
 export type PermissionMethod<T> = (
   method: RESTMethod,
@@ -223,7 +224,7 @@ export function permissionMiddleware<T>(
 
       return next();
     } catch (error) {
-      console.error(`Permissions error: ${error}`);
+      logger.error(`Permissions error: ${error as string}`);
       return next(error);
     }
   };

@@ -18,6 +18,7 @@ import {openApiEtagMiddleware} from "./openApiEtag";
 
 const SLOW_READ_MAX = 200;
 const SLOW_WRITE_MAX = 500;
+const IS_JEST = process.env.JEST_WORKER_ID !== undefined;
 
 export function setupEnvironment(): void {
   if (!process.env.TOKEN_ISSUER) {
@@ -27,15 +28,15 @@ export function setupEnvironment(): void {
     throw new Error("TOKEN_SECRET must be set.");
   }
   if (!process.env.REFRESH_TOKEN_SECRET) {
-    logger.warn("REFRESH_TOKEN_SECRET must be set.");
+    throw new Error("REFRESH_TOKEN_SECRET must be set.");
   }
   if (!process.env.SESSION_SECRET) {
     throw new Error("SESSION_SECRET must be set.");
   }
-  if (!process.env.TOKEN_EXPIRES_IN) {
+  if (!process.env.TOKEN_EXPIRES_IN && !IS_JEST) {
     logger.warn("TOKEN_EXPIRES_IN is not set so using default.");
   }
-  if (!process.env.REFRESH_TOKEN_EXPIRES_IN) {
+  if (!process.env.REFRESH_TOKEN_EXPIRES_IN && !IS_JEST) {
     logger.warn("REFRESH_TOKEN_EXPIRES_IN not set so using default.");
   }
 }
