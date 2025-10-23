@@ -1,10 +1,11 @@
 import {assert} from "chai";
 import express from "express";
+import jwt from "jsonwebtoken";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter} from "./api";
-import {addAuthRoutes, addMeRoutes, setupAuth} from "./auth";
+import {addAuthRoutes, addMeRoutes, generateTokens, setupAuth} from "./auth";
 import {setupServer} from "./expressServer";
 import {Permissions} from "./permissions";
 import {Food, FoodModel, getBaseServer, setupDb, UserModel} from "./tests";
@@ -487,5 +488,56 @@ describe("custom auth options", function () {
 
     // ensure non-admin can no longer access
     await notAdminAgent.get("/auth/me").expect(401);
+  });
+});
+
+describe("generateTokens", () => {
+  const OLD_ENV = process.env;
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = {...OLD_ENV};
+    process.env.TOKEN_SECRET = "secret";
+    process.env.REFRESH_TOKEN_SECRET = "refresh_secret";
+  });
+
+  afterEach(() => {
+    process.env = OLD_ENV;
+  });
+
+  it("generates a token and refresh token for a valid user", async () => {
+    const user = {_id: "12345"};
+    const {token, refreshToken} = await generateTokens(user);
+
+    expect(token).toBeDefined();
+    expect(refreshToken).toBeDefined();
+
+    // Verify token structure
+    const tokenParts = token!.split(".");
+    expect(tokenParts.length).toBe(3);
+  });
+
+  it("throws an error if TOKEN_SECRET is missing", async () => {
+    delete process.env.TOKEN_SECRET;
+    const user = {_id: "12345"};
+
+    await expect(generateTokens(user)).rejects.toThrow("TOKEN_SECRET must be set in env.");
+  });
+
+  it("returns null tokens if user is missing", async () => {
+    const result = await generateTokens(undefined);
+    expect(result).toEqual({token: null, refreshToken: null});
+  });
+
+  it("respects custom expiration from authOptions", async () => {
+    const user = {_id: "12345"};
+    const authOptions = {
+      generateTokenExpiration: () => "1h" as jwt.SignOptions["expiresIn"],
+      generateRefreshTokenExpiration: () => "7d" as jwt.SignOptions["expiresIn"],
+    };
+    const {token, refreshToken} = await generateTokens(user, authOptions);
+
+    expect(token).toBeDefined();
+    expect(refreshToken).toBeDefined();
   });
 });

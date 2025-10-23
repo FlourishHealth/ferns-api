@@ -224,7 +224,7 @@ export function permissionMiddleware<T>(
 
       return next();
     } catch (error) {
-      logger.error(`Permissions error: ${error as string}`);
+      logger.error(`Permissions error: ${error instanceof Error ? error.message : error}`);
       return next(error);
     }
   };
