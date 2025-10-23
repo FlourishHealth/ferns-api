@@ -424,6 +424,27 @@ export async function sendToGoogleChat(
   }
 }
 
+/**
+ * Sends a message to a Zoom chat channel via webhook.
+ *
+ * @param messageText - The message text to send
+ * @param options - Configuration options
+ * @param options.channel - The Zoom channel to post to (defaults to "default")
+ * @param options.shouldThrow - If true, throws an APIError on failure; otherwise logs and continues
+ * @param options.env - Optional environment prefix (e.g., "stg", "prod") to prepend to message
+ *
+ * @remarks
+ * Requires ZOOM_CHAT_WEBHOOKS environment variable containing JSON with channel configurations:
+ * ```json
+ * {
+ *   "default": {"channel": "webhook_url", "verificationToken": "token"},
+ *   "ops": {"channel": "webhook_url", "verificationToken": "token"}
+ * }
+ * ```
+ *
+ * Falls back to "default" channel if specified channel not found.
+ * Logs errors to Sentry and logger when webhook is missing or request fails.
+ */
 export async function sendToZoom(
   messageText: string,
   {channel, shouldThrow = false, env}: {channel: string; shouldThrow?: boolean; env?: string}
