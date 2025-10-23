@@ -426,19 +426,21 @@ export async function sendToGoogleChat(
 
 export async function sendToZoom(
   messageText: string,
-  {channel, shouldThrow = false, env}: {channel?: string; shouldThrow?: boolean; env?: string} = {}
+  {channel, shouldThrow = false, env}: {channel: string; shouldThrow?: boolean; env?: string}
 ) {
-  const zoomWebhooksString = process.env.ZOOM_WEBHOOKS;
+  const zoomWebhooksString = process.env.ZOOM_CHAT_WEBHOOKS;
   if (!zoomWebhooksString) {
-    const msg = `ZOOM_WEBHOOKS not set. Zoom message not sent`;
+    const msg = `ZOOM_CHAT_WEBHOOKS not set. Zoom message not sent`;
     Sentry.captureException(new Error(msg));
     logger.error(msg);
     return;
   }
-  const zoomWebhooks = JSON.parse(zoomWebhooksString ?? "{}");
+  const zoomWebhooks: Record<string, {channel: string; verificationToken: string}> = JSON.parse(
+    zoomWebhooksString ?? "{}"
+  );
 
   const zoomChannel = channel ?? "default";
-  const zoomWebhookUrl = zoomWebhooks[zoomChannel] ?? zoomWebhooks.default;
+  const zoomWebhookUrl = zoomWebhooks[zoomChannel]?.channel ?? zoomWebhooks.default?.channel;
 
   if (!zoomWebhookUrl) {
     const msg = `No webhook url set in env for ${zoomChannel}. Zoom message not sent`;
@@ -447,18 +449,10 @@ export async function sendToZoom(
     return;
   }
 
-  const zoomTokenString = process.env.ZOOM_WEBHOOK_TOKENS;
-  if (!zoomTokenString) {
-    const msg = `ZOOM_WEBHOOK_TOKENS not set. Zoom message not sent`;
-    Sentry.captureException(new Error(msg));
-    logger.error(msg);
-    return;
-  }
-  const zoomTokens = JSON.parse(zoomTokenString ?? "{}");
-  const zoomToken = zoomTokens[zoomChannel] ?? zoomTokens.default;
-
+  const zoomToken =
+    zoomWebhooks[zoomChannel]?.verificationToken ?? zoomWebhooks.default?.verificationToken;
   if (!zoomToken) {
-    const msg = `No token set in env for ${zoomChannel}. Zoom message not sent`;
+    const msg = `No verification token set in env for ${zoomChannel}. Zoom message not sent`;
     Sentry.captureException(new Error(msg));
     logger.error(msg);
     return;
@@ -469,13 +463,12 @@ export async function sendToZoom(
   }
 
   try {
-    const authHeader = `Basic ${Buffer.from(zoomToken).toString("base64")}`;
     await axios.post(
       zoomWebhookUrl,
       {text: messageText},
       {
         headers: {
-          Authorization: authHeader,
+          Authorization: zoomToken,
           "Content-Type": "application/json",
         },
       }
