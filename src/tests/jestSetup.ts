@@ -8,10 +8,15 @@ import {winstonLogger} from "../logger";
 let logs: string[] = [];
 let testFailed = false;
 
+const SHOW_ALL_LOGS = process.env.SHOW_ALL_TEST_LOGS === "true";
+
 // Create a custom stream that captures logs
 const logStream = new Writable({
   write(chunk: any, encoding: any, callback: any) {
     logs.push(chunk.toString());
+    if (SHOW_ALL_LOGS) {
+      process.stdout.write(chunk);
+    }
     callback();
   },
 });
@@ -52,9 +57,11 @@ const originalConsole = {
 
 const captureConsoleMethod = (method: keyof typeof originalConsole) => {
   (console as any)[method] = (...args: any[]) => {
-    logs.push(
-      `[console.${method}] ${args.map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg))).join(" ")}`
-    );
+    const logMessage = `[console.${method}] ${args.map((arg) => (typeof arg === "object" ? JSON.stringify(arg) : String(arg))).join(" ")}`;
+    logs.push(logMessage);
+    if (SHOW_ALL_LOGS) {
+      originalConsole[method](...args);
+    }
   };
 };
 
@@ -120,9 +127,9 @@ beforeEach(function () {
   testFailed = false;
 });
 
-// Output logs after each test if it failed
+// Output logs after each test if it failed (unless SHOW_ALL_LOGS is enabled)
 afterEach(function () {
-  if (testFailed && logs.length > 0) {
+  if (!SHOW_ALL_LOGS && testFailed && logs.length > 0) {
     // Use original console.log to actually output the logs
     originalConsole.log("\nLogs for failed test:\n", logs.join("\n"));
   }
