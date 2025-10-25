@@ -446,7 +446,7 @@ export async function sendToGoogleChat(
  * Logs errors to Sentry and logger when webhook is missing or request fails.
  */
 export async function sendToZoom(
-  messageText: string,
+  messageText: string | Record<string, string>,
   {channel, shouldThrow = false, env}: {channel: string; shouldThrow?: boolean; env?: string}
 ) {
   const zoomWebhooksString = process.env.ZOOM_CHAT_WEBHOOKS;
@@ -484,16 +484,12 @@ export async function sendToZoom(
   }
 
   try {
-    await axios.post(
-      zoomWebhookUrl,
-      {text: messageText},
-      {
-        headers: {
-          Authorization: zoomToken,
-          "Content-Type": "application/json",
-        },
-      }
-    );
+    await axios.post(zoomWebhookUrl, messageText, {
+      headers: {
+        Authorization: zoomToken,
+        "Content-Type": "application/json",
+      },
+    });
   } catch (error: any) {
     logger.error(`Error posting to Zoom: ${error.text ?? error.message}`);
     Sentry.captureException(error);
