@@ -227,7 +227,7 @@ describe("expressServer webhook helpers", () => {
       assert.isArray(callArgs);
       const [url, payload, options] = callArgs;
       assert.equal(url, "https://zoom.example/webhook");
-      assert.deepEqual(payload, {text: "hello world"});
+      assert.equal(payload, "hello world");
       assert.deepEqual(options.headers, {
         Authorization: "test-token-123",
         "Content-Type": "application/json",
@@ -252,7 +252,7 @@ describe("expressServer webhook helpers", () => {
       assert.isArray(callArgs);
       const [url, payload, options] = callArgs;
       assert.equal(url, "https://zoom.example/ops");
-      assert.deepEqual(payload, {text: "ops msg"});
+      assert.equal(payload, "ops msg");
       assert.equal(options.headers.Authorization, "ops-token");
     });
 
@@ -270,7 +270,7 @@ describe("expressServer webhook helpers", () => {
       assert.isArray(callArgs);
       const [url, payload] = callArgs;
       assert.equal(url, "https://zoom.example/default");
-      assert.deepEqual(payload, {text: "missing channel"});
+      assert.equal(payload, "missing channel");
     });
 
     it("returns early when webhook url is missing for channel", async () => {
@@ -308,7 +308,7 @@ describe("expressServer webhook helpers", () => {
       const callArgs = mockAxiosPost.mock.calls[0];
       assert.isArray(callArgs);
       const [, payload] = callArgs;
-      assert.deepEqual(payload, {text: "[STG] status ok"});
+      assert.equal(payload, "[STG] status ok");
     });
 
     it("captures error and throws APIError when shouldThrow=true", async () => {
