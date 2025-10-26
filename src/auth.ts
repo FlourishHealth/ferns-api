@@ -119,7 +119,7 @@ export const generateTokens = async (user: any, authOptions?: AuthOptions) => {
       tokenOptions.expiresIn = process.env.TOKEN_EXPIRES_IN as StringValue;
     } catch (error) {
       // This error will result in using the default value above of 15m.
-      console.error(error);
+      logger.error(error as string);
     }
   }
   if (process.env.TOKEN_ISSUER) {
@@ -143,7 +143,7 @@ export const generateTokens = async (user: any, authOptions?: AuthOptions) => {
         refreshTokenOptions.expiresIn = process.env.REFRESH_TOKEN_EXPIRES_IN as StringValue;
       } catch (error) {
         // This error will result in using the default value above of 30d.
-        console.error(error);
+        logger.error(error as string);
       }
     }
     refreshToken = jwt.sign(payload, refreshTokenSecretOrKey, refreshTokenOptions);
