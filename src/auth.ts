@@ -298,6 +298,7 @@ export function addAuthRoutes(
         logger.warn(`Invalid login: ${info}`);
         return res.status(401).json({message: info?.message});
       }
+      logger.info(`User logged in: ${user._id}, type: ${(user as any).type || "N/A"}`);
       const tokens = await generateTokens(user, authOptions);
       return res.json({
         data: {userId: user?._id, token: tokens.token, refreshToken: tokens.refreshToken},
