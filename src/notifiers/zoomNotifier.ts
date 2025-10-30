@@ -46,7 +46,7 @@ export async function sendToZoom(
 
   const zoomChannel = channel ?? "default";
   // Use format full
-  const zoomWebhookUrl = `${zoomWebhooks[zoomChannel]?.channel ?? zoomWebhooks.default?.channel}?format=full`;
+  const zoomWebhookUrl = zoomWebhooks[zoomChannel]?.channel ?? zoomWebhooks.default?.channel;
 
   if (!zoomWebhookUrl) {
     const msg = `No webhook url set in env for ${zoomChannel}. Zoom message not sent`;
@@ -89,7 +89,7 @@ export async function sendToZoom(
 
   try {
     await axios.post(
-      zoomWebhookUrl,
+      `${zoomWebhookUrl}?format=full`,
       {content: messageBody},
       {
         headers: {
