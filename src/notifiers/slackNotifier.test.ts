@@ -113,4 +113,3 @@ describe("sendToSlack", () => {
     assert.equal(mockAxiosPost.mock.calls.length, 1);
   });
 });
-

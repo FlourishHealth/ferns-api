@@ -114,4 +114,3 @@ describe("sendToGoogleChat", () => {
     assert.equal(mockAxiosPost.mock.calls.length, 1);
   });
 });
-
