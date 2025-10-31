@@ -12,5 +12,6 @@ declare namespace NodeJS {
     TOKEN_EXPIRES_IN: string;
     REFRESH_TOKEN_SECRET: string;
     DISABLE_LOG_ALL_REQUESTS: string;
+    ZOOM_CHAT_WEBHOOKS?: string;
   }
 }

@@ -1,6 +1,5 @@
 import * as Sentry from "@sentry/node";
 import openapi from "@wesleytodd/openapi";
-import axios from "axios";
 import cors from "cors";
 import cron from "cron";
 import express, {Router} from "express";
@@ -12,8 +11,9 @@ import qs from "qs";
 
 import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, addMeRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
-import {APIError, apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
+import {apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
 import {logger, LoggingOptions, setupLogging} from "./logger";
+import {sendToSlack} from "./notifiers";
 import {openApiEtagMiddleware} from "./openApiEtag";
 
 const SLOW_READ_MAX = 200;
@@ -331,175 +331,6 @@ export function cronjob(
     new cron.CronJob(schedule, callback, null, true, "America/Chicago");
   } catch (error) {
     throw new Error(`Failed to create cronjob: ${error}`);
-  }
-}
-
-// Convenience method to send data to a Slack webhook.
-export async function sendToSlack(
-  text: string,
-  {
-    slackChannel,
-    shouldThrow = false,
-    env,
-  }: {slackChannel?: string; shouldThrow?: boolean; env?: string} = {}
-) {
-  // since Slack now requires a webhook for each channel, we need to store them in the environment
-  // as an object, so we can look them up by channel name.
-  const slackWebhooksString = process.env.SLACK_WEBHOOKS;
-  if (!slackWebhooksString) {
-    logger.debug("You must set SLACK_WEBHOOKS in the environment to use sendToSlack.");
-    return;
-  }
-  const slackWebhooks = JSON.parse(slackWebhooksString ?? "{}");
-
-  const channel = slackChannel ?? "default";
-
-  const slackWebhookUrl = slackWebhooks[channel] ?? slackWebhooks.default;
-
-  if (!slackWebhookUrl) {
-    Sentry.captureException(
-      new Error(`No webhook url set in env for ${channel}. Slack message not sent`)
-    );
-    logger.debug(`No webhook url set in env for ${channel}.`);
-    return;
-  }
-
-  if (env) {
-    text = `[${env.toUpperCase()}] ${text}`;
-  }
-
-  try {
-    await axios.post(slackWebhookUrl, {
-      text,
-    });
-  } catch (error: any) {
-    logger.error(`Error posting to slack: ${error.text ?? error.message}`);
-    Sentry.captureException(error);
-    if (shouldThrow) {
-      throw new APIError({
-        status: 500,
-        title: `Error posting to slack: ${error.text ?? error.message}`,
-      });
-    }
-  }
-}
-
-export async function sendToGoogleChat(
-  messageText: string,
-  {channel, shouldThrow = false, env}: {channel?: string; shouldThrow?: boolean; env?: string} = {}
-) {
-  const chatWebhooksString = process.env.GOOGLE_CHAT_WEBHOOKS;
-  if (!chatWebhooksString) {
-    const msg = `GOOGLE_CHAT_WEBHOOKS not set. Google Chat message not sent`;
-    Sentry.captureException(new Error(msg));
-    logger.error(msg);
-    return;
-  }
-  const chatWebhooks = JSON.parse(chatWebhooksString ?? "{}");
-
-  const chatChannel = channel ?? "default";
-  const chatWebhookUrl = chatWebhooks[chatChannel] ?? chatWebhooks.default;
-
-  if (!chatWebhookUrl) {
-    const msg = `No webhook url set in env for ${chatChannel}. Google Chat message not sent`;
-    Sentry.captureException(new Error(msg));
-    logger.error(msg);
-    return;
-  }
-
-  if (env) {
-    messageText = `[${env.toUpperCase()}] ${messageText}`;
-  }
-
-  try {
-    await axios.post(chatWebhookUrl, {text: messageText});
-  } catch (error: any) {
-    logger.error(`Error posting to Google Chat: ${error.text ?? error.message}`);
-    Sentry.captureException(error);
-    if (shouldThrow) {
-      throw new APIError({
-        status: 500,
-        title: `Error posting to Google Chat: ${error.text ?? error.message}`,
-      });
-    }
-  }
-}
-
-/**
- * Sends a message to a Zoom chat channel via webhook.
- *
- * @param messageText - The message text to send
- * @param options - Configuration options
- * @param options.channel - The Zoom channel to post to (defaults to "default")
- * @param options.shouldThrow - If true, throws an APIError on failure; otherwise logs and continues
- * @param options.env - Optional environment prefix (e.g., "stg", "prod") to prepend to message
- *
- * @remarks
- * Requires ZOOM_CHAT_WEBHOOKS environment variable containing JSON with channel configurations:
- * ```json
- * {
- *   "default": {"channel": "webhook_url", "verificationToken": "token"},
- *   "ops": {"channel": "webhook_url", "verificationToken": "token"}
- * }
- * ```
- *
- * Falls back to "default" channel if specified channel not found.
- * Logs errors to Sentry and logger when webhook is missing or request fails.
- */
-export async function sendToZoom(
-  messageText: string | Record<string, string>,
-  {channel, shouldThrow = false, env}: {channel: string; shouldThrow?: boolean; env?: string}
-) {
-  const zoomWebhooksString = process.env.ZOOM_CHAT_WEBHOOKS;
-  if (!zoomWebhooksString) {
-    const msg = `ZOOM_CHAT_WEBHOOKS not set. Zoom message not sent`;
-    Sentry.captureException(new Error(msg));
-    logger.error(msg);
-    return;
-  }
-  const zoomWebhooks: Record<string, {channel: string; verificationToken: string}> = JSON.parse(
-    zoomWebhooksString ?? "{}"
-  );
-
-  const zoomChannel = channel ?? "default";
-  const zoomWebhookUrl = zoomWebhooks[zoomChannel]?.channel ?? zoomWebhooks.default?.channel;
-
-  if (!zoomWebhookUrl) {
-    const msg = `No webhook url set in env for ${zoomChannel}. Zoom message not sent`;
-    Sentry.captureException(new Error(msg));
-    logger.error(msg);
-    return;
-  }
-
-  const zoomToken =
-    zoomWebhooks[zoomChannel]?.verificationToken ?? zoomWebhooks.default?.verificationToken;
-  if (!zoomToken) {
-    const msg = `No verification token set in env for ${zoomChannel}. Zoom message not sent`;
-    Sentry.captureException(new Error(msg));
-    logger.error(msg);
-    return;
-  }
-
-  if (env) {
-    messageText = `[${env.toUpperCase()}] ${messageText}`;
-  }
-
-  try {
-    await axios.post(zoomWebhookUrl, messageText, {
-      headers: {
-        Authorization: zoomToken,
-        "Content-Type": "application/json",
-      },
-    });
-  } catch (error: any) {
-    logger.error(`Error posting to Zoom: ${error.text ?? error.message}`);
-    Sentry.captureException(error);
-    if (shouldThrow) {
-      throw new APIError({
-        status: 500,
-        title: `Error posting to Zoom: ${error.text ?? error.message}`,
-      });
-    }
   }
 }
 
