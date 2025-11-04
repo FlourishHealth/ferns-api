@@ -14,6 +14,24 @@ module.exports = {
   },
   rules: {
     "@typescript-eslint/explicit-function-return-type": "off"
-  }
+  },
+  overrides: [
+    {
+      files: ["**/*.test.ts"],
+      rules: {
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "dayjs",
+                message: "dayjs is not allowed in test files. Use luxon instead."
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
 };
 
