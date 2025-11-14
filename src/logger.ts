@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/node";
 import fs from "fs";
 import {inspect} from "util";
 import winston from "winston";
@@ -62,14 +63,42 @@ export const winstonLogger = winston.createLogger({
   ],
 });
 
+// Helper function to send logs to Sentry if enabled
+function sendToSentry(message: string, level: "debug" | "info" | "warn" | "error") {
+  if (process.env.USE_SENTRY_LOGGING === "true" && Sentry.logger) {
+    Sentry.logger[level](message);
+  }
+}
+
 export const logger = {
-  debug: (msg: string) => winstonLogger.debug(msg),
-  info: (msg: string) => winstonLogger.info(msg),
-  warn: (msg: string) => winstonLogger.warn(msg),
-  error: (msg: string) => winstonLogger.error(msg),
+  debug: (msg: string) => {
+    winstonLogger.debug(msg);
+    sendToSentry(msg, "debug");
+  },
+  info: (msg: string) => {
+    winstonLogger.info(msg);
+    sendToSentry(msg, "info");
+  },
+  warn: (msg: string) => {
+    winstonLogger.warn(msg);
+    sendToSentry(msg, "warn");
+  },
+  error: (msg: string) => {
+    winstonLogger.error(msg);
+    sendToSentry(msg, "error");
+  },
   // simple way to log a caught exception. e.g. promise().catch(logger.catch)
-  catch: (e: unknown) =>
-    winstonLogger.error(`Caught: ${(e as Error)?.message} ${(e as Error)?.stack}`),
+  catch: (e: unknown) => {
+    const errorMsg = `Caught: ${(e as Error)?.message} ${(e as Error)?.stack}`;
+    winstonLogger.error(errorMsg);
+    if (process.env.USE_SENTRY_LOGGING === "true") {
+      if (e instanceof Error) {
+        Sentry.captureException(e);
+      } else if (Sentry.logger) {
+        Sentry.logger.error(errorMsg);
+      }
+    }
+  },
 };
 
 export interface LoggingOptions {
