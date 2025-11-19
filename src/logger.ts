@@ -24,9 +24,8 @@ function printf(timestamp = false) {
     const rest = splatArgs.map((data: any) => formatWithInspect(data)).join(" ");
     if (timestamp) {
       return `${info.timestamp} - ${info.level}: ${msg} ${rest}`;
-    } else {
-      return `${info.level}: ${msg} ${rest}`;
     }
+    return `${info.level}: ${msg} ${rest}`;
   };
 }
 

@@ -29,17 +29,18 @@ export type JSONObject = {[member: string]: JSONValue};
 export type JSONValue = JSONPrimitive | JSONObject | JSONArray;
 
 export function addPopulateToQuery(
-  builtQuery: mongoose.Query<any[], any, {}, any>,
+  builtQuery: mongoose.Query<any[], any, Record<string, never>, any>,
   populatePaths?: PopulatePath[]
 ) {
   const paths = populatePaths ?? [];
+  let query = builtQuery;
 
   for (const populatePath of paths) {
     const path = populatePath.path;
     const select = populatePath.fields;
-    builtQuery = builtQuery.populate({path, select});
+    query = builtQuery.populate({path, select});
   }
-  return builtQuery;
+  return query;
 }
 
 // TODOS:
@@ -198,7 +199,7 @@ export interface FernsRouterOptions<T> {
    * Throw an APIError to return a 400 with an error message.
    * @deprecated: Use responseHandler instead.
    */
-  postGet?: (value: T, request: express.Request) => void | Promise<T>;
+  postGet?: (value: T, request: express.Request) => undefined | Promise<T>;
   /** Hook that runs after the list of objects is fetched but before they are serialized.
    * Returns a promise so that asynchronous actions can be included in the function.
    * Throw an APIError to return a 400 with an error message.
@@ -257,18 +258,17 @@ export interface FernsRouterOptions<T> {
 // just returns the base model. If
 export function getModel(baseModel: Model<any>, body?: any, options?: FernsRouterOptions<any>) {
   const discriminatorKey = options?.discriminatorKey ?? "__t";
-  const modelName = (body ?? {})[discriminatorKey];
+  const modelName = body?.[discriminatorKey];
   if (!modelName) {
     return baseModel;
-  } else {
-    const model = (baseModel.discriminators ?? {})[modelName];
-    if (!model) {
-      throw new Error(
-        `Could not find discriminator model for key ${modelName}, baseModel: ${baseModel}`
-      );
-    }
-    return model;
   }
+  const model = baseModel.discriminators?.[modelName];
+  if (!model) {
+    throw new Error(
+      `Could not find discriminator model for key ${modelName}, baseModel: ${baseModel}`
+    );
+  }
+  return model;
 }
 
 // Ensures query params are allowed. Also checks nested query params when using $and/$or.
@@ -360,12 +360,11 @@ export function fernsRouter<T>(
         } catch (error: any) {
           if (isAPIError(error)) {
             throw error;
-          } else {
-            throw new APIError({
-              title: `preCreate hook error: ${error.message}`,
-              error,
-            });
           }
+          throw new APIError({
+            title: `preCreate hook error: ${error.message}`,
+            error,
+          });
         }
         if (body === undefined) {
           throw new APIError({
@@ -373,7 +372,8 @@ export function fernsRouter<T>(
             title: "Create not allowed",
             detail: "A body must be returned from preCreate",
           });
-        } else if (body === null) {
+        }
+        if (body === null) {
           throw new APIError({
             status: 403,
             title: "Create not allowed",
@@ -443,7 +443,7 @@ export function fernsRouter<T>(
 
       let query: any = {};
       for (const queryParam of Object.keys(options.defaultQueryParams ?? [])) {
-        query[queryParam] = (options.defaultQueryParams ?? {})[queryParam];
+        query[queryParam] = options.defaultQueryParams?.[queryParam];
       }
 
       for (const queryParam of Object.keys(req.query)) {
@@ -500,13 +500,13 @@ export function fernsRouter<T>(
       if (query.period) {
         // need to remove 'period' since it isn't part of any schemas but parsed and applied in
         // queryFilter instead
-        delete query.period;
+        query.period = undefined;
       }
 
       let builtQuery = model.find(query).limit(limit + 1);
       const total = await model.countDocuments(query);
       if (req.query.page) {
-        if (Number(req.query.page) === 0 || isNaN(Number(req.query.page))) {
+        if (Number(req.query.page) === 0 || Number.isNaN(Number(req.query.page))) {
           throw new APIError({
             status: 400,
             title: `Invalid page: ${req.query.page}`,
@@ -554,10 +554,7 @@ export function fernsRouter<T>(
             serialized = serialized.slice(0, limit);
 
             if (!req.query.page) {
-              const msg =
-                `More than ${limit} results returned for ${model.collection.name} ` +
-                `without pagination, data may be silently truncated. req.query: ` +
-                `${JSON.stringify(req.query)}`;
+              const msg = `More than ${limit} results returned for ${model.collection.name} without pagination, data may be silently truncated. req.query: ${JSON.stringify(req.query)}`;
               logger.warn(msg);
               try {
                 Sentry.captureMessage(msg);
@@ -573,9 +570,8 @@ export function fernsRouter<T>(
             limit,
             total,
           });
-        } else {
-          return res.json({data: serialized});
         }
+        return res.json({data: serialized});
       } catch (error: any) {
         throw new APIError({
           title: `Serialization error: ${error.message}`,
@@ -613,7 +609,7 @@ export function fernsRouter<T>(
     asyncHandler(async (_req: Request, _res: Response) => {
       // Patch is what we want 90% of the time
       throw new APIError({
-        title: `PUT is not supported.`,
+        title: "PUT is not supported.",
       });
     })
   );
@@ -652,12 +648,11 @@ export function fernsRouter<T>(
         } catch (error: any) {
           if (isAPIError(error)) {
             throw error;
-          } else {
-            throw new APIError({
-              title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
-              error,
-            });
           }
+          throw new APIError({
+            title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
+            error,
+          });
         }
         if (body === undefined) {
           throw new APIError({
@@ -665,7 +660,8 @@ export function fernsRouter<T>(
             title: "Update not allowed",
             detail: "A body must be returned from preUpdate",
           });
-        } else if (body === null) {
+        }
+        if (body === null) {
           throw new APIError({
             status: 403,
             title: "Update not allowed",
@@ -739,13 +735,12 @@ export function fernsRouter<T>(
         } catch (error: any) {
           if (isAPIError(error)) {
             throw error;
-          } else {
-            throw new APIError({
-              status: 403,
-              title: `preDelete hook error on ${req.params.id}: ${error.message}`,
-              error,
-            });
           }
+          throw new APIError({
+            status: 403,
+            title: `preDelete hook error on ${req.params.id}: ${error.message}`,
+            error,
+          });
         }
         if (body === undefined) {
           throw new APIError({
@@ -753,7 +748,8 @@ export function fernsRouter<T>(
             title: "Delete not allowed",
             detail: "A body must be returned from preDelete",
           });
-        } else if (body === null) {
+        }
+        if (body === null) {
           throw new APIError({
             status: 403,
             title: "Delete not allowed",
@@ -906,7 +902,8 @@ export function fernsRouter<T>(
           title: "Update not allowed",
           detail: "A body must be returned from preUpdate",
         });
-      } else if (body === null) {
+      }
+      if (body === null) {
         throw new APIError({
           title: "Update not allowed",
           detail: `preUpdate hook on ${req.params.id} returned null`,
@@ -956,17 +953,17 @@ export function fernsRouter<T>(
   // Set up routes for managing array fields. Check if there any array fields to add this for.
   if (Object.values(baseModel.schema.paths).find((config) => config.instance === "Array")) {
     router.post(
-      `/:id/:field`,
+      "/:id/:field",
       authenticateMiddleware(options.allowAnonymous),
       asyncHandler(arrayPost)
     );
     router.patch(
-      `/:id/:field/:itemId`,
+      "/:id/:field/:itemId",
       authenticateMiddleware(options.allowAnonymous),
       asyncHandler(arrayPatch)
     );
     router.delete(
-      `/:id/:field/:itemId`,
+      "/:id/:field/:itemId",
       authenticateMiddleware(options.allowAnonymous),
       asyncHandler(arrayDelete)
     );

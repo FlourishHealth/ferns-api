@@ -16,11 +16,11 @@ import {
   Food,
   FoodModel,
   getBaseServer,
-  setupDb,
   StaffUser,
   StaffUserModel,
   SuperUser,
   SuperUserModel,
+  setupDb,
   UserModel,
 } from "./tests";
 
@@ -432,7 +432,7 @@ describe("ferns-api", () => {
             update: [Permissions.IsAdmin],
             delete: [Permissions.IsAdmin],
           },
-          postUpdate: async (doc: any, cleanedBody: any, request: any, prevValue: any) => {
+          postUpdate: async (doc: any, _cleanedBody: any, _request: any, prevValue: any) => {
             postUpdateDoc = doc;
             postUpdatePrevDoc = prevValue;
             postUpdateCalled = true;
@@ -566,7 +566,7 @@ describe("ferns-api", () => {
             update: [Permissions.IsAdmin],
             delete: [Permissions.IsAdmin],
           },
-          postUpdate: async (doc: any, cleanedBody: any, request: any, prevValue: any) => {
+          postUpdate: async (doc: any, _cleanedBody: any, _request: any, prevValue: any) => {
             postUpdateDoc = doc;
             postUpdatePrevDoc = prevValue;
             postUpdateCalled = true;
@@ -898,12 +898,12 @@ describe("ferns-api", () => {
       const greenBeans = await FoodModel.create({
         name: "Green Beans",
         calories: 102,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin?._id,
       });
       const res = await agent.get(`/food?${qs.stringify({name: "Green Beans"})}`).expect(200);
       assert.lengthOf(res.body.data, 1);
-      assert.equal(res.body.data[0].id, greenBeans!.id);
+      assert.equal(res.body.data[0].id, greenBeans?.id);
       assert.equal(res.body.data[0].name, "Green Beans");
     });
 
@@ -911,14 +911,14 @@ describe("ferns-api", () => {
       const greenBeans = await FoodModel.create({
         name: "Green Beans",
         calories: 102,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin?._id,
       });
 
       // Case sensitive does match correct casing
       let res = await agent.get(`/food?${qs.stringify({name: {$regex: "Green"}})}`).expect(200);
       assert.lengthOf(res.body.data, 1);
-      assert.equal(res.body.data[0].id, greenBeans!.id);
+      assert.equal(res.body.data[0].id, greenBeans?.id);
       assert.equal(res.body.data[0].name, "Green Beans");
 
       // Fails with different casing and sensitive
@@ -930,7 +930,7 @@ describe("ferns-api", () => {
         .get(`/food?${qs.stringify({name: {$regex: "green", $options: "i"}})}`)
         .expect(200);
       assert.lengthOf(res.body.data, 1);
-      assert.equal(res.body.data[0].id, greenBeans!.id);
+      assert.equal(res.body.data[0].id, greenBeans?.id);
     });
 
     it("query with an $in operator", async function () {
@@ -990,7 +990,7 @@ describe("ferns-api", () => {
         .get(`/food?${qs.stringify({$and: [{tags: "healthy"}, {tags: "cheap"}]})}`)
         .expect(200);
       assert.lengthOf(res.body.data, 1);
-      assert.equal(res.body.data[0].id, carrots!._id);
+      assert.equal(res.body.data[0].id, carrots?._id);
     });
 
     it("query $and operator on same field, nested objects", async function () {
@@ -1002,7 +1002,7 @@ describe("ferns-api", () => {
         )
         .expect(200);
       assert.lengthOf(res.body.data, 1);
-      assert.equal(res.body.data[0].id, carrots!._id);
+      assert.equal(res.body.data[0].id, carrots?._id);
     });
 
     it("query $or operator on same field", async function () {
@@ -1013,7 +1013,7 @@ describe("ferns-api", () => {
       // Only carrots matches both
       assert.sameDeepMembers(
         res.body.data.map((d) => d.id),
-        [carrots!._id.toString(), pizza!._id.toString()]
+        [carrots?._id.toString(), pizza?._id.toString()]
       );
     });
 
@@ -1029,7 +1029,7 @@ describe("ferns-api", () => {
       assert.lengthOf(res.body.data, 2);
       assert.sameDeepMembers(
         res.body.data.map((d) => d.id),
-        [carrots!._id.toString(), spinach!._id.toString()]
+        [carrots?._id.toString(), spinach?._id.toString()]
       );
     });
 
@@ -1051,9 +1051,9 @@ describe("ferns-api", () => {
     });
 
     it("query with a number", async function () {
-      const res = await agent.get(`/food?calories=100`).expect(200);
+      const res = await agent.get("/food?calories=100").expect(200);
       assert.lengthOf(res.body.data, 1);
-      assert.equal(res.body.data[0].id, carrots!._id);
+      assert.equal(res.body.data[0].id, carrots?._id);
     });
 
     it("update", async function () {
@@ -1162,7 +1162,7 @@ describe("ferns-api", () => {
     });
 
     it("lists with populate", async function () {
-      const res = await agent.get(`/food`).expect(200);
+      const res = await agent.get("/food").expect(200);
       assert.lengthOf(res.body.data, 2);
       const [carrots, spin] = res.body.data;
       assert.equal(carrots.ownerId._id, notAdmin._id);
@@ -1230,7 +1230,7 @@ describe("ferns-api", () => {
         FoodModel.create({
           name: "Apple",
           calories: 100,
-          created: new Date().getTime() - 10,
+          created: Date.now() - 10,
           ownerId: admin?._id,
           hidden: true,
         }),
@@ -1255,12 +1255,11 @@ describe("ferns-api", () => {
                 id: (d as any)._id,
                 foo: "bar",
               }));
-            } else {
-              return {
-                id: (data as any)._id,
-                foo: "bar",
-              };
             }
+            return {
+              id: (data as any)._id,
+              foo: "bar",
+            };
           },
         })
       );
@@ -1276,7 +1275,7 @@ describe("ferns-api", () => {
     });
 
     it("list with serialize", async function () {
-      const res = await agent.get(`/food`).expect(200);
+      const res = await agent.get("/food").expect(200);
       assert.isUndefined(res.body.data[0].ownerId);
       assert.isUndefined(res.body.data[1].ownerId);
 

@@ -1,8 +1,8 @@
 import {DateTime} from "luxon";
 import {
   Document,
-  Error as MongooseError,
   FilterQuery,
+  Error as MongooseError,
   Query,
   Schema,
   SchemaType,
@@ -111,16 +111,16 @@ export function findOneOrNone<T>(schema: Schema<T>) {
     const results = await this.find(query);
     if (results.length === 0) {
       return null;
-    } else if (results.length > 1) {
+    }
+    if (results.length > 1) {
       throw new APIError({
         status: 500,
         title: `${this.modelName}.findOne query returned multiple documents`,
         detail: `query: ${JSON.stringify(query)}`,
         ...errorArgs,
       });
-    } else {
-      return results[0];
     }
+    return results[0];
   };
 }
 
@@ -145,16 +145,16 @@ export function findExactlyOne<T>(schema: Schema<T>) {
         detail: `query: ${JSON.stringify(query)}`,
         ...errorArgs,
       });
-    } else if (results.length > 1) {
+    }
+    if (results.length > 1) {
       throw new APIError({
         status: 500,
         title: `${this.modelName}.findExactlyOne query returned multiple documents`,
         detail: `query: ${JSON.stringify(query)}`,
         ...errorArgs,
       });
-    } else {
-      return results[0];
     }
+    return results[0];
   };
 }
 
@@ -184,13 +184,12 @@ export function upsertPlugin<T>(schema: Schema<any, any, any, any>) {
       // If the document exists, update it with the provided update values.
       Object.assign(doc, update);
       return doc.save();
-    } else {
-      // If the document doesn't exist, create a new one with the combined conditions and update
-      // values.
-      const combinedData = {...conditions, ...update};
-      const newDoc = new this(combinedData);
-      return newDoc.save();
     }
+    // If the document doesn't exist, create a new one with the combined conditions and update
+    // values.
+    const combinedData = {...conditions, ...update};
+    const newDoc = new this(combinedData);
+    return newDoc.save();
   };
 }
 
@@ -260,7 +259,8 @@ export class DateOnly extends SchemaType {
         );
       }
       return date.toJSDate();
-    } else if (typeof val === "string" || typeof val === "number") {
+    }
+    if (typeof val === "string" || typeof val === "number") {
       const date = DateTime.fromJSDate(new Date(val)).toUTC().startOf("day");
       if (!date.isValid) {
         throw new MongooseError.CastError(

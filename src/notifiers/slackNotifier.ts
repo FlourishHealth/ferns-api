@@ -33,13 +33,14 @@ export async function sendToSlack(
     return;
   }
 
+  let formattedText = text;
   if (env) {
-    text = `[${env.toUpperCase()}] ${text}`;
+    formattedText = `[${env.toUpperCase()}] ${text}`;
   }
 
   try {
     await axios.post(slackWebhookUrl, {
-      text,
+      text: formattedText,
     });
   } catch (error: any) {
     logger.error(`Error posting to slack: ${error.text ?? error.message}`);

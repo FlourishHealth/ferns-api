@@ -455,7 +455,7 @@ export function deleteOpenApiMiddleware<T>(
 export function readOpenApiMiddleware<T>(
   options: Partial<FernsRouterOptions<T>>,
   properties: any,
-  required: string[] = [],
+  required: string[],
   queryParameters: any
 ): any {
   if (!options.openApi?.path) {

@@ -10,7 +10,6 @@ import {Strategy as LocalStrategy} from "passport-local";
 import {APIError, apiErrorMiddleware} from "./errors";
 import {AuthOptions} from "./expressServer";
 import {logger} from "./logger";
-import {UserModel} from "./tests";
 
 export interface User {
   _id: ObjectId | string;
@@ -96,7 +95,7 @@ export async function signupUser(
 export const generateTokens = async (user: any, authOptions?: AuthOptions) => {
   const tokenSecretOrKey = process.env.TOKEN_SECRET;
   if (!tokenSecretOrKey) {
-    throw new Error(`TOKEN_SECRET must be set in env.`);
+    throw new Error("TOKEN_SECRET must be set in env.");
   }
   if (!user?._id) {
     logger.warn("No user found for token generation");
@@ -196,7 +195,7 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
 
     const secretOrKey = process.env.TOKEN_SECRET;
     if (!secretOrKey) {
-      throw new Error(`TOKEN_SECRET must be set in env.`);
+      throw new Error("TOKEN_SECRET must be set in env.");
     }
     const jwtOpts: StrategyOptions = {
       jwtFromRequest: customTokenExtractor,
@@ -218,16 +217,14 @@ export function setupAuth(app: express.Application, userModel: UserModel) {
         }
         if (user) {
           return done(null, user);
-        } else {
-          if (userModel.createAnonymousUser) {
-            logger.info("[jwt] Creating anonymous user");
-            user = await userModel.createAnonymousUser();
-            return done(null, user);
-          } else {
-            logger.info("[jwt] No user found from token");
-            return done(null, false);
-          }
         }
+        if (userModel.createAnonymousUser) {
+          logger.info("[jwt] Creating anonymous user");
+          user = await userModel.createAnonymousUser();
+          return done(null, user);
+        }
+        logger.info("[jwt] No user found from token");
+        return done(null, false);
       })
     );
   }
@@ -327,7 +324,7 @@ export function addAuthRoutes(
       logger.error(`Error refreshing token for user ${req.user?.id}: ${error}`);
       return res.status(401).json({message: error?.message});
     }
-    if (decoded && decoded.id) {
+    if (decoded?.id) {
       const user = await userModel.findById(decoded.id);
       const tokens = await generateTokens(user, authOptions);
       logger.debug(`Refreshed token for ${user?.id}`);

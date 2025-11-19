@@ -35,7 +35,7 @@ describe("permissions", function () {
       FoodModel.create({
         name: "Apple",
         calories: 100,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin._id,
       }),
     ]);

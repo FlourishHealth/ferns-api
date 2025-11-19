@@ -12,7 +12,7 @@ import qs from "qs";
 import {FernsRouterOptions} from "./api";
 import {addAuthRoutes, addMeRoutes, setupAuth, UserModel as UserMongooseModel} from "./auth";
 import {apiErrorMiddleware, apiUnauthorizedMiddleware} from "./errors";
-import {logger, LoggingOptions, setupLogging} from "./logger";
+import {LoggingOptions, logger, setupLogging} from "./logger";
 import {sendToSlack} from "./notifiers";
 import {openApiEtagMiddleware} from "./openApiEtag";
 
@@ -116,7 +116,7 @@ export function logRequests(req: any, res: any, next: any) {
 }
 
 export function createRouter(rootPath: string, addRoutes: AddRoutes, middleware: any[] = []) {
-  function routePathMiddleware(req: any, res: any, next: any) {
+  function routePathMiddleware(req: any, _res: any, next: any) {
     if (!req.routeMount) {
       req.routeMount = [];
     }
@@ -202,7 +202,7 @@ function initializeRoutes(
   }
 
   // Store the logging options on the request so we can access them later.
-  app.use((req, res, next) => {
+  app.use((_req, res, next) => {
     res.locals.loggingOptions = options.loggingOptions;
     next();
   });
@@ -321,10 +321,11 @@ export function cronjob(
   schedule: "hourly" | "minutely" | string,
   callback: () => void
 ) {
+  let _cronSchedule = schedule;
   if (schedule === "hourly") {
-    schedule = "0 * * * *";
+    _cronSchedule = "0 * * * *";
   } else if (schedule === "minutely") {
-    schedule = "* * * * *";
+    _cronSchedule = "* * * * *";
   }
   logger.info(`Adding cronjob ${name}, running at: ${schedule}`);
   try {
