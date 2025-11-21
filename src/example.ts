@@ -2,7 +2,7 @@ import express from "express";
 import mongoose, {model, Schema} from "mongoose";
 import passportLocalMongoose from "passport-local-mongoose";
 
-import {fernsRouter, FernsRouterOptions} from "./api";
+import {FernsRouterOptions, fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
 import {setupServer} from "./expressServer";
 import {logger} from "./logger";

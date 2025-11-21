@@ -98,9 +98,9 @@ const mockSpan = {
 
 // Express integration mock
 export const Handlers = {
-  requestHandler: jest.fn(() => (req: any, res: any, next: any) => next()),
-  errorHandler: jest.fn(() => (err: any, req: any, res: any, next: any) => next(err)),
-  tracingHandler: jest.fn(() => (req: any, res: any, next: any) => next()),
+  requestHandler: jest.fn(() => (_req: any, _res: any, next: any) => next()),
+  errorHandler: jest.fn(() => (err: any, _req: any, _res: any, next: any) => next(err)),
+  tracingHandler: jest.fn(() => (_req: any, _res: any, next: any) => next()),
 };
 
 // Default export (some projects might use default import)

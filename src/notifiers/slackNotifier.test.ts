@@ -14,7 +14,7 @@ describe("sendToSlack", () => {
   beforeEach(() => {
     mockAxiosPost = jest.spyOn(axios, "post").mockResolvedValue({status: 200});
     process.env = {...ORIGINAL_ENV};
-    delete process.env.SLACK_WEBHOOKS;
+    process.env.SLACK_WEBHOOKS = undefined;
     (Sentry.captureException as jest.Mock).mockClear();
     (Sentry.captureMessage as jest.Mock).mockClear();
   });

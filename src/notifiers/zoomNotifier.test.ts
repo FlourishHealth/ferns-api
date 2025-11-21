@@ -14,7 +14,7 @@ describe("sendToZoom", () => {
   beforeEach(() => {
     mockAxiosPost = jest.spyOn(axios, "post").mockResolvedValue({status: 200});
     process.env = {...ORIGINAL_ENV};
-    delete process.env.ZOOM_CHAT_WEBHOOKS;
+    process.env.ZOOM_CHAT_WEBHOOKS = undefined;
     (Sentry.captureException as jest.Mock).mockClear();
     (Sentry.captureMessage as jest.Mock).mockClear();
   });

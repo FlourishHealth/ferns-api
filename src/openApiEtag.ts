@@ -9,7 +9,8 @@ import {NextFunction, Request, Response} from "express";
 export function openApiEtagMiddleware(req: Request, res: Response, next: NextFunction): void {
   // Only handle GET requests to /openapi.json
   if (req.method !== "GET" || req.path !== "/openapi.json") {
-    return next();
+    next();
+    return;
   }
 
   // Store original res.json to intercept the response

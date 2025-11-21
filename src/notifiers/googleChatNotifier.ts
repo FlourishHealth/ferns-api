@@ -10,7 +10,7 @@ export async function sendToGoogleChat(
 ) {
   const chatWebhooksString = process.env.GOOGLE_CHAT_WEBHOOKS;
   if (!chatWebhooksString) {
-    const msg = `GOOGLE_CHAT_WEBHOOKS not set. Google Chat message not sent`;
+    const msg = "GOOGLE_CHAT_WEBHOOKS not set. Google Chat message not sent";
     Sentry.captureException(new Error(msg));
     logger.error(msg);
     return;
@@ -27,12 +27,13 @@ export async function sendToGoogleChat(
     return;
   }
 
+  let formattedMessageText = messageText;
   if (env) {
-    messageText = `[${env.toUpperCase()}] ${messageText}`;
+    formattedMessageText = `[${env.toUpperCase()}] ${messageText}`;
   }
 
   try {
-    await axios.post(chatWebhookUrl, {text: messageText});
+    await axios.post(chatWebhookUrl, {text: formattedMessageText});
   } catch (error: any) {
     logger.error(`Error posting to Google Chat: ${error.text ?? error.message}`);
     Sentry.captureException(error);

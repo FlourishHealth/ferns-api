@@ -54,7 +54,7 @@ export const Permissions = {
   IsAny: () => {
     return true;
   },
-  IsOwner: (method: RESTMethod, user?: User, obj?: any) => {
+  IsOwner: (_method: RESTMethod, user?: User, obj?: any) => {
     // When checking if we can possibly perform the action, return true.
     if (!obj) {
       return true;
@@ -68,10 +68,10 @@ export const Permissions = {
     const ownerId = obj?.ownerId?._id || obj?.ownerId;
     return user?.id && ownerId && String(ownerId) === String(user?.id);
   },
-  IsAdmin: (method: RESTMethod, user?: User) => {
+  IsAdmin: (_method: RESTMethod, user?: User) => {
     return Boolean(user?.admin);
   },
-  IsAuthenticated: (method: RESTMethod, user?: User) => {
+  IsAuthenticated: (_method: RESTMethod, user?: User) => {
     if (!user) {
       return false;
     }
@@ -90,9 +90,8 @@ export async function checkPermissions<T>(
     // May or may not be a promise.
     if (!(await perm(method, user, obj))) {
       return false;
-    } else {
-      anyTrue = true;
     }
+    anyTrue = true;
   }
   return anyTrue;
 }
@@ -104,7 +103,7 @@ export function permissionMiddleware<T>(
   baseModel: Model<T>,
   options: Pick<FernsRouterOptions<T>, "permissions" | "populatePaths" | "discriminatorKey">
 ) {
-  return async (req: express.Request, res: express.Response, next: NextFunction) => {
+  return async (req: express.Request, _res: express.Response, next: NextFunction) => {
     if (req.method === "OPTIONS") {
       return next();
     }
@@ -179,7 +178,7 @@ export function permissionMiddleware<T>(
             status: 404,
             title: `Document ${req.params.id} not found for model ${model.modelName}`,
           });
-          delete error.meta;
+          error.meta = undefined;
           throw error;
         }
 
@@ -199,18 +198,17 @@ export function permissionMiddleware<T>(
             status: 404,
             title: `Document ${req.params.id} not found for model ${model.modelName}`,
           });
-          delete error.meta;
+          error.meta = undefined;
           throw error;
-        } else {
-          Sentry.captureMessage(
-            `Document ${req.params.id} not found, because ${JSON.stringify(reason)} for model ${model.modelName}`
-          );
-          throw new APIError({
-            status: 404,
-            title: `Document ${req.params.id} not found for model ${model.modelName}`,
-            meta: reason,
-          });
         }
+        Sentry.captureMessage(
+          `Document ${req.params.id} not found, because ${JSON.stringify(reason)} for model ${model.modelName}`
+        );
+        throw new APIError({
+          status: 404,
+          title: `Document ${req.params.id} not found for model ${model.modelName}`,
+          meta: reason,
+        });
       }
 
       if (!(await checkPermissions(method, options.permissions[method], req.user, data))) {

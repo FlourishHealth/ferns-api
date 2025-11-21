@@ -51,7 +51,7 @@ export function AdminOwnerTransformer<T>(options: {
 
   return {
     // TODO: Migrate AdminOwnerTransform to use pre-hooks.
-    transform: (obj: Partial<T>, method: "create" | "update", user?: User) => {
+    transform: (obj: Partial<T>, _method: "create" | "update", user?: User) => {
       const userType = getUserType(user, obj);
       let allowedFields: any;
       if (userType === "admin") {
@@ -75,13 +75,14 @@ export function AdminOwnerTransformer<T>(options: {
       const userType = getUserType(user, obj);
       if (userType === "admin") {
         return pickFields(obj, [...(options.adminReadFields ?? []), "id"]);
-      } else if (userType === "owner") {
-        return pickFields(obj, [...(options.ownerReadFields ?? []), "id"]);
-      } else if (userType === "auth") {
-        return pickFields(obj, [...(options.authReadFields ?? []), "id"]);
-      } else {
-        return pickFields(obj, [...(options.anonReadFields ?? []), "id"]);
       }
+      if (userType === "owner") {
+        return pickFields(obj, [...(options.ownerReadFields ?? []), "id"]);
+      }
+      if (userType === "auth") {
+        return pickFields(obj, [...(options.authReadFields ?? []), "id"]);
+      }
+      return pickFields(obj, [...(options.anonReadFields ?? []), "id"]);
     },
   };
 }
@@ -105,9 +106,8 @@ export function transform<T>(
 
   if (!Array.isArray(data)) {
     return transformFn(data, method, user);
-  } else {
-    return data.map((d) => transformFn(d, method, user));
   }
+  return data.map((d) => transformFn(d, method, user));
 }
 
 export function serialize<T>(
@@ -130,9 +130,8 @@ export function serialize<T>(
 
     if (options.transformer?.serialize) {
       return options.transformer?.serialize(dataObject, serializeUser);
-    } else {
-      return dataObject;
     }
+    return dataObject;
   };
 
   if (options.transformer?.serialize) {
@@ -142,9 +141,8 @@ export function serialize<T>(
   }
   if (!Array.isArray(data)) {
     return serializeFn(data, req.user);
-  } else {
-    return data.map((d) => serializeFn(d, req.user));
   }
+  return data.map((d) => serializeFn(d, req.user));
 }
 
 /**

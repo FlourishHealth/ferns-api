@@ -57,7 +57,7 @@ const filterKeys = (obj: Record<string, any>, keysToKeep?: string[]): Record<str
         ...remainingKeys.slice(1),
       ]);
     } else {
-      if (currentObj.hasOwnProperty(currentKey)) {
+      if (Object.prototype.hasOwnProperty.call(currentObj, currentKey)) {
         currentResult[currentKey] = currentObj[currentKey];
       }
       if (remainingKeys.length > 1) {
@@ -80,7 +80,7 @@ function getPathInSchema(schema: any, path: string): string {
   for (let i = 0; i < keys.length; i++) {
     const key = keys[i];
 
-    if (currentSchema.properties && currentSchema.properties[key]) {
+    if (currentSchema.properties?.[key]) {
       fullPath += fullPath ? `.${key}` : key;
       currentSchema = currentSchema.properties[key];
 
@@ -113,7 +113,7 @@ export function getOpenApiSpecForModel(
   });
 
   if (populatePaths && isArray(populatePaths)) {
-    populatePaths.forEach((populatePath) => {
+    for (const populatePath of populatePaths) {
       // Get the referenced populate model from the model schema
       let populateModel = model.schema.path(populatePath.path)?.options?.ref;
       const populatePathIsArray = Array.isArray(model.schema.path(populatePath.path).options.type);
@@ -121,7 +121,7 @@ export function getOpenApiSpecForModel(
         populateModel = model.schema.path(populatePath.path).options.type[0].ref;
       }
       if (!populateModel) {
-        return;
+        continue;
       }
 
       // Get the properties of the referenced model
@@ -153,7 +153,7 @@ export function getOpenApiSpecForModel(
         const part = pathParts[i];
         if (i === pathParts.length - 1) {
           // We're at the last part, merge the schema
-          if (currentSchema[part] && currentSchema[part].properties) {
+          if (currentSchema[part]?.properties) {
             currentSchema[part].properties = {
               ...currentSchema[part].properties,
               ...(schemaToSet.properties || {[part]: schemaToSet}),
@@ -175,7 +175,7 @@ export function getOpenApiSpecForModel(
           currentSchema = currentSchema[part].properties || currentSchema[part];
         }
       }
-    });
+    }
   }
 
   // Add virtuals to the modelSwagger property
@@ -233,7 +233,7 @@ export function unpopulate<T>(doc: Document<T>, path: string): Document<T> {
       if (Array.isArray(current[part])) {
         // If the field is an array, recursively unpopulate each element
         current[part] = current[part].map((item: any) => {
-          return item && item._id ? item._id : item;
+          return item?._id ? item._id : item;
         });
       } else if (current[part]?._id) {
         // If the field is a populated document, revert to _id
@@ -242,9 +242,9 @@ export function unpopulate<T>(doc: Document<T>, path: string): Document<T> {
     } else {
       // Recursive case: continue down the path
       if (Array.isArray(current[part])) {
-        current[part].forEach((item: any) => {
+        for (const item of current[part]) {
           recursiveUnpopulate(item, parts.slice(1)); // Recursively handle each item in the array
-        });
+        }
       } else {
         recursiveUnpopulate(current[part], parts.slice(1)); // Recursively handle the next part
       }

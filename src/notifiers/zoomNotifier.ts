@@ -35,7 +35,7 @@ export async function sendToZoom(
 ) {
   const zoomWebhooksString = process.env.ZOOM_CHAT_WEBHOOKS;
   if (!zoomWebhooksString) {
-    const msg = `ZOOM_CHAT_WEBHOOKS not set. Zoom message not sent`;
+    const msg = "ZOOM_CHAT_WEBHOOKS not set. Zoom message not sent";
     Sentry.captureException(new Error(msg));
     logger.error(msg);
     return;
@@ -98,7 +98,6 @@ export async function sendToZoom(
         },
       }
     );
-    // biome-ignore lint/suspicious/noExplicitAny: <Error>
   } catch (error: any) {
     logger.error(`Error posting to Zoom: ${error.text ?? error.message}`);
     Sentry.captureException(error);

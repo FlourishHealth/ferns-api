@@ -12,7 +12,7 @@ const SHOW_ALL_LOGS = process.env.SHOW_ALL_TEST_LOGS === "true";
 
 // Create a custom stream that captures logs
 const logStream = new Writable({
-  write(chunk: any, encoding: any, callback: any) {
+  write(chunk: any, _encoding: any, callback: any) {
     logs.push(chunk.toString());
     if (SHOW_ALL_LOGS) {
       process.stdout.write(chunk);

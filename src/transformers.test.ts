@@ -31,14 +31,14 @@ describe("query and transform", function () {
       FoodModel.create({
         name: "Apple",
         calories: 100,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin._id,
         hidden: true,
       }),
       FoodModel.create({
         name: "Carrots",
         calories: 100,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin._id,
       }),
     ]);

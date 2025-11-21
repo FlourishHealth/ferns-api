@@ -74,7 +74,7 @@ describe("createdUpdate", function () {
     jest.advanceTimersByTime(10000);
     await stuff.save();
     assert.equal(stuff.created.toISOString(), "2022-12-17T03:24:00.000Z");
-    assert.isTrue(stuff.updated! > stuff.created);
+    assert.isTrue(stuff.updated && stuff.updated > stuff.created);
     jest.useRealTimers();
   });
 });
@@ -141,7 +141,7 @@ describe("findOneOrNone", function () {
   it("returns a single match", async function () {
     const result = await StuffModel.findOneOrNone({name: "Things"});
     assert.isNotNull(result);
-    assert.equal(result!._id.toString(), things._id.toString());
+    assert.equal(result?._id.toString(), things._id.toString());
   });
 
   it("throws error with two matches.", async function () {
@@ -228,7 +228,7 @@ describe("upsertPlugin", function () {
 
     const found = await StuffModel.findOne({name: "NewThing"});
     assert.isNotNull(found);
-    assert.equal(found!.ownerId, "456");
+    assert.equal(found?.ownerId, "456");
   });
 
   it("updates existing document when one exists", async function () {
@@ -316,7 +316,7 @@ describe("DateOnly", function () {
       assert.match(error.message, /Cast to DateOnly failed/);
       return;
     }
-    assert.fail(`Expected error was not thrown`);
+    assert.fail("Expected error was not thrown");
   });
 
   it("adjusts date to date only", async function () {
@@ -337,11 +337,11 @@ describe("DateOnly", function () {
     let found = await StuffModel.findOne({
       date: {$gte: "2000-01-01T00:00:00.000Z", $lt: "2001-01-01T00:00:00.000Z"},
     });
-    assert.strictEqual(found!.date.toISOString(), "2000-10-10T00:00:00.000Z");
+    assert.strictEqual(found?.date.toISOString(), "2000-10-10T00:00:00.000Z");
     found = await StuffModel.findOne({
       date: {$gte: "2000-01-01T12:12:12.000Z", $lt: "2001-01-01T12:12:12.000Z"},
     });
-    assert.strictEqual(found!.date.toISOString(), "2000-10-10T00:00:00.000Z");
+    assert.strictEqual(found?.date.toISOString(), "2000-10-10T00:00:00.000Z");
   });
 
   describe("handle 404", function () {

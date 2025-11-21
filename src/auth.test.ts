@@ -35,14 +35,14 @@ describe("auth tests", function () {
       FoodModel.create({
         name: "Apple",
         calories: 100,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin._id,
         hidden: true,
       }),
       FoodModel.create({
         name: "Carrots",
         calories: 100,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin._id,
       }),
     ]);
@@ -260,7 +260,7 @@ describe("auth tests", function () {
     await agent.get("/auth/me").expect(200);
 
     // Advance time to past token expiration
-    jest.setSystemTime(new Date().getTime() + 1000 * 60 * 60 * 24 * 30);
+    jest.setSystemTime(Date.now() + 1000 * 60 * 60 * 24 * 30);
 
     await agent.get("/auth/me").expect(401);
   });
@@ -389,14 +389,14 @@ describe("custom auth options", function () {
       FoodModel.create({
         name: "Apple",
         calories: 100,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin._id,
         hidden: true,
       }),
       FoodModel.create({
         name: "Carrots",
         calories: 100,
-        created: new Date().getTime() - 10,
+        created: Date.now() - 10,
         ownerId: admin._id,
       }),
     ]);
@@ -406,9 +406,8 @@ describe("custom auth options", function () {
       generateTokenExpiration: (user?: {admin: boolean}) => {
         if (user?.admin) {
           return "30d";
-        } else {
-          return "365d";
         }
+        return "365d";
       },
     });
     setupAuth(app, UserModel as any);
@@ -479,12 +478,12 @@ describe("custom auth options", function () {
 
     // Advance time by 30 days check that admin can no longer access with old token,
     // and non-admin can due to custom times set as auth options
-    jest.setSystemTime(new Date().getTime() + 1000 * 60 * 60 * 24 * 30);
+    jest.setSystemTime(Date.now() + 1000 * 60 * 60 * 24 * 30);
     await adminAgent.get("/auth/me").expect(401);
     await notAdminAgent.get("/auth/me").expect(200);
 
     // Advance time by an additional 335 days to pass the 365 day expiration for non-admin
-    jest.setSystemTime(new Date().getTime() + 1000 * 60 * 60 * 24 * 365);
+    jest.setSystemTime(Date.now() + 1000 * 60 * 60 * 24 * 365);
 
     // ensure non-admin can no longer access
     await notAdminAgent.get("/auth/me").expect(401);
@@ -513,12 +512,12 @@ describe("generateTokens", () => {
     expect(refreshToken).toBeDefined();
 
     // Verify token structure
-    const tokenParts = token!.split(".");
-    expect(tokenParts.length).toBe(3);
+    const tokenParts = token?.split(".");
+    expect(tokenParts?.length).toBe(3);
   });
 
   it("throws an error if TOKEN_SECRET is missing", async () => {
-    delete process.env.TOKEN_SECRET;
+    process.env.TOKEN_SECRET = undefined;
     const user = {_id: "12345"};
 
     await expect(generateTokens(user)).rejects.toThrow("TOKEN_SECRET must be set in env.");

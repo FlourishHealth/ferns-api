@@ -3,7 +3,7 @@ import express, {Router} from "express";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
 
-import {fernsRouter, FernsRouterOptions} from "./api";
+import {FernsRouterOptions, fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
 import {setupServer} from "./expressServer";
 import {Permissions} from "./permissions";
@@ -63,7 +63,7 @@ function addRoutes(router: Router, options?: Partial<FernsRouterOptions<any>>): 
       },
     })
   );
-  router.use("/food/count", getMessageSummaryOpenApiMiddleware, async (req, res) => {
+  router.use("/food/count", getMessageSummaryOpenApiMiddleware, async (_req, res) => {
     res.json({message: "count"});
   });
 }
@@ -131,7 +131,7 @@ describe("openApi", function () {
   it("gets food with populated paths", async function () {
     server = supertest(app);
     // eslint-disable-next-line unused-imports/no-unused-vars
-    const [admin, notAdmin] = await setupDb();
+    const [_admin, notAdmin] = await setupDb();
     const food = await FoodModel.create({name: "test", ownerId: notAdmin._id});
     const res = await server.get(`/food/${food._id}`).expect(200);
     expect(res.body.data.ownerId._id).toEqual(notAdmin._id.toString());

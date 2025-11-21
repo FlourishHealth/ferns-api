@@ -182,7 +182,7 @@ export function getAPIErrorBody(error: APIError): {[id: string]: any} {
 
 export function apiUnauthorizedMiddleware(
   err: Error,
-  req: Request,
+  _req: Request,
   res: Response,
   next: NextFunction
 ) {
@@ -194,7 +194,7 @@ export function apiUnauthorizedMiddleware(
   }
 }
 
-export function apiErrorMiddleware(err: Error, req: Request, res: Response, next: NextFunction) {
+export function apiErrorMiddleware(err: Error, _req: Request, res: Response, next: NextFunction) {
   if (isAPIError(err)) {
     if (!err.disableExternalErrorTracking) {
       Sentry.captureException(err);
