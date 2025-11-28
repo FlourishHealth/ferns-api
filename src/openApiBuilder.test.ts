@@ -1,4 +1,3 @@
-import {assert} from "chai";
 import express, {Router} from "express";
 import supertest from "supertest";
 import TestAgent from "supertest/lib/agent";
@@ -16,10 +15,14 @@ function addRoutesWithBuilder(router: Router, options?: Partial<FernsRouterOptio
     .withTags(["Stats"])
     .withSummary("Get food statistics")
     .withDescription("Returns aggregated statistics about food items")
-    .withQueryParameter("category", {type: "string"}, {
-      description: "Filter by food category",
-      required: false,
-    })
+    .withQueryParameter(
+      "category",
+      {type: "string"},
+      {
+        description: "Filter by food category",
+        required: false,
+      }
+    )
     .withResponse<{count: number; avgCalories: number}>(200, {
       count: {type: "number", description: "Total number of food items"},
       avgCalories: {type: "number", description: "Average calories"},
@@ -40,9 +43,13 @@ function addRoutesWithBuilder(router: Router, options?: Partial<FernsRouterOptio
       endDate: {type: "string", format: "date", required: true, description: "Report end date"},
       includeDeleted: {type: "boolean", description: "Whether to include deleted items"},
     })
-    .withResponse<{reportId: string}>(201, {
-      reportId: {type: "string", description: "Generated report ID"},
-    }, {description: "Report created successfully"})
+    .withResponse<{reportId: string}>(
+      201,
+      {
+        reportId: {type: "string", description: "Generated report ID"},
+      },
+      {description: "Report created successfully"}
+    )
     .build();
 
   router.post("/food/reports", createReportMiddleware, async (_req, res) => {
@@ -53,11 +60,15 @@ function addRoutesWithBuilder(router: Router, options?: Partial<FernsRouterOptio
   const listCategoriesMiddleware = createOpenApiBuilder(options ?? {})
     .withTags(["Categories"])
     .withSummary("List food categories")
-    .withArrayResponse<{id: string; name: string; count: number}>(200, {
-      id: {type: "string", description: "Category ID"},
-      name: {type: "string", description: "Category name"},
-      count: {type: "number", description: "Number of items in category"},
-    }, {description: "List of categories"})
+    .withArrayResponse<{id: string; name: string; count: number}>(
+      200,
+      {
+        id: {type: "string", description: "Category ID"},
+        name: {type: "string", description: "Category name"},
+        count: {type: "number", description: "Number of items in category"},
+      },
+      {description: "List of categories"}
+    )
     .build();
 
   router.get("/food/categories", listCategoriesMiddleware, async (_req, res) => {
@@ -71,9 +82,13 @@ function addRoutesWithBuilder(router: Router, options?: Partial<FernsRouterOptio
   const getCategoryMiddleware = createOpenApiBuilder(options ?? {})
     .withTags(["Categories"])
     .withSummary("Get category by ID")
-    .withPathParameter("categoryId", {type: "string"}, {
-      description: "The category identifier",
-    })
+    .withPathParameter(
+      "categoryId",
+      {type: "string"},
+      {
+        description: "The category identifier",
+      }
+    )
     .withResponse<{id: string; name: string}>(200, {
       id: {type: "string"},
       name: {type: "string"},
@@ -110,7 +125,11 @@ describe("OpenApiMiddlewareBuilder", function () {
     process.env.REFRESH_TOKEN_SECRET = "testsecret1234";
     process.env.ENABLE_SWAGGER = "true";
 
-    app = setupServer({addRoutes: addRoutesWithBuilder, userModel: UserModel as any, skipListen: true});
+    app = setupServer({
+      addRoutes: addRoutesWithBuilder,
+      userModel: UserModel as any,
+      skipListen: true,
+    });
     setupAuth(app, UserModel as any);
     addAuthRoutes(app, UserModel as any);
   });
@@ -334,39 +353,43 @@ describe("OpenApiMiddlewareBuilder configuration", function () {
   it("correctly extracts required fields from request body schema", function () {
     // We can't easily test this without a mock openApi.path, but we can at least
     // verify the builder accepts the configuration
-    const builder = createOpenApiBuilder({})
-      .withRequestBody<{required1: string; required2: string; optional: string}>({
-        required1: {type: "string", required: true},
-        required2: {type: "string", required: true},
-        optional: {type: "string"},
-      });
+    const builder = createOpenApiBuilder({}).withRequestBody<{
+      required1: string;
+      required2: string;
+      optional: string;
+    }>({
+      required1: {type: "string", required: true},
+      required2: {type: "string", required: true},
+      optional: {type: "string"},
+    });
 
     expect(builder).toBeInstanceOf(OpenApiMiddlewareBuilder);
   });
 
   it("supports custom media types for request body", function () {
-    const builder = createOpenApiBuilder({})
-      .withRequestBody(
-        {data: {type: "string"}},
-        {mediaType: "application/xml"}
-      );
+    const builder = createOpenApiBuilder({}).withRequestBody(
+      {data: {type: "string"}},
+      {mediaType: "application/xml"}
+    );
 
     expect(builder).toBeInstanceOf(OpenApiMiddlewareBuilder);
   });
 
   it("supports custom media types for response", function () {
-    const builder = createOpenApiBuilder({})
-      .withResponse(200, {data: {type: "string"}}, {mediaType: "text/plain"});
+    const builder = createOpenApiBuilder({}).withResponse(
+      200,
+      {data: {type: "string"}},
+      {mediaType: "text/plain"}
+    );
 
     expect(builder).toBeInstanceOf(OpenApiMiddlewareBuilder);
   });
 
   it("supports optional request body", function () {
-    const builder = createOpenApiBuilder({})
-      .withRequestBody(
-        {data: {type: "string"}},
-        {required: false}
-      );
+    const builder = createOpenApiBuilder({}).withRequestBody(
+      {data: {type: "string"}},
+      {required: false}
+    );
 
     expect(builder).toBeInstanceOf(OpenApiMiddlewareBuilder);
   });
