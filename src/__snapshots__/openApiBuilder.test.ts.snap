@@ -1,0 +1,1485 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OpenApiMiddlewareBuilder snapshot tests matches OpenAPI spec snapshot 1`] = `
+{
+  "components": {
+    "schemas": {
+      "APIError": {
+        "properties": {
+          "code": {
+            "description": "An application-specific error code, expressed as a string value.",
+            "type": "string",
+          },
+          "detail": {
+            "description": "A human-readable explanation specific to this occurrence of the problem. Like title, this field’s value can be localized.",
+            "type": "string",
+          },
+          "id": {
+            "description": "A unique identifier for this particular occurrence of the problem.",
+            "type": "string",
+          },
+          "links": {
+            "properties": {
+              "about": {
+                "description": "A link that leads to further details about this particular occurrence of the problem. When derefenced, this URI SHOULD return a human-readable description of the error.",
+                "type": "string",
+              },
+              "type": {
+                "description": "A link that identifies the type of error that this particular error is an instance of. This URI SHOULD be dereferencable to a human-readable explanation of the general error.",
+                "type": "string",
+              },
+            },
+            "type": "object",
+          },
+          "meta": {
+            "description": "A meta object containing non-standard meta-information about the error.",
+            "type": "object",
+          },
+          "source": {
+            "properties": {
+              "header": {
+                "description": "A string indicating the name of a single request header which caused the error.",
+                "type": "string",
+              },
+              "parameter": {
+                "description": "A string indicating which URI query parameter caused the error.",
+                "type": "string",
+              },
+              "pointer": {
+                "description": "A JSON Pointer [RFC6901] to the associated entity in the request document [e.g. "/data" for a primary data object, or "/data/attributes/title" for a specific attribute].",
+                "type": "string",
+              },
+            },
+            "type": "object",
+          },
+          "status": {
+            "description": "The HTTP status code applicable to this problem, expressed as a string value.",
+            "type": "number",
+          },
+          "title": {
+            "description": "The error message",
+            "type": "string",
+          },
+        },
+        "type": "object",
+      },
+    },
+  },
+  "info": {
+    "description": "Generated docs from an Express api",
+    "title": "Express Application",
+    "version": "1.0.0",
+  },
+  "openapi": "3.0.0",
+  "paths": {
+    "/food/": {
+      "get": {
+        "parameters": [
+          {
+            "in": "query",
+            "name": "_id",
+            "schema": {
+              "properties": {
+                "$in": {
+                  "items": {
+                    "type": "string",
+                  },
+                  "type": "array",
+                },
+              },
+              "type": "object",
+            },
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "type": "number",
+            },
+          },
+          {
+            "in": "query",
+            "name": "sort",
+            "schema": {
+              "type": "string",
+            },
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "number",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "data": {
+                      "items": {
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                          },
+                          "calories": {
+                            "type": "number",
+                          },
+                          "categories": {
+                            "items": {
+                              "properties": {
+                                "_id": {
+                                  "type": "string",
+                                },
+                                "created": {
+                                  "format": "date-time",
+                                  "type": "string",
+                                },
+                                "name": {
+                                  "type": "string",
+                                },
+                                "show": {
+                                  "type": "boolean",
+                                },
+                                "updated": {
+                                  "format": "date-time",
+                                  "type": "string",
+                                },
+                              },
+                              "required": [],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
+                          "description": {
+                            "type": "any",
+                          },
+                          "eatenBy": {
+                            "items": {
+                              "required": true,
+                              "type": "schemaobjectid",
+                            },
+                            "type": "array",
+                          },
+                          "expiration": {
+                            "type": "dateonly",
+                          },
+                          "hidden": {
+                            "type": "boolean",
+                          },
+                          "lastEatenWith": {
+                            "additionalProperties": {
+                              "format": "date-time",
+                              "type": "string",
+                            },
+                            "type": "object",
+                          },
+                          "likesIds": {
+                            "items": {
+                              "properties": {
+                                "_id": {
+                                  "type": "string",
+                                },
+                                "likes": {
+                                  "type": "boolean",
+                                },
+                                "userId": {
+                                  "type": "string",
+                                },
+                              },
+                              "required": [],
+                              "type": "object",
+                            },
+                            "type": "array",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                          "ownerId": {
+                            "type": "string",
+                          },
+                          "source": {
+                            "properties": {
+                              "dateAdded": {
+                                "type": "string",
+                              },
+                              "href": {
+                                "type": "string",
+                              },
+                              "name": {
+                                "type": "string",
+                              },
+                            },
+                            "type": "object",
+                          },
+                          "tags": {
+                            "items": {
+                              "type": "string",
+                            },
+                            "type": "array",
+                          },
+                        },
+                        "required": [
+                          "likesIds",
+                          "_id",
+                          "created",
+                          "updated",
+                        ],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "limit": {
+                      "type": "number",
+                    },
+                    "more": {
+                      "type": "boolean",
+                    },
+                    "page": {
+                      "type": "number",
+                    },
+                    "total": {
+                      "type": "number",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful list",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "tags": [
+          "foods",
+        ],
+      },
+      "post": {
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "_id": {
+                    "type": "string",
+                  },
+                  "calories": {
+                    "type": "number",
+                  },
+                  "categories": {
+                    "items": {
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                        },
+                        "created": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "name": {
+                          "type": "string",
+                        },
+                        "show": {
+                          "type": "boolean",
+                        },
+                        "updated": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                      },
+                      "required": [],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "created": {
+                    "format": "date-time",
+                    "type": "string",
+                  },
+                  "description": {
+                    "type": "any",
+                  },
+                  "eatenBy": {
+                    "items": {
+                      "required": true,
+                      "type": "schemaobjectid",
+                    },
+                    "type": "array",
+                  },
+                  "expiration": {
+                    "type": "dateonly",
+                  },
+                  "hidden": {
+                    "type": "boolean",
+                  },
+                  "lastEatenWith": {
+                    "additionalProperties": {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "type": "object",
+                  },
+                  "likesIds": {
+                    "items": {
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                        },
+                        "likes": {
+                          "type": "boolean",
+                        },
+                        "userId": {
+                          "type": "string",
+                        },
+                      },
+                      "required": [],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "name": {
+                    "type": "string",
+                  },
+                  "ownerId": {
+                    "type": "string",
+                  },
+                  "source": {
+                    "properties": {
+                      "dateAdded": {
+                        "type": "string",
+                      },
+                      "href": {
+                        "type": "string",
+                      },
+                      "name": {
+                        "type": "string",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  "tags": {
+                    "items": {
+                      "type": "string",
+                    },
+                    "type": "array",
+                  },
+                },
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "_id": {
+                      "type": "string",
+                    },
+                    "calories": {
+                      "type": "number",
+                    },
+                    "categories": {
+                      "items": {
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                          },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                          "show": {
+                            "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
+                        },
+                        "required": [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "created": {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "description": {
+                      "type": "any",
+                    },
+                    "eatenBy": {
+                      "items": {
+                        "required": true,
+                        "type": "schemaobjectid",
+                      },
+                      "type": "array",
+                    },
+                    "expiration": {
+                      "type": "dateonly",
+                    },
+                    "hidden": {
+                      "type": "boolean",
+                    },
+                    "lastEatenWith": {
+                      "additionalProperties": {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "type": "object",
+                    },
+                    "likesIds": {
+                      "items": {
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                          },
+                          "likes": {
+                            "type": "boolean",
+                          },
+                          "userId": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "ownerId": {
+                      "type": "string",
+                    },
+                    "source": {
+                      "properties": {
+                        "dateAdded": {
+                          "type": "string",
+                        },
+                        "href": {
+                          "type": "string",
+                        },
+                        "name": {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "tags": {
+                      "items": {
+                        "type": "string",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "likesIds",
+                    "_id",
+                    "created",
+                    "updated",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful create",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "tags": [
+          "foods",
+        ],
+      },
+    },
+    "/food/categories": {
+      "get": {
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "properties": {
+                      "count": {
+                        "description": "Number of items in category",
+                        "type": "number",
+                      },
+                      "id": {
+                        "description": "Category ID",
+                        "type": "string",
+                      },
+                      "name": {
+                        "description": "Category name",
+                        "type": "string",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  "type": "array",
+                },
+              },
+            },
+            "description": "List of categories",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "summary": "List food categories",
+        "tags": [
+          "Categories",
+        ],
+      },
+    },
+    "/food/categories/{categoryId}": {
+      "get": {
+        "parameters": [
+          {
+            "description": "The category identifier",
+            "in": "path",
+            "name": "categoryId",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Success",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "summary": "Get category by ID",
+        "tags": [
+          "Categories",
+        ],
+      },
+    },
+    "/food/reports": {
+      "post": {
+        "description": "Generates a report based on provided criteria",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "endDate": {
+                    "description": "Report end date",
+                    "format": "date",
+                    "required": true,
+                    "type": "string",
+                  },
+                  "includeDeleted": {
+                    "description": "Whether to include deleted items",
+                    "type": "boolean",
+                  },
+                  "startDate": {
+                    "description": "Report start date",
+                    "format": "date",
+                    "required": true,
+                    "type": "string",
+                  },
+                },
+                "required": [
+                  "startDate",
+                  "endDate",
+                ],
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "reportId": {
+                      "description": "Generated report ID",
+                      "type": "string",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Report created successfully",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "summary": "Create a food report",
+        "tags": [
+          "Reports",
+        ],
+      },
+    },
+    "/food/stats": {
+      "get": {
+        "description": "Returns aggregated statistics about food items",
+        "parameters": [
+          {
+            "description": "Filter by food category",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "avgCalories": {
+                      "description": "Average calories",
+                      "type": "number",
+                    },
+                    "count": {
+                      "description": "Total number of food items",
+                      "type": "number",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Success",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "summary": "Get food statistics",
+        "tags": [
+          "Stats",
+        ],
+      },
+    },
+    "/food/{id}": {
+      "delete": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful delete",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "tags": [
+          "foods",
+        ],
+      },
+      "get": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "_id": {
+                      "type": "string",
+                    },
+                    "calories": {
+                      "type": "number",
+                    },
+                    "categories": {
+                      "items": {
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                          },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                          "show": {
+                            "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
+                        },
+                        "required": [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "created": {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "description": {
+                      "type": "any",
+                    },
+                    "eatenBy": {
+                      "items": {
+                        "required": true,
+                        "type": "schemaobjectid",
+                      },
+                      "type": "array",
+                    },
+                    "expiration": {
+                      "type": "dateonly",
+                    },
+                    "hidden": {
+                      "type": "boolean",
+                    },
+                    "lastEatenWith": {
+                      "additionalProperties": {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "type": "object",
+                    },
+                    "likesIds": {
+                      "items": {
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                          },
+                          "likes": {
+                            "type": "boolean",
+                          },
+                          "userId": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "ownerId": {
+                      "type": "string",
+                    },
+                    "source": {
+                      "properties": {
+                        "dateAdded": {
+                          "type": "string",
+                        },
+                        "href": {
+                          "type": "string",
+                        },
+                        "name": {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "tags": {
+                      "items": {
+                        "type": "string",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "likesIds",
+                    "_id",
+                    "created",
+                    "updated",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful read",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "tags": [
+          "foods",
+        ],
+      },
+      "patch": {
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+            },
+          },
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "_id": {
+                    "type": "string",
+                  },
+                  "calories": {
+                    "type": "number",
+                  },
+                  "categories": {
+                    "items": {
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                        },
+                        "created": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                        "name": {
+                          "type": "string",
+                        },
+                        "show": {
+                          "type": "boolean",
+                        },
+                        "updated": {
+                          "format": "date-time",
+                          "type": "string",
+                        },
+                      },
+                      "required": [],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "created": {
+                    "format": "date-time",
+                    "type": "string",
+                  },
+                  "description": {
+                    "type": "any",
+                  },
+                  "eatenBy": {
+                    "items": {
+                      "required": true,
+                      "type": "schemaobjectid",
+                    },
+                    "type": "array",
+                  },
+                  "expiration": {
+                    "type": "dateonly",
+                  },
+                  "hidden": {
+                    "type": "boolean",
+                  },
+                  "lastEatenWith": {
+                    "additionalProperties": {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "type": "object",
+                  },
+                  "likesIds": {
+                    "items": {
+                      "properties": {
+                        "_id": {
+                          "type": "string",
+                        },
+                        "likes": {
+                          "type": "boolean",
+                        },
+                        "userId": {
+                          "type": "string",
+                        },
+                      },
+                      "required": [],
+                      "type": "object",
+                    },
+                    "type": "array",
+                  },
+                  "name": {
+                    "type": "string",
+                  },
+                  "ownerId": {
+                    "type": "string",
+                  },
+                  "source": {
+                    "properties": {
+                      "dateAdded": {
+                        "type": "string",
+                      },
+                      "href": {
+                        "type": "string",
+                      },
+                      "name": {
+                        "type": "string",
+                      },
+                    },
+                    "type": "object",
+                  },
+                  "tags": {
+                    "items": {
+                      "type": "string",
+                    },
+                    "type": "array",
+                  },
+                },
+                "type": "object",
+              },
+            },
+          },
+          "required": true,
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "_id": {
+                      "type": "string",
+                    },
+                    "calories": {
+                      "type": "number",
+                    },
+                    "categories": {
+                      "items": {
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                          },
+                          "created": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
+                          "name": {
+                            "type": "string",
+                          },
+                          "show": {
+                            "type": "boolean",
+                          },
+                          "updated": {
+                            "format": "date-time",
+                            "type": "string",
+                          },
+                        },
+                        "required": [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "created": {
+                      "format": "date-time",
+                      "type": "string",
+                    },
+                    "description": {
+                      "type": "any",
+                    },
+                    "eatenBy": {
+                      "items": {
+                        "required": true,
+                        "type": "schemaobjectid",
+                      },
+                      "type": "array",
+                    },
+                    "expiration": {
+                      "type": "dateonly",
+                    },
+                    "hidden": {
+                      "type": "boolean",
+                    },
+                    "lastEatenWith": {
+                      "additionalProperties": {
+                        "format": "date-time",
+                        "type": "string",
+                      },
+                      "type": "object",
+                    },
+                    "likesIds": {
+                      "items": {
+                        "properties": {
+                          "_id": {
+                            "type": "string",
+                          },
+                          "likes": {
+                            "type": "boolean",
+                          },
+                          "userId": {
+                            "type": "string",
+                          },
+                        },
+                        "required": [],
+                        "type": "object",
+                      },
+                      "type": "array",
+                    },
+                    "name": {
+                      "type": "string",
+                    },
+                    "ownerId": {
+                      "type": "string",
+                    },
+                    "source": {
+                      "properties": {
+                        "dateAdded": {
+                          "type": "string",
+                        },
+                        "href": {
+                          "type": "string",
+                        },
+                        "name": {
+                          "type": "string",
+                        },
+                      },
+                      "type": "object",
+                    },
+                    "tags": {
+                      "items": {
+                        "type": "string",
+                      },
+                      "type": "array",
+                    },
+                  },
+                  "required": [
+                    "likesIds",
+                    "_id",
+                    "created",
+                    "updated",
+                  ],
+                  "type": "object",
+                },
+              },
+            },
+            "description": "Successful update",
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Bad request",
+          },
+          "401": {
+            "description": "The user must be authenticated",
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on this document",
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "Document not found",
+          },
+          "405": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIError",
+                },
+              },
+            },
+            "description": "The user is not allowed to perform this action on any document",
+          },
+        },
+        "tags": [
+          "foods",
+        ],
+      },
+    },
+  },
+}
+`;
