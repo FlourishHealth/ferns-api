@@ -159,16 +159,24 @@ export interface FernsRouterOptions<T> {
    */
   preCreate?: (value: any, request: express.Request) => T | Promise<T> | null;
   /**
-   * Hook that runs after `transformer.transform` but before changes are made for update
-   * operations. Can update the body fields based on the request or the user.
+   * Hook that runs after `transformer.transform` but before changes are made for update operations.
+   * Can update the body fields based on the request or the user.
    * Also applies to all array operations. Return null to return a generic 403 error.
    * Throw an APIError to return a 400 with specific error information.
+   *
+   * @param value - The request body relative to the model update (type: Partial<T>). Note: this does not contain the entire document to be updated, only the fields being updated.
+   * @param request - The Express request object.
    */
-  preUpdate?: (value: any, request: express.Request) => T | Promise<T> | null;
-  /** Hook that runs after `transformer.transform` but before the object is deleted.
+  preUpdate?: (value: Partial<T>, request: express.Request) => T | Promise<T> | null;
+  /**
+   * Hook that runs after `transformer.transform` but before the object is deleted.
    * Return null to return a generic 403 error.
-   * Throw an APIError to return a 400 with specific error information. */
-  preDelete?: (value: any, request: express.Request) => T | Promise<T> | null;
+   * Throw an APIError to return a 400 with specific error information.
+   *
+   * @param value - The document to be deleted, before the soft update of deleted: true (type: T).
+   * @param request - The Express request object.
+   */
+  preDelete?: (value: T, request: express.Request) => T | Promise<T> | null;
   /**
    * Hook that runs after the object is created but before the responseHandler serializes and
    * returned. This is a good spot to perform dependent changes to other models or performing async
@@ -178,13 +186,18 @@ export interface FernsRouterOptions<T> {
   postCreate?: (value: T, request: express.Request) => void | Promise<void>;
   /**
    * Hook that runs after the object is updated but before the responseHandler serializes and
-   * returned. This is a good spot to perform dependent changes to other models or performing async
+   * returned. This is a good spot to perform dependent changes to other models or perform async
    * tasks/side effects, such as sending a push notification.
    * Throw an APIError to return a 400 with an error message.
+   *
+   * @param value - The document after it has been updated (type: T).
+   * @param cleanedBody - The request body relative to the model update (type: Partial<T>).
+   * @param request - The Express request object.
+   * @param prevValue - The entire document before it was updated (type: T).
    */
   postUpdate?: (
     value: T,
-    cleanedBody: any,
+    cleanedBody: Partial<T>,
     request: express.Request,
     prevValue: T
   ) => void | Promise<void>;
@@ -192,6 +205,9 @@ export interface FernsRouterOptions<T> {
    * Hook that runs after the object is deleted. This is a good spot to perform dependent changes
    * to other models or performing async tasks/side effects, such as cascading object deletions.
    * Throw an APIError to return a 400 with an error message.
+   *
+   * @param request - The Express request object.
+   * @param value - The document that was deleted, after the soft update of deleted: true (type: T).
    */
   postDelete?: (request: express.Request, value: T) => void | Promise<void>;
   /** Hook that runs after the object is fetched but before it is serialized.
