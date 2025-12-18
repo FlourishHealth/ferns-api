@@ -9,7 +9,7 @@ import cloneDeep from "lodash/cloneDeep";
 import mongoose, {Document, Model} from "mongoose";
 
 import {authenticateMiddleware, User} from "./auth";
-import {APIError, apiErrorMiddleware, isAPIError} from "./errors";
+import {APIError, apiErrorMiddleware, getDisableExternalErrorTracking, isAPIError} from "./errors";
 import {logger} from "./logger";
 import {
   createOpenApiMiddleware,
@@ -352,7 +352,7 @@ export function fernsRouter<T>(
           status: 400,
           title: error.message,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
       if (options.preCreate) {
@@ -366,7 +366,7 @@ export function fernsRouter<T>(
             status: 400,
             title: `preCreate hook error: ${error.message}`,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
         if (body === undefined) {
@@ -392,7 +392,7 @@ export function fernsRouter<T>(
           status: 400,
           title: error.message,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
 
@@ -406,7 +406,7 @@ export function fernsRouter<T>(
             status: 400,
             title: `Populate error: ${error.message}`,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
       }
@@ -419,7 +419,7 @@ export function fernsRouter<T>(
             status: 400,
             title: `postCreate hook error: ${error.message}`,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
       }
@@ -430,7 +430,7 @@ export function fernsRouter<T>(
         throw new APIError({
           title: `responseHandler error: ${error.message}`,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
     })
@@ -488,7 +488,7 @@ export function fernsRouter<T>(
             status: 400,
             title: `Query filter error: ${error}`,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
 
@@ -539,7 +539,7 @@ export function fernsRouter<T>(
         throw new APIError({
           title: `List error: ${error.stack}`,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
 
@@ -551,7 +551,7 @@ export function fernsRouter<T>(
         throw new APIError({
           title: `responseHandler error: ${error.message}`,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
 
@@ -586,7 +586,7 @@ export function fernsRouter<T>(
         throw new APIError({
           title: `Serialization error: ${error.message}`,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
     })
@@ -609,7 +609,7 @@ export function fernsRouter<T>(
         throw new APIError({
           title: `responseHandler error: ${error.message}`,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
     })
@@ -647,7 +647,7 @@ export function fernsRouter<T>(
           status: 403,
           title: `PATCH failed on ${req.params.id} for user ${req.user?.id}: ${error.message}`,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
 
@@ -666,7 +666,7 @@ export function fernsRouter<T>(
             status: 400,
             title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
         if (body === undefined) {
@@ -698,7 +698,7 @@ export function fernsRouter<T>(
           status: 400,
           title: `preUpdate hook save error on ${req.params.id}: ${error.message}`,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
 
@@ -716,7 +716,7 @@ export function fernsRouter<T>(
             status: 400,
             title: `postUpdate hook error on ${req.params.id}: ${error.message}`,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
       }
@@ -728,7 +728,7 @@ export function fernsRouter<T>(
         throw new APIError({
           title: `responseHandler error: ${error.message}`,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
     })
@@ -758,7 +758,7 @@ export function fernsRouter<T>(
             status: 403,
             title: `preDelete hook error on ${req.params.id}: ${error.message}`,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
         if (body === undefined) {
@@ -793,7 +793,7 @@ export function fernsRouter<T>(
             status: 400,
             title: error.message,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
       }
@@ -806,7 +806,7 @@ export function fernsRouter<T>(
             status: 400,
             title: `postDelete hook error: ${error.message}`,
             error,
-            disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+            disableExternalErrorTracking: getDisableExternalErrorTracking(error),
           });
         }
       }
@@ -904,7 +904,7 @@ export function fernsRouter<T>(
         title: error.message,
         status: 403,
         error,
-        disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+        disableExternalErrorTracking: getDisableExternalErrorTracking(error),
       });
     }
 
@@ -916,7 +916,7 @@ export function fernsRouter<T>(
           title: `preUpdate hook error on ${req.params.id}: ${error.message}`,
           status: 400,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
       if (body === undefined) {
@@ -945,7 +945,7 @@ export function fernsRouter<T>(
         title: `PATCH Pre Update error on ${req.params.id}: ${error.message}`,
         status: 400,
         error,
-        disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+        disableExternalErrorTracking: getDisableExternalErrorTracking(error),
       });
     }
 
@@ -957,7 +957,7 @@ export function fernsRouter<T>(
           title: `PATCH Post Update error on ${req.params.id}: ${error.message}`,
           status: 400,
           error,
-          disableExternalErrorTracking: (error as any).disableExternalErrorTracking,
+          disableExternalErrorTracking: getDisableExternalErrorTracking(error),
         });
       }
     }
