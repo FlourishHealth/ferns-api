@@ -193,7 +193,6 @@ export function permissionMiddleware<T>(
 
         // If no reason found, treat as not found
         if (!reason) {
-          Sentry.captureMessage(`Document ${req.params.id} not found for model ${model.modelName}`);
           const error = new APIError({
             status: 404,
             title: `Document ${req.params.id} not found for model ${model.modelName}`,
@@ -201,13 +200,12 @@ export function permissionMiddleware<T>(
           error.meta = undefined;
           throw error;
         }
-        Sentry.captureMessage(
-          `Document ${req.params.id} not found, because ${JSON.stringify(reason)} for model ${model.modelName}`
-        );
         throw new APIError({
           status: 404,
           title: `Document ${req.params.id} not found for model ${model.modelName}`,
           meta: reason,
+          // We don't want to send this to Sentry because it's expected behavior.
+          disableExternalErrorTracking: true,
         });
       }
 
