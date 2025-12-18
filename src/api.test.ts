@@ -9,6 +9,7 @@ import TestAgent from "supertest/lib/agent";
 
 import {fernsRouter} from "./api";
 import {addAuthRoutes, setupAuth} from "./auth";
+import {APIError} from "./errors";
 import {logRequests} from "./expressServer";
 import {Permissions} from "./permissions";
 import {
@@ -213,6 +214,203 @@ describe("ferns-api", () => {
 
       await agent.delete(`/food/${broccoli._id}`).expect(204);
       assert.isTrue(deleteCalled);
+    });
+
+    it("preCreate hook preserves disableExternalErrorTracking on APIError", async function () {
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          preCreate: () => {
+            throw new APIError({
+              status: 400,
+              title: "Custom preCreate error",
+              disableExternalErrorTracking: true,
+            });
+          },
+        })
+      );
+      server = supertest(app);
+
+      const res = await server
+        .post("/food")
+        .send({
+          name: "Broccoli",
+          calories: 15,
+        })
+        .expect(400);
+
+      assert.equal(res.body.title, "Custom preCreate error");
+      assert.equal(res.body.disableExternalErrorTracking, true);
+    });
+
+    it("preCreate hook preserves disableExternalErrorTracking on non-APIError", async function () {
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          preCreate: () => {
+            const error: any = new Error("Some custom error");
+            error.disableExternalErrorTracking = true;
+            throw error;
+          },
+        })
+      );
+      server = supertest(app);
+
+      const res = await server
+        .post("/food")
+        .send({
+          name: "Broccoli",
+          calories: 15,
+        })
+        .expect(400);
+
+      assert.include(res.body.title, "preCreate hook error");
+      assert.equal(res.body.disableExternalErrorTracking, true);
+    });
+
+    it("preUpdate hook preserves disableExternalErrorTracking on APIError", async function () {
+      const notAdmin = await UserModel.findOne({email: "notAdmin@example.com"});
+      const spinach = await FoodModel.create({
+        name: "Spinach",
+        calories: 1,
+        created: new Date("2021-12-03T00:00:20.000Z"),
+        ownerId: (notAdmin as any)._id,
+        hidden: false,
+        source: {
+          name: "Brand",
+        },
+      });
+
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          preUpdate: () => {
+            throw new APIError({
+              status: 400,
+              title: "Custom preUpdate error",
+              disableExternalErrorTracking: true,
+            });
+          },
+        })
+      );
+      server = supertest(app);
+
+      const res = await server
+        .patch(`/food/${spinach._id}`)
+        .send({
+          name: "Broccoli",
+        })
+        .expect(400);
+
+      assert.equal(res.body.title, "Custom preUpdate error");
+      assert.equal(res.body.disableExternalErrorTracking, true);
+    });
+
+    it("preUpdate hook preserves disableExternalErrorTracking on non-APIError", async function () {
+      const notAdmin = await UserModel.findOne({email: "notAdmin@example.com"});
+      const spinach = await FoodModel.create({
+        name: "Spinach",
+        calories: 1,
+        created: new Date("2021-12-03T00:00:20.000Z"),
+        ownerId: (notAdmin as any)._id,
+        hidden: false,
+        source: {
+          name: "Brand",
+        },
+      });
+
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          preUpdate: () => {
+            const error: any = new Error("Some custom error");
+            error.disableExternalErrorTracking = true;
+            throw error;
+          },
+        })
+      );
+      server = supertest(app);
+
+      const res = await server
+        .patch(`/food/${spinach._id}`)
+        .send({
+          name: "Broccoli",
+        })
+        .expect(400);
+
+      assert.include(res.body.title, "preUpdate hook error");
+      assert.equal(res.body.disableExternalErrorTracking, true);
+    });
+
+    it("preDelete hook preserves disableExternalErrorTracking on non-APIError", async function () {
+      const notAdmin = await UserModel.findOne({email: "notAdmin@example.com"});
+      const spinach = await FoodModel.create({
+        name: "Spinach",
+        calories: 1,
+        created: new Date("2021-12-03T00:00:20.000Z"),
+        ownerId: (notAdmin as any)._id,
+        hidden: false,
+        source: {
+          name: "Brand",
+        },
+      });
+
+      app.use(
+        "/food",
+        fernsRouter(FoodModel, {
+          allowAnonymous: true,
+          permissions: {
+            list: [Permissions.IsAny],
+            create: [Permissions.IsAny],
+            read: [Permissions.IsAny],
+            update: [Permissions.IsAny],
+            delete: [Permissions.IsAny],
+          },
+          preDelete: () => {
+            const error: any = new Error("Some custom error");
+            error.disableExternalErrorTracking = true;
+            throw error;
+          },
+        })
+      );
+      server = supertest(app);
+
+      const res = await agent.delete(`/food/${spinach._id}`).expect(403);
+
+      assert.include(res.body.title, "preDelete hook error");
+      assert.equal(res.body.disableExternalErrorTracking, true);
     });
   });
 

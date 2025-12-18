@@ -158,6 +158,23 @@ export function isAPIError(error: Error): error is APIError {
   return error.name === "APIError";
 }
 
+/**
+ * Safely extracts the disableExternalErrorTracking property from an error.
+ * Works with both APIError instances and regular Error objects that may have
+ * this property attached.
+ */
+export function getDisableExternalErrorTracking(error: unknown): boolean | undefined {
+  if (error instanceof Error) {
+    if (isAPIError(error)) {
+      return error.disableExternalErrorTracking;
+    }
+  }
+  if (error && typeof error === "object" && "disableExternalErrorTracking" in error) {
+    return (error as {disableExternalErrorTracking?: boolean}).disableExternalErrorTracking;
+  }
+  return undefined;
+}
+
 // Creates an APIError body to send to clients as JSON. Errors don't have a toJSON defined,
 // and we want to strip out things like message, name, and stack for the client.
 // There is almost certainly a more elegant solution to this.
