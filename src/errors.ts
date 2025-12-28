@@ -130,28 +130,31 @@ export class APIError extends Error {
 }
 
 // This can be attached to any schema to store errors compatible with the JSONAPI spec.
-export const ErrorSchema = new Schema({
-  title: {type: String, required: true},
-  id: String,
-  links: {
-    about: String,
-    type: String,
-  },
-  status: Number,
-  code: String,
-  detail: String,
-  source: {
-    pointer: String,
-    parameter: String,
-    header: String,
-  },
-  meta: Schema.Types.Mixed,
-});
+// Lazily initialize to avoid module loading order issues with Bun where mongoose
+// may not be fully initialized when this module loads.
 
 // Create an errors field for storing error information in a JSONAPI compatible form directly on a
 // model.
 export function errorsPlugin(schema: Schema): void {
-  schema.add({apiErrors: [ErrorSchema]});
+  const errorSchema = new Schema({
+    title: {type: String, required: true},
+    id: String,
+    links: {
+      about: String,
+      type: String,
+    },
+    status: Number,
+    code: String,
+    detail: String,
+    source: {
+      pointer: String,
+      parameter: String,
+      header: String,
+    },
+    meta: Schema.Types.Mixed,
+  });
+
+  schema.add({apiErrors: errorSchema});
 }
 
 export function isAPIError(error: Error): error is APIError {

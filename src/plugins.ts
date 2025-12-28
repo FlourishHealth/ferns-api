@@ -288,6 +288,3 @@ export class DateOnly extends SchemaType {
     return (val instanceof Date ? DateTime.fromJSDate(val).startOf("day").toJSDate() : val) as any;
   }
 }
-
-// Register the schema type with Mongoose
-(Schema.Types as any).DateOnly = DateOnly;
