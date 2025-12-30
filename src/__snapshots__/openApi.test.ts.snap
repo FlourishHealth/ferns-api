@@ -139,6 +139,26 @@ exports[`openApi gets the openapi.json 1`] = `
               "type": "number",
             },
           },
+          {
+            "in": "query",
+            "name": "$and",
+            "schema": {
+              "items": {
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
+          {
+            "in": "query",
+            "name": "$or",
+            "schema": {
+              "items": {
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
         ],
         "responses": {
           "200": {
@@ -1957,6 +1977,26 @@ exports[`openApi gets the openapi.json with custom endpoint 1`] = `
               "type": "number",
             },
           },
+          {
+            "in": "query",
+            "name": "$and",
+            "schema": {
+              "items": {
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
+          {
+            "in": "query",
+            "name": "$or",
+            "schema": {
+              "items": {
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
         ],
         "responses": {
           "200": {
@@ -3727,6 +3767,26 @@ exports[`openApi populate gets the openapi.json with populate 1`] = `
             "name": "limit",
             "schema": {
               "type": "number",
+            },
+          },
+          {
+            "in": "query",
+            "name": "$and",
+            "schema": {
+              "items": {
+                "type": "object",
+              },
+              "type": "array",
+            },
+          },
+          {
+            "in": "query",
+            "name": "$or",
+            "schema": {
+              "items": {
+                "type": "object",
+              },
+              "type": "array",
             },
           },
         ],

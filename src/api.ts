@@ -52,7 +52,7 @@ export function addPopulateToQuery(
 const PAGINATION_QUERY_PARAMS = ["limit", "page", "sort"];
 
 // Add support for more complex queries.
-const COMPLEX_QUERY_PARAMS = ["$and", "$or"];
+export const COMPLEX_QUERY_PARAMS = ["$and", "$or"];
 
 /**
  * @param a - the first number
@@ -299,6 +299,12 @@ function checkQueryParamAllowed(
     // Complex query of the form `$and: [{key1: value1}, {key2: value2}]`
     for (const subQuery of queryParamValue) {
       for (const subKey of Object.keys(subQuery)) {
+        if (COMPLEX_QUERY_PARAMS.includes(subKey)) {
+          throw new APIError({
+            status: 400,
+            title: `${subKey} is not allowed as a nested query param.`,
+          });
+        }
         checkQueryParamAllowed(subKey, subQuery[subKey], queryFields);
       }
     }

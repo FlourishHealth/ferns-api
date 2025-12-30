@@ -3,7 +3,7 @@ import merge from "lodash/merge";
 import {Model} from "mongoose";
 import m2s from "mongoose-to-swagger";
 
-import {FernsRouterOptions} from "./api";
+import {COMPLEX_QUERY_PARAMS, FernsRouterOptions} from "./api";
 import {logger} from "./logger";
 import {getOpenApiSpecForModel} from "./populate";
 
@@ -275,6 +275,16 @@ export function listOpenApiMiddleware<T>(model: Model<T>, options: Partial<Ferns
               type: "number",
             },
           },
+          ...COMPLEX_QUERY_PARAMS.map((param) => ({
+            name: param,
+            in: "query",
+            schema: {
+              type: "array",
+              items: {
+                type: "object",
+              },
+            },
+          })),
         ],
         responses: {
           200: {

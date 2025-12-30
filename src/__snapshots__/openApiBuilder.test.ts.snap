@@ -247,6 +247,18 @@ exports[`OpenApiMiddlewareBuilder snapshot tests matches OpenAPI spec snapshot 1
                     "total": {
                       "type": "number",
                     },
+                    "$and": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                      },
+                    },
+                    "$or": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                      },
+                    },
                   },
                   "type": "object",
                 },

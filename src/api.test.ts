@@ -1248,6 +1248,13 @@ describe("ferns-api", () => {
       assert.equal(res.body.title, "ownerId is not allowed as a query param.");
     });
 
+    it("query nested $and operator", async function () {
+      const res = await agent
+        .get(`/food?${qs.stringify({$and: [{calories: {$gt: 100}}, {$and: [{name: "USDA"}]}]})}`)
+        .expect(400);
+      assert.equal(res.body.title, "$and is not allowed as a nested query param.");
+    });
+
     it("query with a number", async function () {
       const res = await agent.get("/food?calories=100").expect(200);
       assert.lengthOf(res.body.data, 1);
