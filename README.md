@@ -1,5 +1,7 @@
 # ferns-api
 
+# Deprecated! Please see [@terreno/api](https://github.com/FlourishHealth/terreno).
+
 This library attempts to make creating REST APIs much easier with Express and Mongoose.
 Most REST APIs wind up being a lot of boilerplate, so this tries to cut that down without turning
 into a full blown framework of its own. This library is inspired by the
